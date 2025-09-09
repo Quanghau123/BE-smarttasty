@@ -1,0 +1,66 @@
+## 🏗 Mô hình kiến trúc
+
+```
+                  ┌─────────────────────┐
+                  │   SmartTasty-Service│
+                  │  (Auth + API logic) │
+                  └─────────┬───────────┘
+                            │
+          ┌─────────────────┴─────────────────┐
+          │                                   │
+ [Login]  │                           [Send Notification]
+          │                                   │
+          ▼                                   ▼
+ ┌─────────────────┐                  ┌─────────────────┐
+ │   Kafka / MQ     │  <─ Publish ─►   │ Notification-Svc│
+ │ (Event Bus)      │  ◄─ Subscribe ─  │ (email, push)   │
+ └─────────────────┘                  └───────┬─────────┘
+                                               │
+                                  ┌────────────┴────────────┐
+                                  │                         │
+                                  ▼                         ▼
+                      ┌─────────────────────┐     ┌───────────────────┐
+                      │ Redis / Mongo (user │     │  Socket-Server    │
+                      │  online status +    │     │   (SignalR hub)   │
+                      │  notification queue)│     └─────────┬─────────┘
+                      └─────────────────────┘               │
+                                                           ▼
+                                                    ┌───────────────┐
+                                                    │     Client    │
+                                                    │  (Web/Mobile) │
+                                                    └───────────────┘
+```
+
+---
+
+## 🔄 Luồng hoạt động
+
+### 1. **Login**
+
+* User → gọi API đăng nhập `SmartTasty-Service`.
+* Service tạo **JWT** trả về user.
+* Đồng thời publish event **UserLoggedIn** vào Kafka.
+* Notification-Service subscribe event này → đánh dấu **online** trong Redis/Mongo.
+
+---
+
+### 2. **Send Notification**
+
+* Admin → gọi API `SmartTasty-Service` (JWT với role=Admin).
+* Service gọi API sang **Notification-Service**.
+* Notification-Service publish event **SendNotification** vào Kafka.
+* Socket-Server subscribe:
+
+  * Nếu user đang online (check Redis) → gửi real-time qua SignalR.
+  * Nếu user offline → lưu vào **queue (Redis/Mongo)** để gửi sau.
+
+---
+
+### 3. **Reconnect**
+
+* Khi User kết nối lại với **Socket-Server** bằng JWT:
+
+  * Socket-Server check offline queue trong Redis/Mongo.
+  * Gửi toàn bộ notification chưa đọc cho client.
+  * Đánh dấu queue đã được xử lý.
+

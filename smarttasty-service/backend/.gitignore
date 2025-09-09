@@ -1,0 +1,57 @@
+# Build output
+bin/
+obj/
+
+# Visual Studio files
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio Code
+.vscode/
+
+# NuGet packages
+*.nupkg
+packages/
+.nuget/
+
+# Rider IDE
+.idea/
+
+# ASP.NET Core publish output
+publish/
+
+# Logs
+*.log
+logs/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# User-specific files
+*.rsuser
+*.vcxproj.user
+*.dbmdl
+
+# Entity Framework Migrations
+**/Migrations/*.cs
+**/Migrations/*.Designer.cs
+**/Migrations/*.resx
+
+# Docker related
+docker-compose.override.yml
+**/Dockerfile*
+
+# Secrets
+secrets.json
+
+# Others
+*.vsix
+*.cache
+*.pid
+
+# ENV
+.env

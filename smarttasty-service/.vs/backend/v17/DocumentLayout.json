@@ -1,0 +1,332 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\Admin\\Documents\\HocTap\\khoaluan\\SmartTasty\\backend\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{45182488-6522-4859-9CAF-A0310EC1011A}|backend\\backend.csproj|c:\\users\\admin\\documents\\hoctap\\khoaluan\\smarttasty\\backend\\backend\\data\\migrations\\20250723031852_updatereviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{45182488-6522-4859-9CAF-A0310EC1011A}|backend\\backend.csproj|solutionrelative:backend\\data\\migrations\\20250723031852_updatereviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{45182488-6522-4859-9CAF-A0310EC1011A}|backend\\backend.csproj|c:\\users\\admin\\documents\\hoctap\\khoaluan\\smarttasty\\backend\\backend\\data\\migrations\\applicationdbcontextmodelsnapshot.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{45182488-6522-4859-9CAF-A0310EC1011A}|backend\\backend.csproj|solutionrelative:backend\\data\\migrations\\applicationdbcontextmodelsnapshot.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{45182488-6522-4859-9CAF-A0310EC1011A}|backend\\backend.csproj|c:\\users\\admin\\documents\\hoctap\\khoaluan\\smarttasty\\backend\\backend\\data\\migrations\\20250608043924_initschema.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{45182488-6522-4859-9CAF-A0310EC1011A}|backend\\backend.csproj|solutionrelative:backend\\data\\migrations\\20250608043924_initschema.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Admin\\Documents\\HocTap\\khoaluan\\SmartTasty\\backend\\backend\\Controllers\\UploadController.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:backend\\Controllers\\UploadController.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Admin\\Documents\\HocTap\\khoaluan\\SmartTasty\\backend\\backend\\Models\\Photo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:backend\\Models\\Photo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Admin\\Documents\\HocTap\\khoaluan\\SmartTasty\\backend\\backend\\DTOs\\RestaurantDto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:backend\\DTOs\\RestaurantDto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Admin\\Documents\\HocTap\\khoaluan\\SmartTasty\\backend\\backend\\DTOs\\Photo\\PhotoUploadResult.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:backend\\DTOs\\Photo\\PhotoUploadResult.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{45182488-6522-4859-9CAF-A0310EC1011A}|backend\\backend.csproj|c:\\users\\admin\\documents\\hoctap\\khoaluan\\smarttasty\\backend\\backend\\data\\applicationdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{45182488-6522-4859-9CAF-A0310EC1011A}|backend\\backend.csproj|solutionrelative:backend\\data\\applicationdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{45182488-6522-4859-9CAF-A0310EC1011A}|backend\\backend.csproj|c:\\users\\admin\\documents\\hoctap\\khoaluan\\smarttasty\\backend\\backend\\models\\restaurant.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{45182488-6522-4859-9CAF-A0310EC1011A}|backend\\backend.csproj|solutionrelative:backend\\models\\restaurant.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{45182488-6522-4859-9CAF-A0310EC1011A}|backend\\backend.csproj|c:\\users\\admin\\documents\\hoctap\\khoaluan\\smarttasty\\backend\\backend\\models\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{45182488-6522-4859-9CAF-A0310EC1011A}|backend\\backend.csproj|solutionrelative:backend\\models\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{45182488-6522-4859-9CAF-A0310EC1011A}|backend\\backend.csproj|c:\\users\\admin\\documents\\hoctap\\khoaluan\\smarttasty\\backend\\backend\\helpers\\validationhelper.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{45182488-6522-4859-9CAF-A0310EC1011A}|backend\\backend.csproj|solutionrelative:backend\\helpers\\validationhelper.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{45182488-6522-4859-9CAF-A0310EC1011A}|backend\\backend.csproj|c:\\users\\admin\\documents\\hoctap\\khoaluan\\smarttasty\\backend\\backend\\services\\restaurantservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{45182488-6522-4859-9CAF-A0310EC1011A}|backend\\backend.csproj|solutionrelative:backend\\services\\restaurantservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{45182488-6522-4859-9CAF-A0310EC1011A}|backend\\backend.csproj|c:\\users\\admin\\documents\\hoctap\\khoaluan\\smarttasty\\backend\\backend\\enums\\userrole.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{45182488-6522-4859-9CAF-A0310EC1011A}|backend\\backend.csproj|solutionrelative:backend\\enums\\userrole.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{45182488-6522-4859-9CAF-A0310EC1011A}|backend\\backend.csproj|c:\\users\\admin\\documents\\hoctap\\khoaluan\\smarttasty\\backend\\backend\\models\\passwordresettoken.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{45182488-6522-4859-9CAF-A0310EC1011A}|backend\\backend.csproj|solutionrelative:backend\\models\\passwordresettoken.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{45182488-6522-4859-9CAF-A0310EC1011A}|backend\\backend.csproj|c:\\users\\admin\\documents\\hoctap\\khoaluan\\smarttasty\\backend\\backend\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{45182488-6522-4859-9CAF-A0310EC1011A}|backend\\backend.csproj|solutionrelative:backend\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{45182488-6522-4859-9CAF-A0310EC1011A}|backend\\backend.csproj|c:\\users\\admin\\documents\\hoctap\\khoaluan\\smarttasty\\backend\\backend\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{45182488-6522-4859-9CAF-A0310EC1011A}|backend\\backend.csproj|solutionrelative:backend\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{45182488-6522-4859-9CAF-A0310EC1011A}|backend\\backend.csproj|c:\\users\\admin\\documents\\hoctap\\khoaluan\\smarttasty\\backend\\backend\\configurations\\cloudinarysettings.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{45182488-6522-4859-9CAF-A0310EC1011A}|backend\\backend.csproj|solutionrelative:backend\\configurations\\cloudinarysettings.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Admin\\Documents\\HocTap\\khoaluan\\SmartTasty\\backend\\backend\\Services\\PhotoService.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:backend\\Services\\PhotoService.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Admin\\Documents\\HocTap\\khoaluan\\SmartTasty\\backend\\backend\\Interfaces\\IPhotoService.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:backend\\Interfaces\\IPhotoService.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 2,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{d78612c7-9962-4b83-95d9-268046dad23a}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{aa2115a1-9712-457b-9047-dbb71ca2cdd2}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "20250723031852_UpdateReviewModel.cs",
+              "DocumentMoniker": "C:\\Users\\Admin\\Documents\\HocTap\\khoaluan\\SmartTasty\\backend\\backend\\Data\\Migrations\\20250723031852_UpdateReviewModel.cs",
+              "RelativeDocumentMoniker": "backend\\Data\\Migrations\\20250723031852_UpdateReviewModel.cs",
+              "ToolTip": "C:\\Users\\Admin\\Documents\\HocTap\\khoaluan\\SmartTasty\\backend\\backend\\Data\\Migrations\\20250723031852_UpdateReviewModel.cs",
+              "RelativeToolTip": "backend\\Data\\Migrations\\20250723031852_UpdateReviewModel.cs",
+              "ViewState": "AgIAAEUAAAAAAAAAAAAowBAAAAAgAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-07-23T03:28:54.697Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "ApplicationDbContextModelSnapshot.cs",
+              "DocumentMoniker": "C:\\Users\\Admin\\Documents\\HocTap\\khoaluan\\SmartTasty\\backend\\backend\\Data\\Migrations\\ApplicationDbContextModelSnapshot.cs",
+              "RelativeDocumentMoniker": "backend\\Data\\Migrations\\ApplicationDbContextModelSnapshot.cs",
+              "ToolTip": "C:\\Users\\Admin\\Documents\\HocTap\\khoaluan\\SmartTasty\\backend\\backend\\Data\\Migrations\\ApplicationDbContextModelSnapshot.cs",
+              "RelativeToolTip": "backend\\Data\\Migrations\\ApplicationDbContextModelSnapshot.cs",
+              "ViewState": "AgIAABAAAAAAAAAAAAAgwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-07-23T03:28:41.722Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "20250608043924_InitSchema.cs",
+              "DocumentMoniker": "C:\\Users\\Admin\\Documents\\HocTap\\khoaluan\\SmartTasty\\backend\\backend\\Data\\Migrations\\20250608043924_InitSchema.cs",
+              "RelativeDocumentMoniker": "backend\\Data\\Migrations\\20250608043924_InitSchema.cs",
+              "ToolTip": "C:\\Users\\Admin\\Documents\\HocTap\\khoaluan\\SmartTasty\\backend\\backend\\Data\\Migrations\\20250608043924_InitSchema.cs",
+              "RelativeToolTip": "backend\\Data\\Migrations\\20250608043924_InitSchema.cs",
+              "ViewState": "AgIAAEAAAAAAAAAAAAAgwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-07-23T03:28:25.782Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "ApplicationDbContext.cs",
+              "DocumentMoniker": "C:\\Users\\Admin\\Documents\\HocTap\\khoaluan\\SmartTasty\\backend\\backend\\Data\\ApplicationDbContext.cs",
+              "RelativeDocumentMoniker": "backend\\Data\\ApplicationDbContext.cs",
+              "ToolTip": "C:\\Users\\Admin\\Documents\\HocTap\\khoaluan\\SmartTasty\\backend\\backend\\Data\\ApplicationDbContext.cs",
+              "RelativeToolTip": "backend\\Data\\ApplicationDbContext.cs",
+              "ViewState": "AgIAABUAAAAAAAAAAAAgwCYAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-14T11:34:25.774Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "Restaurant.cs",
+              "DocumentMoniker": "C:\\Users\\Admin\\Documents\\HocTap\\khoaluan\\SmartTasty\\backend\\backend\\Models\\Restaurant.cs",
+              "RelativeDocumentMoniker": "backend\\Models\\Restaurant.cs",
+              "ToolTip": "C:\\Users\\Admin\\Documents\\HocTap\\khoaluan\\SmartTasty\\backend\\backend\\Models\\Restaurant.cs",
+              "RelativeToolTip": "backend\\Models\\Restaurant.cs",
+              "ViewState": "AgIAAB0AAAAAAAAAAAAUwCUAAAAvAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-14T10:39:45.811Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "User.cs",
+              "DocumentMoniker": "C:\\Users\\Admin\\Documents\\HocTap\\khoaluan\\SmartTasty\\backend\\backend\\Models\\User.cs",
+              "RelativeDocumentMoniker": "backend\\Models\\User.cs",
+              "ToolTip": "C:\\Users\\Admin\\Documents\\HocTap\\khoaluan\\SmartTasty\\backend\\backend\\Models\\User.cs",
+              "RelativeToolTip": "backend\\Models\\User.cs",
+              "ViewState": "AgIAAB4AAAAAAAAAAAAiwCUAAABaAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-14T10:39:47.01Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "ValidationHelper.cs",
+              "DocumentMoniker": "C:\\Users\\Admin\\Documents\\HocTap\\khoaluan\\SmartTasty\\backend\\backend\\Helpers\\ValidationHelper.cs",
+              "RelativeDocumentMoniker": "backend\\Helpers\\ValidationHelper.cs",
+              "ToolTip": "C:\\Users\\Admin\\Documents\\HocTap\\khoaluan\\SmartTasty\\backend\\backend\\Helpers\\ValidationHelper.cs",
+              "RelativeToolTip": "backend\\Helpers\\ValidationHelper.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-15T05:27:31.687Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "UploadController.cs",
+              "DocumentMoniker": "C:\\Users\\Admin\\Documents\\HocTap\\khoaluan\\SmartTasty\\backend\\backend\\Controllers\\UploadController.cs",
+              "RelativeDocumentMoniker": "backend\\Controllers\\UploadController.cs",
+              "ToolTip": "C:\\Users\\Admin\\Documents\\HocTap\\khoaluan\\SmartTasty\\backend\\backend\\Controllers\\UploadController.cs",
+              "RelativeToolTip": "backend\\Controllers\\UploadController.cs",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-15T04:05:18.443Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "Photo.cs",
+              "DocumentMoniker": "C:\\Users\\Admin\\Documents\\HocTap\\khoaluan\\SmartTasty\\backend\\backend\\Models\\Photo.cs",
+              "RelativeDocumentMoniker": "backend\\Models\\Photo.cs",
+              "ToolTip": "C:\\Users\\Admin\\Documents\\HocTap\\khoaluan\\SmartTasty\\backend\\backend\\Models\\Photo.cs",
+              "RelativeToolTip": "backend\\Models\\Photo.cs",
+              "ViewState": "AgIAAAsAAAAAAAAAAAA4wBMAAAAIAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-15T04:35:30.114Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "RestaurantDto.cs",
+              "DocumentMoniker": "C:\\Users\\Admin\\Documents\\HocTap\\khoaluan\\SmartTasty\\backend\\backend\\DTOs\\RestaurantDto.cs",
+              "RelativeDocumentMoniker": "backend\\DTOs\\RestaurantDto.cs",
+              "ToolTip": "C:\\Users\\Admin\\Documents\\HocTap\\khoaluan\\SmartTasty\\backend\\backend\\DTOs\\RestaurantDto.cs",
+              "RelativeToolTip": "backend\\DTOs\\RestaurantDto.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-15T05:31:12.468Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "PhotoUploadResult.cs",
+              "DocumentMoniker": "C:\\Users\\Admin\\Documents\\HocTap\\khoaluan\\SmartTasty\\backend\\backend\\DTOs\\Photo\\PhotoUploadResult.cs",
+              "RelativeDocumentMoniker": "backend\\DTOs\\Photo\\PhotoUploadResult.cs",
+              "ToolTip": "C:\\Users\\Admin\\Documents\\HocTap\\khoaluan\\SmartTasty\\backend\\backend\\DTOs\\Photo\\PhotoUploadResult.cs",
+              "RelativeToolTip": "backend\\DTOs\\Photo\\PhotoUploadResult.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAAmAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-15T04:31:27.109Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 17,
+              "Title": "PhotoService.cs",
+              "DocumentMoniker": "C:\\Users\\Admin\\Documents\\HocTap\\khoaluan\\SmartTasty\\backend\\backend\\Services\\PhotoService.cs",
+              "RelativeDocumentMoniker": "backend\\Services\\PhotoService.cs",
+              "ToolTip": "C:\\Users\\Admin\\Documents\\HocTap\\khoaluan\\SmartTasty\\backend\\backend\\Services\\PhotoService.cs",
+              "RelativeToolTip": "backend\\Services\\PhotoService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAAwAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-15T03:59:08.259Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 18,
+              "Title": "IPhotoService.cs",
+              "DocumentMoniker": "C:\\Users\\Admin\\Documents\\HocTap\\khoaluan\\SmartTasty\\backend\\backend\\Interfaces\\IPhotoService.cs",
+              "RelativeDocumentMoniker": "backend\\Interfaces\\IPhotoService.cs",
+              "ToolTip": "C:\\Users\\Admin\\Documents\\HocTap\\khoaluan\\SmartTasty\\backend\\backend\\Interfaces\\IPhotoService.cs",
+              "RelativeToolTip": "backend\\Interfaces\\IPhotoService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABgAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-15T03:42:17.587Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "RestaurantService.cs",
+              "DocumentMoniker": "C:\\Users\\Admin\\Documents\\HocTap\\khoaluan\\SmartTasty\\backend\\backend\\Services\\RestaurantService.cs",
+              "RelativeDocumentMoniker": "backend\\Services\\RestaurantService.cs",
+              "ToolTip": "C:\\Users\\Admin\\Documents\\HocTap\\khoaluan\\SmartTasty\\backend\\backend\\Services\\RestaurantService.cs",
+              "RelativeToolTip": "backend\\Services\\RestaurantService.cs",
+              "ViewState": "AgIAACsAAAAAAAAAAAAIwFEAAAAJAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-15T05:27:54.515Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
+              "Title": "UserRole.cs",
+              "DocumentMoniker": "C:\\Users\\Admin\\Documents\\HocTap\\khoaluan\\SmartTasty\\backend\\backend\\Enums\\UserRole.cs",
+              "RelativeDocumentMoniker": "backend\\Enums\\UserRole.cs",
+              "ToolTip": "C:\\Users\\Admin\\Documents\\HocTap\\khoaluan\\SmartTasty\\backend\\backend\\Enums\\UserRole.cs",
+              "RelativeToolTip": "backend\\Enums\\UserRole.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-15T05:27:22.057Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 13,
+              "Title": "PasswordResetToken.cs",
+              "DocumentMoniker": "C:\\Users\\Admin\\Documents\\HocTap\\khoaluan\\SmartTasty\\backend\\backend\\Models\\PasswordResetToken.cs",
+              "RelativeDocumentMoniker": "backend\\Models\\PasswordResetToken.cs",
+              "ToolTip": "C:\\Users\\Admin\\Documents\\HocTap\\khoaluan\\SmartTasty\\backend\\backend\\Models\\PasswordResetToken.cs",
+              "RelativeToolTip": "backend\\Models\\PasswordResetToken.cs",
+              "ViewState": "AgIAAAoAAAAAAAAAAAAgwBIAAAAVAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-15T04:36:47.333Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 14,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Users\\Admin\\Documents\\HocTap\\khoaluan\\SmartTasty\\backend\\backend\\Program.cs",
+              "RelativeDocumentMoniker": "backend\\Program.cs",
+              "ToolTip": "C:\\Users\\Admin\\Documents\\HocTap\\khoaluan\\SmartTasty\\backend\\backend\\Program.cs",
+              "RelativeToolTip": "backend\\Program.cs",
+              "ViewState": "AgIAADkAAAAAAAAAAAAAABwAAAA8AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-15T03:39:42.226Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 15,
+              "Title": "appsettings.json",
+              "DocumentMoniker": "C:\\Users\\Admin\\Documents\\HocTap\\khoaluan\\SmartTasty\\backend\\backend\\appsettings.json",
+              "RelativeDocumentMoniker": "backend\\appsettings.json",
+              "ToolTip": "C:\\Users\\Admin\\Documents\\HocTap\\khoaluan\\SmartTasty\\backend\\backend\\appsettings.json",
+              "RelativeToolTip": "backend\\appsettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAAgAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2025-06-15T03:37:32.662Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 16,
+              "Title": "CloudinarySettings.cs",
+              "DocumentMoniker": "C:\\Users\\Admin\\Documents\\HocTap\\khoaluan\\SmartTasty\\backend\\backend\\Configurations\\CloudinarySettings.cs",
+              "RelativeDocumentMoniker": "backend\\Configurations\\CloudinarySettings.cs",
+              "ToolTip": "C:\\Users\\Admin\\Documents\\HocTap\\khoaluan\\SmartTasty\\backend\\backend\\Configurations\\CloudinarySettings.cs",
+              "RelativeToolTip": "backend\\Configurations\\CloudinarySettings.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAqwAYAAAA2AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-15T03:36:30.451Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

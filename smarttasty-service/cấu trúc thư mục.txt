@@ -1,0 +1,17 @@
+MyWebApi/
+├── Controllers/             # Chứa các controller
+│   └── WeatherForecastController.cs
+├── Models/                  # Chứa các model, DTO
+├── Services/                # Logic nghiệp vụ
+├── Interfaces/              # Interface cho Service
+├── Middleware/              # Custom middleware
+├── Data/                    # DbContext, Migration, Seeder
+│   ├── ApplicationDbContext.cs (bạn tự tạo)
+│   ├── Migrations/
+│   └── Seeders/
+├── Configurations/          # Cấu hình DI, Swagger, Auth...
+├── Program.cs               # Entry point
+├── appsettings.json         # File cấu hình
+├── WeatherForecast.cs       # Model mẫu mặc định
+├── launchSettings.json      # Trong thư mục Properties/
+└── backend.csproj

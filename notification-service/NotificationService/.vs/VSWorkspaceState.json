@@ -1,0 +1,17 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\Application",
+    "\\Application\\DTOs",
+    "\\Application\\DTOs\\Fcm",
+    "\\Application\\DTOs\\Kafka",
+    "\\Application\\DTOs\\Notification",
+    "\\Application\\Interfaces",
+    "\\Application\\Interfaces\\Kafka",
+    "\\Infrastructure",
+    "\\Infrastructure\\Messaging",
+    "\\Infrastructure\\Messaging\\Fcm"
+  ],
+  "SelectedNode": "\\Application\\Services\\PushService.cs",
+  "PreviewInSolutionExplorer": false
+}

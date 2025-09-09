@@ -1,0 +1,91 @@
+Nếu để **FE (Frontend)** làm phần lấy token Web Push thật (động), thì flow chuẩn sẽ như sau:
+
+### 🔹 Các bước FE cần làm
+
+1. **Đăng ký Service Worker**
+
+   * FE viết 1 file `service-worker.js` để lắng nghe push event.
+   * Trong `index.html` hoặc React/Vue/Angular, FE đăng ký:
+
+     ```javascript
+     if ("serviceWorker" in navigator) {
+       navigator.serviceWorker.register("/service-worker.js").then(() => {
+         console.log("Service Worker registered");
+       });
+     }
+     ```
+
+2. **Xin quyền hiển thị thông báo**
+
+   ```javascript
+   Notification.requestPermission().then(permission => {
+     if (permission === "granted") {
+       console.log("Notification permission granted.");
+     }
+   });
+   ```
+
+3. **Lấy Subscription (Push Token)**
+
+   * FE dùng **Push API** + **VAPID public key** (key này BE cung cấp) để tạo subscription:
+
+     ```javascript
+     navigator.serviceWorker.ready.then(registration => {
+       const vapidPublicKey = "BE_PUBLIC_KEY"; // BE generate và đưa cho FE
+       const convertedKey = urlBase64ToUint8Array(vapidPublicKey);
+
+       registration.pushManager.subscribe({
+         userVisibleOnly: true,
+         applicationServerKey: convertedKey
+       }).then(subscription => {
+         console.log("Push subscription:", JSON.stringify(subscription));
+         // Gửi subscription về BE để lưu
+       });
+     });
+     ```
+
+   > **Subscription này chính là “token thật”** (chứa endpoint + keys).
+
+4. **Gửi token về BE**
+
+   * FE call API `POST /api/push/subscription`
+   * Payload ví dụ:
+
+     ```json
+     {
+       "userId": "1",
+       "subscription": {
+         "endpoint": "https://fcm.googleapis.com/fcm/send/xxxxx",
+         "keys": {
+           "p256dh": "BOKL....",
+           "auth": "abc123..."
+         }
+       }
+     }
+     ```
+   * BE lưu vào DB.
+
+5. **Nhận thông báo**
+
+   * Khi BE gửi push về endpoint, Service Worker lắng nghe và hiển thị:
+
+     ```javascript
+     self.addEventListener("push", function(event) {
+       const data = event.data.json();
+       event.waitUntil(
+         self.registration.showNotification(data.Title, {
+           body: data.Body,
+           data: data.Data
+         })
+       );
+     });
+     ```
+
+---
+
+👉 Như vậy:
+
+* **Hiện tại** bạn test thì sửa JSON input tĩnh như bạn paste ở trên là OK.
+* **Sau này** khi FE làm xong phần trên, `ReceiverIds` hoặc `subscription` sẽ được gửi từ FE về BE (thay tĩnh thành động).
+
+Bạn có muốn mình viết luôn đoạn **API `POST /api/push/subscription` bên BE** để FE gọi thử lưu token thật ko?

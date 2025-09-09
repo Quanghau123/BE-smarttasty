@@ -1,0 +1,85 @@
+version: "3.9"
+
+services:
+  zookeeper:
+    image: bitnami/zookeeper:${ZOOKEEPER_VERSION}
+    container_name: ${ZOOKEEPER_CONTAINER}
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=${ALLOW_ANONYMOUS_LOGIN}
+    ports:
+      - "${ZOOKEEPER_PORT}:2181"
+    restart: unless-stopped 
+
+  kafka:
+    image: bitnami/kafka:${KAFKA_VERSION}
+    container_name: ${KAFKA_CONTAINER}
+    volumes:
+      - ./data/kafka-data:/var/lib/kafka/data
+    environment:
+      - KAFKA_BROKER_ID=${KAFKA_BROKER_ID}
+      - KAFKA_LISTENERS=PLAINTEXT://:${KAFKA_PORT}
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://${KAFKA_ADVERTISED_HOST}:${KAFKA_PORT}
+      - KAFKA_ZOOKEEPER_CONNECT=${ZOOKEEPER_CONTAINER}:${ZOOKEEPER_PORT}
+      - ALLOW_PLAINTEXT_LISTENER=${ALLOW_PLAINTEXT_LISTENER}
+      - KAFKA_LOG_RETENTION_HOURS=${KAFKA_LOG_RETENTION_HOURS}
+      - KAFKA_HEAP_OPTS=${KAFKA_HEAP_OPTS}
+    ports:
+      - "${KAFKA_PORT}:${KAFKA_PORT}"
+    depends_on:
+      - zookeeper
+    restart: unless-stopped 
+    mem_limit: ${KAFKA_MEMORY_LIMIT}
+
+  kafdrop:
+    image: obsidiandynamics/kafdrop:${KAFDROP_VERSION}
+    container_name: ${KAFDROP_CONTAINER}
+    ports:
+      - "${KAFDROP_PORT}:9000"
+    environment:
+      KAFKA_BROKERCONNECT: ${KAFKA_CONTAINER}:${KAFKA_PORT}
+      JVM_OPTS: "${KAFDROP_JVM_OPTS}"
+    depends_on:
+      - kafka
+    restart: unless-stopped 
+
+  redis:
+    image: redis:${REDIS_VERSION}
+    container_name: ${REDIS_CONTAINER}
+    command: ["redis-server", "--maxmemory", "${REDIS_MAXMEMORY}", "--maxmemory-policy", "${REDIS_POLICY}"]
+    ports:
+      - "${REDIS_PORT}:6379"
+    restart: unless-stopped
+    mem_limit: ${REDIS_MEMORY_LIMIT} 
+
+  smarttastyservice:
+    build:
+      context: ./smarttasty-service/backend
+      dockerfile: Dockerfile
+    container_name: ${SMARTTASTY_CONTAINER}
+    ports:
+      - "${SMARTTASTY_PORT}:8080"
+    depends_on:
+      - kafka
+      - redis
+
+  socketserver:
+    build:
+      context: ./socket-server/WebSocketServer
+      dockerfile: Dockerfile
+    container_name: ${SOCKET_CONTAINER}
+    ports:
+      - "${SOCKET_PORT}:8000"
+    depends_on:
+      - kafka
+      - redis
+
+  notification-service:
+    build:
+      context: ./notification-service/NotificationService
+      dockerfile: Dockerfile
+    container_name: ${NOTI_CONTAINER}
+    ports:
+      - "${NOTI_PORT}:8080"
+    depends_on:
+      - kafka
+      - redis
