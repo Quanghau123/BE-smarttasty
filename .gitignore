@@ -1,11 +1,11 @@
-# 🔹 Bỏ qua file cấu hình môi trường
 .env
 
-# 🔹 Thư mục editor / IDE
 .vscode/
 .vs/
 
-# 🔹 Thư mục dữ liệu, log, build
 data/
 *.log
 *.tmp
+
+huong-dan-khoi-dong.txt
+luong-hoat-dong-kafka-*.txt
