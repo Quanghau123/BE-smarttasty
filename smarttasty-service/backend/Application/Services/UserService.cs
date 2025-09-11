@@ -1,0 +1,450 @@
+﻿using backend.Infrastructure.Configurations;
+using backend.Infrastructure.Data;
+using backend.Infrastructure.Helpers;
+using backend.Application.Interfaces;
+using backend.Domain.Models;
+using backend.Domain.Models.Requests.User;
+using backend.Infrastructure.Helpers.Commons.Response;
+using backend.Domain.Enums.Commons.Response;
+using backend.Infrastructure.Messaging.Kafka;
+using backend.Application.DTOs.KafkaPayload;
+using backend.Application.DTOs.Kafka;
+using BCrypt.Net;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+using System;
+using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
+using System.Net;
+using System.Net.Mail;
+using System.Security.Claims;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace backend.Application.Services
+{
+    public class UserService : IUserService
+    {
+        private readonly ApplicationDbContext _context;
+        private readonly JwtSettings _jwtSettings;
+        private readonly IConfiguration _config;
+        private readonly KafkaProducerService _kafkaProducer;
+
+        public UserService(ApplicationDbContext context, IOptions<JwtSettings> jwtOptions, IConfiguration config, KafkaProducerService kafkaProducer)
+        {
+            _context = context ?? throw new ArgumentNullException(nameof(context));
+            _jwtSettings = jwtOptions.Value ?? throw new ArgumentNullException(nameof(jwtOptions));
+            _config = config;
+            _kafkaProducer = kafkaProducer;
+
+            if (string.IsNullOrEmpty(_jwtSettings.SecretKey))
+                throw new InvalidOperationException("SecretKey is not configured.");
+        }
+
+        public async Task<ApiResponse<object>> HandleUserLogin(string email, string password)
+        {
+            var user = await _context.Users.Where(u => u.Email == email).FirstOrDefaultAsync();
+            if (user == null)
+                return new ApiResponse<object> { ErrCode = ErrorCode.NotFound, ErrMessage = "Email does not exist." };
+
+            if (!BCrypt.Net.BCrypt.Verify(password, user.UserPassword))
+                return new ApiResponse<object> { ErrCode = ErrorCode.ValidationError, ErrMessage = "Wrong password" };
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.ASCII.GetBytes(_jwtSettings.SecretKey);
+
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(new[] {
+            new Claim(JwtRegisteredClaimNames.Sub, user.UserId.ToString()),
+            new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
+            new Claim(ClaimTypes.Email, user.Email),
+            new Claim(ClaimTypes.Role, user.Role.ToString())
+        }),
+                Expires = DateTime.UtcNow.AddHours(2),
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+            };
+
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            var jwt = tokenHandler.WriteToken(token);
+
+            var loginEvent = new KafkaEnvelope<UserLoggedInPayload>
+            {
+                Event = "UserLoggedIn",
+                Target = user.UserId.ToString(),
+                Payload = new UserLoggedInPayload
+                {
+                    UserId = user.UserId.ToString(),
+                    Username = user.UserName,
+                    Jwt = jwt,
+                    Timestamp = DateTime.UtcNow
+                }
+            };
+
+            await _kafkaProducer.SendMessageAsync(loginEvent);
+
+            return new ApiResponse<object>
+            {
+                ErrCode = ErrorCode.Success,
+                ErrMessage = "OK",
+                Data = new
+                {
+                    token = jwt,
+                    user = new
+                    {
+                        user.UserId,
+                        user.UserName,
+                        user.Email,
+                        user.Phone,
+                        user.Address,
+                        Role = user.Role.ToString()
+                    }
+                }
+            };
+        }
+
+        public async Task<ApiResponse<object>> GetAllUsers()
+        {
+            var users = await _context.Users
+                .Select(u => new
+                {
+                    u.UserId,
+                    u.UserName,
+                    u.Email,
+                    u.Phone,
+                    Role = u.Role.ToString(),
+                    u.Address,
+                    u.IsActive,
+                    u.CreatedAt
+                })
+                .ToListAsync();
+
+            return new ApiResponse<object>
+            {
+                ErrCode = ErrorCode.Success,
+                ErrMessage = "OK",
+                Data = users
+            };
+        }
+
+        public async Task<ApiResponse<object>> GetUserById(int id)
+        {
+            var user = await _context.Users
+                .Where(u => u.UserId == id)
+                .Select(u => new
+                {
+                    u.UserId,
+                    u.UserName,
+                    u.Email,
+                    u.Phone,
+                    Role = u.Role.ToString(),
+                    u.Address,
+                    u.IsActive,
+                    u.CreatedAt
+                })
+                .FirstOrDefaultAsync();
+
+            if (user == null)
+                return new ApiResponse<object> { ErrCode = ErrorCode.NotFound, ErrMessage = "User not found" };
+
+            return new ApiResponse<object>
+            {
+                ErrCode = ErrorCode.Success,
+                ErrMessage = "OK",
+                Data = user
+            };
+        }
+
+        public async Task<ApiResponse<object>> CreateNewUser(CreateUserRequest data)
+        {
+            if (!ValidationHelper.IsValidEmail(data.Email))
+            {
+                return new ApiResponse<object> { ErrCode = ErrorCode.ValidationError, ErrMessage = "Invalid email." };
+            }
+
+            if (!ValidationHelper.IsValidPhone(data.Phone))
+            {
+                return new ApiResponse<object> { ErrCode = ErrorCode.ValidationError, ErrMessage = "Invalid phone number." };
+            }
+
+            if (!ValidationHelper.IsValidPassword(data.UserPassword))
+            {
+                return new ApiResponse<object> { ErrCode = ErrorCode.ValidationError, ErrMessage = "Invalid password." };
+            }
+
+            if (await _context.Users.AnyAsync(u => u.Email == data.Email))
+            {
+                return new ApiResponse<object> { ErrCode = ErrorCode.ValidationError, ErrMessage = "Email is already in use." };
+            }
+
+            var user = new User
+            {
+                UserName = data.UserName,
+                Email = data.Email,
+                Phone = data.Phone,
+                Address = data.Address,
+                Role = data.Role,
+                UserPassword = BCrypt.Net.BCrypt.HashPassword(data.UserPassword)
+            };
+
+            await _context.Users.AddAsync(user);
+            await _context.SaveChangesAsync();
+
+            return new ApiResponse<object>
+            {
+                ErrCode = ErrorCode.Success,
+                ErrMessage = "Account created successfully.",
+                Data = new { user.UserId, user.UserName, user.Email }
+            };
+        }
+
+        public async Task<ApiResponse<object>> UpdateUserData(UpdateUserRequest data)
+        {
+            var user = await _context.Users.FindAsync(data.UserId);
+            if (user == null)
+            {
+                return new ApiResponse<object> { ErrCode = ErrorCode.NotFound, ErrMessage = "User not found" };
+            }
+
+            if (!ValidationHelper.IsValidEmail(data.Email))
+            {
+                return new ApiResponse<object> { ErrCode = ErrorCode.ValidationError, ErrMessage = "Invalid email." };
+            }
+
+            if (!ValidationHelper.IsValidPhone(data.Phone))
+            {
+                return new ApiResponse<object> { ErrCode = ErrorCode.ValidationError, ErrMessage = "Invalid phone number (must be a Vietnamese number starting with 03, 05, 07, 08, 09 and having 10 digits)." };
+            }
+
+            if (await _context.Users.AnyAsync(u => u.Email == data.Email && u.UserId != data.UserId))
+            {
+                return new ApiResponse<object> { ErrCode = ErrorCode.ValidationError, ErrMessage = "Email is already in use." };
+            }
+            user.UserName = data.UserName;
+            user.Email = data.Email;
+            user.Phone = data.Phone;
+            user.Address = data.Address;
+            user.Role = data.Role;
+            user.IsActive = data.IsActive;
+
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync();
+
+            return new ApiResponse<object> { ErrCode = ErrorCode.Success, ErrMessage = "User updated successfully!" };
+        }
+
+        public async Task<ApiResponse<object>> DeleteUser(int id)
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user == null)
+                return new ApiResponse<object> { ErrCode = ErrorCode.NotFound, ErrMessage = "User does not exist" };
+
+            _context.Users.Remove(user);
+            await _context.SaveChangesAsync();
+
+            return new ApiResponse<object>
+            {
+                ErrCode = ErrorCode.Success,
+                ErrMessage = "User deleted successfully."
+            };
+        }
+
+        public async Task<ApiResponse<object>> SendResetPasswordEmail(string email)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            if (user == null)
+            {
+                return new ApiResponse<object> { ErrCode = ErrorCode.NotFound, ErrMessage = "Email không tồn tại trong hệ thống." };
+            }
+
+            var existingToken = await _context.PasswordResetTokens
+                .FirstOrDefaultAsync(t => t.UserId == user.UserId && !t.IsUsed);
+
+            if (existingToken != null)
+            {
+                _context.PasswordResetTokens.Remove(existingToken);
+            }
+
+            var resetToken = Guid.NewGuid().ToString();
+            var expiration = DateTime.UtcNow.AddMinutes(30);
+
+            _context.PasswordResetTokens.Add(new PasswordResetToken
+            {
+                UserId = user.UserId,
+                Token = resetToken,
+                Expiration = expiration,
+                IsUsed = false
+            });
+
+            await _context.SaveChangesAsync();
+
+            var gmail = _config["EmailSettings:Gmail"];
+            var appPassword = _config["EmailSettings:AppPassword"];
+
+            var smtpClient = new SmtpClient("smtp.gmail.com")
+            {
+                Port = 587,
+                Credentials = new NetworkCredential(gmail, appPassword),
+                EnableSsl = true,
+            };
+
+            var resetLink = $"http://localhost:3000/reset-password?token={resetToken}";
+
+            var mailMessage = new MailMessage
+            {
+                From = new MailAddress(gmail!),
+                Subject = "Yêu cầu đặt lại mật khẩu",
+                Body = $@"
+                <html>
+                <head>
+                  <style>
+                    body {{
+                      font-family: Arial, sans-serif;
+                      background-color: #f3f3f3;
+                      padding: 20px;
+                      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+                    }}
+                    .email-container {{
+                      background-color: #ffffff;
+                      max-width: 600px;
+                      margin: auto;
+                      border-radius: 8px;
+                      padding: 30px;
+                      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+                    }}
+                    .content {{
+                      text-align: center;
+                    }}
+                    .token-box {{
+                      background-color: #f9f9f9;
+                      border: 1px dashed #ccc;
+                      padding: 15px;
+                      margin: 20px 0;
+                      font-family: monospace;
+                      font-size: 16px;
+                      color: #333;
+                    }}
+                    .button {{
+                      display: inline-block;
+                      margin-top: 25px;
+                      padding: 12px 25px;
+                      font-size: 16px;
+                      background-color: #007bff;
+                      color: white;
+                      text-decoration: none;
+                      border-radius: 5px;
+                    }}
+                    .footer {{
+                      margin-top: 30px;
+                      font-size: 12px;
+                      color: #777;
+                      text-align: center;
+                    }}
+                  </style>
+                </head>
+                <body>
+                  <div class='email-container'>
+                    <div class='content'>
+                      <h2>Xin chào {user.UserName},</h2>
+                      <p>Bạn đã yêu cầu đặt lại mật khẩu cho tài khoản của mình.</p>
+                      <p><strong>Mã token của bạn:</strong></p>
+                      <div class='token-box'>{resetToken}</div>
+                      <p>Bạn có thể nhấn vào nút bên dưới để đặt lại mật khẩu. Liên kết chỉ có hiệu lực trong <strong>30 phút</strong>.</p>
+                      <a class='button' href='{resetLink}'>Đặt lại mật khẩu</a>
+                    </div>
+                    <div class='footer'>
+                      Nếu bạn không yêu cầu hành động này, hãy bỏ qua email này.<br/>
+                      © 2025 SmartTasty. All rights reserved.
+                    </div>
+                  </div>
+                </body>
+                </html>
+                ",
+                IsBodyHtml = true
+            };
+
+            mailMessage.To.Add(email);
+            await smtpClient.SendMailAsync(mailMessage);
+
+            return new ApiResponse<object>
+            {
+                ErrCode = ErrorCode.Success,
+                ErrMessage = "Password reset email sent!"
+            };
+        }
+
+        public async Task<ApiResponse<object>> ResetPassword(string token, string newPassword)
+        {
+            if (!ValidationHelper.IsValidPassword(newPassword))
+            {
+                return new ApiResponse<object>
+                {
+                    ErrCode = ErrorCode.ValidationError,
+                    ErrMessage = "Password must contain uppercase, lowercase, numbers, special characters and be longer than 5 characters."
+                };
+            }
+
+            var tokenEntry = await _context.PasswordResetTokens
+                .Include(t => t.User)
+                .FirstOrDefaultAsync(t => t.Token == token && !t.IsUsed && t.Expiration > DateTime.UtcNow);
+
+            if (tokenEntry == null)
+            {
+                return new ApiResponse<object> { ErrCode = ErrorCode.ValidationError, ErrMessage = "Token is invalid or expired." };
+            }
+
+            var user = tokenEntry.User;
+            if (user == null)
+            {
+                return new ApiResponse<object> { ErrCode = ErrorCode.NotFound, ErrMessage = "User does not exist." };
+            }
+
+            user.UserPassword = BCrypt.Net.BCrypt.HashPassword(newPassword);
+            tokenEntry.IsUsed = true;
+
+            await _context.SaveChangesAsync();
+
+            return new ApiResponse<object>
+            {
+                ErrCode = ErrorCode.Success,
+                ErrMessage = "Password changed successfully!"
+            };
+        }
+
+        public async Task<ApiResponse<object>> ChangePasswordAsync(string userId, string currentPassword, string newPassword)
+        {
+            if (!int.TryParse(userId, out int parsedUserId))
+            {
+                return new ApiResponse<object> { ErrCode = ErrorCode.ValidationError, ErrMessage = "Invalid User ID." };
+            }
+
+            var user = await _context.Users.FindAsync(parsedUserId);
+            if (user == null)
+                return new ApiResponse<object> { ErrCode = ErrorCode.NotFound, ErrMessage = "User does not exist." };
+
+            bool isCurrentPasswordValid = BCrypt.Net.BCrypt.Verify(currentPassword, user.UserPassword);
+            if (!isCurrentPasswordValid)
+                return new ApiResponse<object> { ErrCode = ErrorCode.ValidationError, ErrMessage = "Old password is incorrect." };
+
+            if (!ValidationHelper.IsValidPassword(newPassword))
+            {
+                return new ApiResponse<object>
+                {
+                    ErrCode = ErrorCode.ValidationError,
+                    ErrMessage = "New password must contain uppercase, lowercase, numbers, special characters and be longer than 5 characters."
+                };
+            }
+
+            user.UserPassword = BCrypt.Net.BCrypt.HashPassword(newPassword);
+            await _context.SaveChangesAsync();
+
+            return new ApiResponse<object>
+            {
+                ErrCode = ErrorCode.Success,
+                ErrMessage = "Password changed successfully."
+            };
+        }
+    }
+}
