@@ -1,11 +1,12 @@
+# ENV
 .env
 
+# Visual Studio 
 .vscode/
 .vs/
 
+# Data
 data/
-*.log
-*.tmp
 
-huong-dan-khoi-dong.txt
-luong-hoat-dong-kafka-*.txt
+# Docker related
+docker-compose.override.yml

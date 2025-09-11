@@ -14,7 +14,7 @@ services:
     image: bitnami/kafka:${KAFKA_VERSION}
     container_name: ${KAFKA_CONTAINER}
     volumes:
-      - ./data/kafka-data:/var/lib/kafka/data
+      - ./data/kafka-data:/bitnami/kafka
     environment:
       - KAFKA_BROKER_ID=${KAFKA_BROKER_ID}
       - KAFKA_LISTENERS=PLAINTEXT://:${KAFKA_PORT}
