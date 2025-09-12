@@ -24,7 +24,7 @@ jobs:
       - name: Build & Push notification-service
         uses: docker/build-push-action@v5
         with:
-          context: notification-service/   # thư mục gốc chứa code
+          context: notification-service/NotificationService/   # thư mục gốc chứa code
           file: notification-service/NotificationService/Dockerfile  # đường dẫn Dockerfile
           push: true
           tags: quanghau123/notification-service:latest
@@ -32,7 +32,7 @@ jobs:
       - name: Build & Push smarttasty-service
         uses: docker/build-push-action@v5
         with:
-          context: smarttasty-service/
+          context: smarttasty-service/backend/
           file: smarttasty-service/backend/Dockerfile 
           push: true
           tags: quanghau123/smarttasty-service:latest
@@ -40,7 +40,7 @@ jobs:
       - name: Build & Push socket-server
         uses: docker/build-push-action@v5
         with:
-          context: socket-server/
+          context: socket-server/WebSocketServer/
           file: socket-server/WebSocketServer/Dockerfile
           push: true
           tags: quanghau123/socket-server:latest
