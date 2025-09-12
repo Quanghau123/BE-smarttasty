@@ -1,7 +1,6 @@
 version: "3.9"
 
 services:
-  # ---------- Zookeeper ----------
   zookeeper:
     image: bitnami/zookeeper:${ZOOKEEPER_VERSION}
     container_name: ${ZOOKEEPER_CONTAINER}
@@ -10,10 +9,7 @@ services:
     ports:
       - "${ZOOKEEPER_PORT}:2181"
     restart: unless-stopped 
-    networks:
-      - backend-net
 
-  # ---------- Kafka ----------
   kafka:
     image: bitnami/kafka:${KAFKA_VERSION}
     container_name: ${KAFKA_CONTAINER}
@@ -33,10 +29,7 @@ services:
       - zookeeper
     restart: unless-stopped 
     mem_limit: ${KAFKA_MEMORY_LIMIT}
-    networks:
-      - backend-net
 
-  # ---------- Kafdrop ----------
   kafdrop:
     image: obsidiandynamics/kafdrop:${KAFDROP_VERSION}
     container_name: ${KAFDROP_CONTAINER}
@@ -48,10 +41,7 @@ services:
     depends_on:
       - kafka
     restart: unless-stopped 
-    networks:
-      - backend-net
 
-  # ---------- Redis ----------
   redis:
     image: redis:${REDIS_VERSION}
     container_name: ${REDIS_CONTAINER}
@@ -60,12 +50,9 @@ services:
       - "${REDIS_PORT}:6379"
     restart: unless-stopped
     mem_limit: ${REDIS_MEMORY_LIMIT} 
-    networks:
-      - backend-net
 
-  # ---------- RedisInsight ----------
   redisinsight:
-    image: redislabs/redisinsight:1.14.0
+    image: redislabs/redisinsight:1.14.0   # dùng version ổn định
     container_name: redisinsight
     ports:
       - "8001:8001"
@@ -73,11 +60,8 @@ services:
       - redis
     volumes:
       - redisinsight-data:/db
-    restart: unless-stopped
-    networks:
-      - backend-net
+    restart: unless-stopped 
 
-  # ---------- SmartTasty Backend ----------
   smarttastyservice:
     build:
       context: ./smarttasty-service/backend
@@ -88,10 +72,7 @@ services:
     depends_on:
       - kafka
       - redis
-    networks:
-      - backend-net
 
-  # ---------- Socket Server ----------
   socketserver:
     build:
       context: ./socket-server/WebSocketServer
@@ -102,10 +83,7 @@ services:
     depends_on:
       - kafka
       - redis
-    networks:
-      - backend-net
 
-  # ---------- Notification Service ----------
   notification-service:
     build:
       context: ./notification-service/NotificationService
@@ -116,67 +94,6 @@ services:
     depends_on:
       - kafka
       - redis
-    networks:
-      - backend-net
-
-  # ---------- Nginx ----------
-  nginx:
-    image: nginx:stable
-    container_name: nginx
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d
-      - ./certbot/www:/var/www/certbot
-      - ./certbot/conf:/etc/letsencrypt
-    depends_on:
-      - smarttastyservice
-      - socketserver
-      - kafdrop
-      - redisinsight
-    networks:
-      - backend-net
-
-  # ---------- Certbot ----------
-  certbot:
-    image: certbot/certbot
-    container_name: certbot
-    volumes:
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
-    environment:
-      CERTBOT_EMAIL: ${CERTBOT_EMAIL}
-      CERTBOT_DOMAIN1: ${CERTBOT_DOMAIN1}
-      CERTBOT_DOMAIN2: ${CERTBOT_DOMAIN2}
-      CERTBOT_DOMAIN3: ${CERTBOT_DOMAIN3}
-      CERTBOT_DOMAIN4: ${CERTBOT_DOMAIN4}
-      CERTBOT_DOMAIN5: ${CERTBOT_DOMAIN5}
-    entrypoint: >
-      sh -c "certbot certonly --webroot -w /var/www/certbot
-      --email $CERTBOT_EMAIL
-      -d $CERTBOT_DOMAIN1 -d $CERTBOT_DOMAIN2 -d $CERTBOT_DOMAIN3
-      -d $CERTBOT_DOMAIN4 -d $CERTBOT_DOMAIN5
-      --agree-tos --non-interactive"
-    networks:
-      - backend-net
-
-  # ---------- Certbot Auto-Renew ----------
-  certbot-renew:
-    image: certbot/certbot
-    container_name: certbot-renew
-    volumes:
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
-    entrypoint: >
-      sh -c "while true; do certbot renew --webroot -w /var/www/certbot; sleep 12h; done"
-    restart: unless-stopped
-    networks:
-      - backend-net
 
 volumes:
   redisinsight-data:
-
-networks:
-  backend-net:
-    driver: bridge
