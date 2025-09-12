@@ -72,6 +72,7 @@ services:
       - redis
     volumes:
       - ./smarttasty-service/backend/appsettings.json:/app/appsettings.json:ro
+      - ./data/protection-keys/smarttasty:/root/.aspnet/DataProtection-Keys
 
   socketserver:
     image: quanghau123/socket-server:latest
@@ -83,6 +84,7 @@ services:
       - redis
     volumes:
     - ./socket-server/WebSocketServer/appsettings.json:/app/appsettings.json:ro
+    - ./data/protection-keys/socket:/root/.aspnet/DataProtection-Keys
 
   notification-service:
     image: quanghau123/notification-service:latest
@@ -94,6 +96,7 @@ services:
       - redis
     volumes:
     - ./notification-service/NotificationService/appsettings.json:/app/appsettings.json:ro
+    - ./data/protection-keys/notification:/root/.aspnet/DataProtection-Keys
 
   watchtower:
     image: containrrr/watchtower
