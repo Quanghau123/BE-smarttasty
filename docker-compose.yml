@@ -102,7 +102,6 @@ services:
       - /etc/letsencrypt:/etc/letsencrypt
       - /var/www/certbot:/var/www/certbot
     command: certonly --webroot -w /var/www/certbot \
-      --keep-until-expiring \
       --email ${CERTBOT_EMAIL} \
       -d ${CERTBOT_DOMAIN1} \
       -d ${CERTBOT_DOMAIN2} \
@@ -110,6 +109,15 @@ services:
       -d ${CERTBOT_DOMAIN4} \
       -d ${CERTBOT_DOMAIN5} \
       --agree-tos
+
+  certbot-renew:
+    image: certbot/certbot
+    container_name: certbot-renew
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt
+      - /var/www/certbot:/var/www/certbot
+    entrypoint: sh -c "while true; do certbot renew --webroot -w /var/www/certbot; sleep 12h; done"
+    restart: unless-stopped
 
 volumes:
   redisinsight-data:
