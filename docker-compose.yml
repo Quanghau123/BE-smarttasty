@@ -101,14 +101,21 @@ services:
     volumes:
       - /etc/letsencrypt:/etc/letsencrypt
       - /var/www/certbot:/var/www/certbot
-    command: certonly --webroot -w /var/www/certbot \
-      --email ${CERTBOT_EMAIL} \
-      -d ${CERTBOT_DOMAIN1} \
-      -d ${CERTBOT_DOMAIN2} \
-      -d ${CERTBOT_DOMAIN3} \
-      -d ${CERTBOT_DOMAIN4} \
-      -d ${CERTBOT_DOMAIN5} \
-      --agree-tos
+    environment:
+      CERTBOT_EMAIL: ${CERTBOT_EMAIL}
+      CERTBOT_DOMAIN1: ${CERTBOT_DOMAIN1}
+      CERTBOT_DOMAIN2: ${CERTBOT_DOMAIN2}
+      CERTBOT_DOMAIN3: ${CERTBOT_DOMAIN3}
+      CERTBOT_DOMAIN4: ${CERTBOT_DOMAIN4}
+      CERTBOT_DOMAIN5: ${CERTBOT_DOMAIN5}
+    entrypoint: sh -c "certbot certonly --webroot -w /var/www/certbot \
+      --email $CERTBOT_EMAIL \
+      -d $CERTBOT_DOMAIN1 \
+      -d $CERTBOT_DOMAIN2 \
+      -d $CERTBOT_DOMAIN3 \
+      -d $CERTBOT_DOMAIN4 \
+      -d $CERTBOT_DOMAIN5 \
+      --agree-tos"
 
   certbot-renew:
     image: certbot/certbot
