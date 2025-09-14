@@ -272,6 +272,7 @@ namespace backend.Application.Services
                 {
                     var dto = _mapper.Map<RestaurantDto>(x.Restaurant);
                     dto.DistanceKm = Math.Round(x.Distance, 2);
+                    dto.ImageUrl = _imageHelper.GetImageUrl(dto.ImagePublicId);
                     return dto;
                 })
                 .ToList();

@@ -1,5 +1,6 @@
 # ENV
 .env
+.env.local
 
 # Visual Studio 
 .vscode/
