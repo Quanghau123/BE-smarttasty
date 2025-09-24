@@ -4,7 +4,6 @@
     {
         admin,
         business,
-        user,
-        shipper
+        user
     }
 }

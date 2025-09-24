@@ -13,6 +13,7 @@ using backend.Application.Services.Commons;
 using backend.Infrastructure.Helpers;
 using backend.Infrastructure.Extensions;
 using backend.Infrastructure.Messaging.Kafka;
+using backend.Application.Jobs;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -22,6 +23,8 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Microsoft.Extensions.Options;
+using Hangfire;
+using Hangfire.PostgreSql;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -117,6 +120,12 @@ builder.Services.AddScoped<IReservationService, ReservationService>();
 builder.Services.AddScoped<IApplyPromotionService, ApplyPromotionService>();
 builder.Services.AddScoped<IOrderPromotionService, OrderPromotionService>();
 builder.Services.AddScoped<IVoucherService, VoucherService>();
+builder.Services.AddScoped<IVNPayService, VNPayService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddScoped<IRefundService, RefundService>();
+builder.Services.AddScoped<ICODService, CODService>();
+builder.Services.AddScoped<PaymentJob>();
 
 // Optional: Custom app services extension (nếu có)
 builder.Services.AddAppServices(builder.Configuration);
@@ -177,10 +186,23 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 // ==========================
-// Build and Middleware
+// Hangfire
 // ==========================
+builder.Services.AddHangfire(config =>
+    config.UsePostgreSqlStorage(options =>
+    {
+        options.UseNpgsqlConnection(builder.Configuration.GetConnectionString("DefaultConnection"));
+        // Bạn có thể config thêm các tùy chọn khác tại đây nếu cần
+    })
+);
+
+builder.Services.AddHangfireServer();
+
 var app = builder.Build();
 
+// ==========================
+// Build and Middleware
+// ==========================
 if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
 {
     app.UseSwagger();
@@ -192,5 +214,15 @@ app.UseCors("AllowAllOrigins");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+
+// Hangfire Dashboard
+app.UseHangfireDashboard();
+
+// Đăng ký job định kỳ SAU khi app và hangfire server đã khởi tạo
+RecurringJob.AddOrUpdate<PaymentJob>(
+    "check-pending-payments",
+    job => job.CheckPendingPayments(),
+    "*/5 * * * *"
+);
 
 app.Run();

@@ -8,6 +8,8 @@ using backend.Application.DTOs.Dish;
 using backend.Application.DTOs.DishPromotion;
 using backend.Application.DTOs.OrderPromotion;
 using backend.Application.DTOs.Voucher;
+using backend.Application.DTOs.Payment;
+using backend.Application.DTOs.Order;
 using backend.Domain.Enums;
 using backend.Domain.Models.Requests.Restaurant;
 using backend.Domain.Models.Requests.Promotion;
@@ -86,6 +88,13 @@ namespace backend.Infrastructure.Mappings
                 .ForMember(dest => dest.StartDate, opt => opt.MapFrom(src => src.Promotion.StartDate))
                 .ForMember(dest => dest.EndDate, opt => opt.MapFrom(src => src.Promotion.EndDate));
 
+            CreateMap<Payment, PaymentDto>();
+            CreateMap<Order, OrderDto>()
+                .ForMember(dest => dest.Items,
+                            opt => opt.MapFrom(src => src.OrderItems));
+            CreateMap<OrderItem, OrderItemDto>()
+                .ForMember(dest => dest.DishName,
+                           opt => opt.MapFrom(src => src.Dish != null ? src.Dish.Name : null));
         }
     }
 }

@@ -4,7 +4,7 @@
     {
         Preparing,
         Delivering,
-        Completed,
+        Delivered,
         Canceled
     }
 }

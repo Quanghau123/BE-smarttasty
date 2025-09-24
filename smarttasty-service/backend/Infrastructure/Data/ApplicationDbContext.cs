@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using backend.Domain.Models;
+using backend.Infrastructure.Data.Seeders;
 
 namespace backend.Infrastructure.Data
 {
@@ -18,6 +19,7 @@ namespace backend.Infrastructure.Data
         public DbSet<DishPromotion> DishPromotions { get; set; }
         public DbSet<OrderPromotion> OrderPromotions { get; set; }
         public DbSet<Order> Orders { get; set; }
+        public DbSet<OrderItem> OrderItems { get; set; }
         public DbSet<Voucher> Vouchers { get; set; }
         public DbSet<Review> Reviews { get; set; }
         public DbSet<Favorite> Favorites { get; set; }
@@ -27,6 +29,14 @@ namespace backend.Infrastructure.Data
         public DbSet<BookingCustomer> BookingCustomers { get; set; }
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<ReservationStatusHistory> ReservationStatusHistories { get; set; }
+
+        // ------------------ Các bảng Thanh toán ------------------
+        public DbSet<Payment> Payments { get; set; }
+        public DbSet<VNPayPayment> VNPayPayments { get; set; }
+        public DbSet<ZaloPayPayment> ZaloPayPayments { get; set; }
+        public DbSet<CODPayment> CODPayments { get; set; }
+        public DbSet<PaymentTransactionLog> PaymentTransactionLogs { get; set; }
+        public DbSet<Refund> Refunds { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -103,10 +113,31 @@ namespace backend.Infrastructure.Data
                 .WithMany(r => r.RecipeReviews)
                 .HasForeignKey(rr => rr.RecipeId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // ------------------ Order ↔ Payment (1-1) ------------------
+            modelBuilder.Entity<Order>()
+                .HasOne(o => o.Payment)
+                .WithOne(p => p.Order)
+                .HasForeignKey<Payment>(p => p.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Seeder
+            modelBuilder.SeedUsers();
+            modelBuilder.SeedRestaurants();
+            modelBuilder.SeedDishes();
+            modelBuilder.SeedPromotions();
         }
 
     }
 }
 
-//dotnet ef migrations add updateOrderPromotion
+//add + update (add mà không update là lỗi nguyên db vì không so sánh với migrations cũ được)
+//dotnet ef migrations add UpdateOrderService_v1
 //dotnet ef database update
+
+//delete migrations nếu update bị lỗi
+//dotnet ef migrations remove
+
+//delete
+//dotnet ef database drop
+

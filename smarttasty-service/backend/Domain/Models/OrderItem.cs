@@ -12,13 +12,13 @@ namespace backend.Domain.Models
         [Required]
         public int OrderId { get; set; }
 
-        [ForeignKey("OrderId")]
+        [ForeignKey(nameof(OrderId))]
         public Order Order { get; set; } = null!;
 
         [Required]
         public int DishId { get; set; }
 
-        [ForeignKey("DishId")]
+        [ForeignKey(nameof(DishId))]
         public Dish Dish { get; set; } = null!;
 
         [Required]
@@ -29,5 +29,17 @@ namespace backend.Domain.Models
 
         [Required]
         public decimal TotalPrice { get; set; }
+
+        // Domain logic: khởi tạo từ món ăn
+        public static OrderItem Create(int dishId, decimal unitPrice, int quantity)
+        {
+            return new OrderItem
+            {
+                DishId = dishId,
+                UnitPrice = unitPrice,
+                Quantity = quantity,
+                TotalPrice = unitPrice * quantity
+            };
+        }
     }
 }

@@ -13,14 +13,14 @@ namespace backend.Domain.Models
         [Required]
         public int UserId { get; set; }
 
-        [ForeignKey("UserId")]
-        public User? User { get; set; } = null!;
+        [ForeignKey(nameof(UserId))]
+        public User User { get; set; } = null!;
 
         [Required]
         public int RestaurantId { get; set; }
 
-        [ForeignKey("RestaurantId")]
-        public Restaurant? Restaurant { get; set; } = null!;
+        [ForeignKey(nameof(RestaurantId))]
+        public Restaurant Restaurant { get; set; } = null!;
 
         [Required]
         public decimal TotalPrice { get; set; }
@@ -30,18 +30,6 @@ namespace backend.Domain.Models
 
         [Required]
         public OrderStatus Status { get; set; } = OrderStatus.Pending;
-
-        // ------------------ Thanh toán ------------------
-        [Required]
-        public PaymentMethod PaymentMethod { get; set; }
-
-        public string? TransactionId { get; set; }
-
-        public string? PaymentUrl { get; set; }
-
-        public PaymentStatus PaymentStatus { get; set; } = PaymentStatus.Pending;
-
-        public DateTime? PaidAt { get; set; }
 
         // ------------------ Giao hàng ------------------
         [Required]
@@ -57,12 +45,6 @@ namespace backend.Domain.Models
 
         public DateTime? DeliveredAt { get; set; }
 
-        // ------------------ Shipper nội bộ (optional) ------------------
-        public int? ShipperId { get; set; }
-
-        [ForeignKey("ShipperId")]
-        public User? Shipper { get; set; }
-
         // ------------------ Thời gian ------------------
         [Required]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
@@ -70,7 +52,32 @@ namespace backend.Domain.Models
         public DateTime? UpdatedAt { get; set; }
 
         // ------------------ Quan hệ ------------------
-        [Required]
         public List<OrderItem> OrderItems { get; set; } = new();
+
+        // ------------------ Thanh toán ------------------
+        public Payment? Payment { get; set; }
+
+        // ------------------ Domain Logic ------------------
+        public void AddItem(OrderItem item)
+        {
+            OrderItems.Add(item);
+            RecalculateTotal();
+        }
+
+        public void RemoveItem(int orderItemId)
+        {
+            var item = OrderItems.FirstOrDefault(x => x.Id == orderItemId);
+            if (item != null)
+            {
+                OrderItems.Remove(item);
+                RecalculateTotal();
+            }
+        }
+
+        public void RecalculateTotal()
+        {
+            TotalPrice = OrderItems.Sum(i => i.TotalPrice);
+            FinalPrice = TotalPrice; // TODO: áp dụng voucher / promotion nếu có
+        }
     }
 }

@@ -1,6 +1,6 @@
-﻿namespace backend.Domain.Enums
+namespace backend.Domain.Enums
 {
-    public enum PaymentMethod
+    public enum PaymentProvider
     {
         VNPay = 1,
         ZaloPay = 2,
