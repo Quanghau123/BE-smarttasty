@@ -17,7 +17,7 @@ namespace backend.Domain.Models
         public Payment Payment { get; set; } = null!;
 
         [Required]
-        public PaymentProvider Provider { get; set; } // Enum thay cho string
+        public PaymentMethod Provider { get; set; } // Enum thay cho string
 
         [Required]
         public PaymentStatus Status { get; set; } // Enum thay cho string

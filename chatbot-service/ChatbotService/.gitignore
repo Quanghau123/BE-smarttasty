@@ -1,0 +1,23 @@
+# Build output
+bin/
+obj/
+sql/
+
+# Visual Studio files
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio Code
+.vscode/
+
+# Docker related
+docker-compose.override.yml
+
+# ENV
+.env
+appsettings.json
+appsettings.Development.json
+appsettings.Production.json

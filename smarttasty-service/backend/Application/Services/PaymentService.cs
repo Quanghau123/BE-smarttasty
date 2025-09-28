@@ -36,14 +36,29 @@ namespace backend.Application.Services
             };
         }
 
+        public async Task<bool> OrderExistsAsync(int orderId)
+        {
+            return await _db.Orders.AnyAsync(o => o.Id == orderId);
+        }
+
+        // Implements IPaymentService.GetPaymentByOrderIdAsync(string)
         public async Task<Payment?> GetPaymentByOrderIdAsync(string orderId)
         {
+            if (int.TryParse(orderId, out int id))
+            {
+                return await GetPaymentByOrderIdAsync(id);
+            }
+            return null;
+        }
+
+        public async Task<Payment?> GetPaymentByOrderIdAsync(int orderId)
+        {
             return await _db.Payments
-        .Include(p => p.Order)
-            .ThenInclude(o => o.OrderItems)
-                .ThenInclude(oi => oi.Dish)  // phải load cả Dish
-        .Include(p => p.TransactionLogs)
-        .FirstOrDefaultAsync(p => p.OrderId.ToString() == orderId);
+                .Include(p => p.Order)
+                    .ThenInclude(o => o.OrderItems)
+                        .ThenInclude(oi => oi.Dish)
+                .Include(p => p.TransactionLogs)
+                .FirstOrDefaultAsync(p => p.OrderId == orderId);
         }
 
         public async Task<ApiResponse<object>> UpdatePaymentSuccess(Payment payment, string transactionNo)
@@ -65,6 +80,7 @@ namespace backend.Application.Services
             };
         }
 
+        // Fix: Correct signature and remove extra parameter
         public async Task<ApiResponse<object>> UpdatePaymentFail(Payment payment, string? message)
         {
             payment.Status = PaymentStatus.Failed;
@@ -72,7 +88,7 @@ namespace backend.Application.Services
             var log = new PaymentTransactionLog
             {
                 PaymentId = payment.Id,
-                Provider = PaymentProvider.VNPay,
+                Provider = payment.Method, // Use Provider for payment method
                 Status = PaymentStatus.Failed,
                 ErrorMessage = message,
                 CreatedAt = DateTime.UtcNow
@@ -94,7 +110,7 @@ namespace backend.Application.Services
             var log = new PaymentTransactionLog
             {
                 PaymentId = payment.Id,
-                Provider = PaymentProvider.VNPay,
+                Provider = PaymentMethod.VNPay,
                 Status = status,
                 RawData = string.Join("&", query.Select(kv => $"{kv.Key}={kv.Value}")),
                 CreatedAt = DateTime.UtcNow
@@ -142,7 +158,7 @@ namespace backend.Application.Services
             var transactionNo = query["vnp_TransactionNo"].ToString();
             var responseCode = query["vnp_ResponseCode"].ToString();
 
-            var payment = await GetPaymentByOrderIdAsync(txnRef);
+            var payment = await GetPaymentByOrderIdAsync(txnRef); // now uses string overload
             if (payment == null)
             {
                 return new ApiResponse<object>
@@ -186,7 +202,7 @@ namespace backend.Application.Services
             var transactionNo = query["vnp_TransactionNo"].ToString();
             var responseCode = query["vnp_ResponseCode"].ToString();
 
-            var payment = await GetPaymentByOrderIdAsync(txnRef);
+            var payment = await GetPaymentByOrderIdAsync(txnRef); // now uses string overload
             if (payment == null)
                 return new { RspCode = "01", Message = "Payment not found" };
 
@@ -209,7 +225,26 @@ namespace backend.Application.Services
 
         public async Task<ApiResponse<object>> CreateCodPaymentAsync(Payment payment)
         {
-            return await _codService.CreateCodPaymentAsync(payment);
+            using var tx = await _db.Database.BeginTransactionAsync();
+            try
+            {
+                payment.Method = PaymentMethod.COD;
+                payment.Status = PaymentStatus.Pending;
+                _db.Payments.Add(payment);
+                await _db.SaveChangesAsync();
+
+                var codPayment = new CODPayment { PaymentId = payment.Id, IsCollected = false };
+                _db.CODPayments.Add(codPayment);
+                await _db.SaveChangesAsync();
+
+                await tx.CommitAsync();
+                return new ApiResponse<object> { ErrCode = ErrorCode.Success, ErrMessage = "COD Payment created", Data = codPayment };
+            }
+            catch (Exception ex)
+            {
+                await tx.RollbackAsync();
+                return new ApiResponse<object> { ErrCode = ErrorCode.ServerError, ErrMessage = ex.Message, Data = null };
+            }
         }
 
         public async Task<ApiResponse<object>> ConfirmCodPaymentAsync(int codPaymentId)

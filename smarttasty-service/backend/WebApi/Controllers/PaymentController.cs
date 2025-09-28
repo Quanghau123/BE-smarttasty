@@ -5,8 +5,10 @@ using backend.Domain.Enums.Commons.Response;
 using backend.Infrastructure.Helpers.Commons.Response;
 using backend.Domain.Models;
 using backend.Application.DTOs.Payment;
+using backend.Domain.Models.Requests.Payment;
 using backend.Domain.Enums;
 using AutoMapper;
+using Microsoft.EntityFrameworkCore; // Add for AnyAsync
 
 namespace backend.WebApi.Controllers
 {
@@ -17,7 +19,7 @@ namespace backend.WebApi.Controllers
         private readonly IPaymentService _paymentService;
         private readonly IVNPayService _vnPayService;
         private readonly ApplicationDbContext _db;
-        private readonly IMapper _mapper; // thêm AutoMapper
+        private readonly IMapper _mapper;
 
         public PaymentController(
             IPaymentService paymentService,
@@ -47,10 +49,21 @@ namespace backend.WebApi.Controllers
             _ => 500
         };
 
-        [HttpGet("create")]
-        public async Task<IActionResult> CreatePayment([FromQuery] decimal amount, [FromQuery] int orderId)
+        [HttpPost("vnpay/create")]
+        public async Task<IActionResult> CreateVNPayPayment([FromBody] CreatePaymentRequest dto)
         {
-            var existingPayment = await _paymentService.GetPaymentByOrderIdAsync(orderId.ToString());
+            // Fix: Use _db.Orders.AnyAsync if OrderExistsAsync is not available
+            if (!await _db.Orders.AnyAsync(o => o.Id == dto.OrderId))
+            {
+                return CreateResult(new ApiResponse<object>
+                {
+                    ErrCode = ErrorCode.NotFound,
+                    ErrMessage = "Order not found",
+                    Data = null
+                });
+            }
+
+            var existingPayment = await _paymentService.GetPaymentByOrderIdAsync(dto.OrderId.ToString());
             if (existingPayment != null)
             {
                 var existingDto = _mapper.Map<PaymentDto>(existingPayment);
@@ -62,12 +75,11 @@ namespace backend.WebApi.Controllers
                 });
             }
 
-            var url = _vnPayService.CreatePaymentUrl(HttpContext, amount, orderId.ToString(), "Thanh toan don hang");
-
+            var url = _vnPayService.CreatePaymentUrl(HttpContext, dto.Amount, dto.OrderId.ToString(), "Thanh toan don hang");
             var payment = new Payment
             {
-                OrderId = orderId,
-                Amount = amount,
+                OrderId = dto.OrderId,
+                Amount = dto.Amount,
                 Method = PaymentMethod.VNPay,
                 Status = PaymentStatus.Pending,
                 PaymentUrl = url,
@@ -76,7 +88,7 @@ namespace backend.WebApi.Controllers
 
             await _paymentService.AddPaymentAsync(payment);
 
-            var fullPayment = await _paymentService.GetPaymentByOrderIdAsync(orderId.ToString());
+            var fullPayment = await _paymentService.GetPaymentByOrderIdAsync(dto.OrderId.ToString());
             var paymentDto = _mapper.Map<PaymentDto>(fullPayment);
 
             return CreateResult(new ApiResponse<PaymentDto>
@@ -116,8 +128,79 @@ namespace backend.WebApi.Controllers
         public async Task<IActionResult> VNPayIpn()
         {
             var res = await _paymentService.HandleVNPayIpn(HttpContext.Request.Query);
-            return Ok(res); // theo spec VNPay: trả JSON {RspCode, Message}
+            // Fix: Handle anonymous object result
+            return Ok(res);
         }
 
+        [HttpGet("pending")]
+        public async Task<IActionResult> GetPendingPayments()
+        {
+            var payments = await _paymentService.GetPendingPayments();
+            var dtos = payments.Select(p => _mapper.Map<PaymentDto>(p)).ToList();
+            return CreateResult(new ApiResponse<List<PaymentDto>>
+            {
+                ErrCode = ErrorCode.Success,
+                ErrMessage = "Pending payments fetched",
+                Data = dtos
+            });
+        }
+
+        [HttpPost("cod/create")]
+        public async Task<IActionResult> CreateCodPayment([FromBody] CreateCodPaymentRequest dto)
+        {
+            if (!await _db.Orders.AnyAsync(o => o.Id == dto.OrderId))
+            {
+                return CreateResult(new ApiResponse<object>
+                {
+                    ErrCode = ErrorCode.NotFound,
+                    ErrMessage = "Order not found",
+                    Data = null
+                });
+            }
+
+            var payment = new Payment
+            {
+                OrderId = dto.OrderId,
+                Amount = dto.Amount,
+                Method = PaymentMethod.COD,
+                Status = PaymentStatus.Pending,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            var result = await _paymentService.CreateCodPaymentAsync(payment);
+
+            // Map Data sang DTO nếu là CODPayment
+            CODPaymentDto? codPaymentDto = null;
+            if (result.Data is CODPayment codPayment)
+            {
+                codPaymentDto = _mapper.Map<CODPaymentDto>(codPayment);
+            }
+
+            return CreateResult(new ApiResponse<CODPaymentDto>
+            {
+                ErrCode = result.ErrCode,
+                ErrMessage = result.ErrMessage,
+                Data = codPaymentDto
+            });
+        }
+
+        [HttpPost("cod/confirm")]
+        public async Task<IActionResult> ConfirmCodPayment([FromQuery] int codPaymentId)
+        {
+            var result = await _paymentService.ConfirmCodPaymentAsync(codPaymentId);
+
+            CODPaymentDto? codPaymentDto = null;
+            if (result.Data is CODPayment codPayment)
+            {
+                codPaymentDto = _mapper.Map<CODPaymentDto>(codPayment);
+            }
+
+            return CreateResult(new ApiResponse<CODPaymentDto>
+            {
+                ErrCode = result.ErrCode,
+                ErrMessage = result.ErrMessage,
+                Data = codPaymentDto
+            });
+        }
     }
 }

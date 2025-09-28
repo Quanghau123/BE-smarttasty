@@ -89,6 +89,7 @@ namespace backend.Infrastructure.Mappings
                 .ForMember(dest => dest.EndDate, opt => opt.MapFrom(src => src.Promotion.EndDate));
 
             CreateMap<Payment, PaymentDto>();
+            CreateMap<CODPayment, CODPaymentDto>();
             CreateMap<Order, OrderDto>()
                 .ForMember(dest => dest.Items,
                             opt => opt.MapFrom(src => src.OrderItems));
