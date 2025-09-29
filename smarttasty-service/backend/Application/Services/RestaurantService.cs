@@ -189,9 +189,24 @@ namespace backend.Application.Services
 
         public async Task<ApiResponse<List<RestaurantDto>>> GetRestaurantsByCategoryAsync(RestaurantCategory category)
         {
-            var restaurants = await _context.Restaurants.Include(r => r.Owner).Where(r => r.Category == category).ToListAsync();
+            var restaurants = await _context.Restaurants
+                .Include(r => r.Owner)
+                .Where(r => r.Category == category)
+                .ToListAsync();
+
             var dtos = _mapper.Map<List<RestaurantDto>>(restaurants);
-            return new ApiResponse<List<RestaurantDto>> { ErrCode = ErrorCode.Success, ErrMessage = "OK", Data = dtos };
+
+            foreach (var dto in dtos)
+            {
+                dto.ImageUrl = _imageHelper.GetImageUrl(dto.ImagePublicId);
+            }
+
+            return new ApiResponse<List<RestaurantDto>>
+            {
+                ErrCode = ErrorCode.Success,
+                ErrMessage = "OK",
+                Data = dtos
+            };
         }
 
         public async Task<ApiResponse<List<RestaurantDto>>> SearchRestaurantsAsync(string query)
