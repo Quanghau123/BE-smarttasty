@@ -88,6 +88,32 @@ namespace backend.Application.Services
             };
         }
 
+        public async Task<ApiResponse<List<ReviewDTO>>> GetByRestaurantIdAsync(int id)
+        {
+            var reviews = await _context.Reviews
+                .Include(r => r.User)
+                .Include(r => r.Restaurant)
+                .Where(r => r.RestaurantId == id)
+                .ToListAsync();
+
+            if (reviews == null || !reviews.Any())
+            {
+                return new ApiResponse<List<ReviewDTO>>
+                {
+                    ErrCode = ErrorCode.NotFound,
+                    ErrMessage = "No reviews found",
+                    Data = new List<ReviewDTO>()
+                };
+            }
+
+            return new ApiResponse<List<ReviewDTO>>
+            {
+                ErrCode = ErrorCode.Success,
+                ErrMessage = "Reviews found",
+                Data = reviews.Select(MapToDTO).ToList()
+            };
+        }
+
         public async Task<ApiResponse<List<ReviewDTO>>> SearchAsync(string keyword)
         {
             var reviews = await _context.Reviews

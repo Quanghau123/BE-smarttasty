@@ -12,6 +12,7 @@ namespace backend.Application.Interfaces
         Task<ApiResponse<ReviewDTO>> CreateReviewAsync(CreateReviewRequest request);
         Task<ApiResponse<List<ReviewDTO>>> GetAllAsync();
         Task<ApiResponse<ReviewDTO?>> GetByIdAsync(int id);
+        Task<ApiResponse<List<ReviewDTO>>> GetByRestaurantIdAsync(int id);
         Task<ApiResponse<List<ReviewDTO>>> SearchAsync(string keyword);
         Task<ApiResponse<bool>> DeleteAsync(int id);
     }

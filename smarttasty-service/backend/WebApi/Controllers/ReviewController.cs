@@ -56,6 +56,13 @@ namespace backend.WebApi.Controllers
             return CreateResult(res);
         }
 
+        [HttpGet("restaurant/{id}")]
+        public async Task<IActionResult> GetByRestaurantId(int id)
+        {
+            var res = await _reviewService.GetByRestaurantIdAsync(id);
+            return CreateResult(res);
+        }
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {

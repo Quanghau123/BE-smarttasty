@@ -126,13 +126,14 @@ namespace backend.Infrastructure.Data
             modelBuilder.SeedRestaurants();
             modelBuilder.SeedDishes();
             modelBuilder.SeedPromotions();
+            modelBuilder.SeedReviews();
         }
 
     }
 }
 
 //add + update (add mà không update là lỗi nguyên db vì không so sánh với migrations cũ được)
-//dotnet ef migrations add UpdateOrderService_v1
+//dotnet ef migrations add UpdateSeedReviews_v1
 //dotnet ef database update
 
 //delete migrations nếu update bị lỗi
