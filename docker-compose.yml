@@ -85,15 +85,13 @@ services:
       retries: 5
 
   chatbot-service:
-    build:
-      context: .
-      dockerfile: ./chatbot-service/ChatbotService/Dockerfile
-    container_name: chatbot-service
+    image: quanghau123/chatbot-service:latest
+    container_name: ${CHATBOT_CONTAINER}
     ports:
-      - "5000:8080"
+      - "${CHATBOT_PORT}:8080"
     environment:
       - DOTNET_ENVIRONMENT=Development
-      - N8N_URL=http://n8n:5678   # gọi qua internal docker network
+      - N8N_URL=http://n8n:5678  
     depends_on:
       - n8n
 
