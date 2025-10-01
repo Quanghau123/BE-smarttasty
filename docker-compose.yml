@@ -76,6 +76,7 @@ services:
       - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER}
       - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD}
       - GENERIC_TIMEZONE=${GENERIC_TIMEZONE}
+      - N8N_EXPRESS_TRUST_PROXY=true
       # Nếu bạn muốn n8n dùng DB riêng (optional), cấu hình DB cho n8n internal DB ở đây.
       # (Không bắt buộc nếu bạn để mặc định file-based)
     volumes:
