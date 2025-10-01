@@ -67,6 +67,7 @@ services:
     ports:
       - "5678:5678"   # nếu trùng port, đổi host:container thành "8081:5678"
     environment:
+      - N8N_TRUSTED_PROXIES=0.0.0.0/0
       - N8N_BASIC_AUTH_ACTIVE=${N8N_BASIC_AUTH_ACTIVE}
       - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER}
       - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD}
