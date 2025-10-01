@@ -61,7 +61,7 @@ services:
     restart: unless-stopped 
 
   n8n:
-    image: n8nio/n8n:latest
+    image: n8nio/n8n:1.102.1
     container_name: n8n
     restart: unless-stopped
     ports:
@@ -71,12 +71,12 @@ services:
       - N8N_PORT=${N8N_PORT}
       - N8N_PROTOCOL=${N8N_PROTOCOL}
       - WEBHOOK_URL=${WEBHOOK_URL}
-      - N8N_TRUSTED_PROXIES=${N8N_TRUSTED_PROXIES}
+      - N8N_EXPRESS_TRUST_PROXY=true
+      # - N8N_TRUSTED_PROXIES=${N8N_TRUSTED_PROXIES}
       - N8N_BASIC_AUTH_ACTIVE=${N8N_BASIC_AUTH_ACTIVE}
       - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER}
       - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD}
       - GENERIC_TIMEZONE=${GENERIC_TIMEZONE}
-      - N8N_EXPRESS_TRUST_PROXY=true
       # Nếu bạn muốn n8n dùng DB riêng (optional), cấu hình DB cho n8n internal DB ở đây.
       # (Không bắt buộc nếu bạn để mặc định file-based)
     volumes:
