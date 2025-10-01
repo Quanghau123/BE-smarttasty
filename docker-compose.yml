@@ -84,10 +84,10 @@ services:
       - kafka
       - redis
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5678/rest/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
+       test: ["CMD", "curl", "-f", "http://localhost:5678/healthz"]
+       interval: 30s
+       timeout: 10s
+       retries: 5
 
   chatbot-service:
     image: quanghau123/chatbot-service:latest
