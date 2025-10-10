@@ -87,6 +87,7 @@ namespace backend.Application.Services
         {
             var order = await _context.Orders
                 .Include(o => o.OrderItems).ThenInclude(i => i.Dish)
+                  .Include(o => o.Restaurant)
                 .Include(o => o.Payment)
                 .FirstOrDefaultAsync(o => o.Id == id);
 

@@ -1,3 +1,5 @@
+using backend.Application.DTOs.Restaurant;
+
 namespace backend.Application.DTOs.Order
 {
     public class OrderDto
@@ -11,5 +13,6 @@ namespace backend.Application.DTOs.Order
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
         public List<OrderItemDto> Items { get; set; } = new();
+        public RestaurantDto Restaurant { get; set; } = new();
     }
 }

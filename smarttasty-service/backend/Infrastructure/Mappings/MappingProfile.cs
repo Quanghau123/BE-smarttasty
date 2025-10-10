@@ -92,7 +92,9 @@ namespace backend.Infrastructure.Mappings
             CreateMap<CODPayment, CODPaymentDto>();
             CreateMap<Order, OrderDto>()
                 .ForMember(dest => dest.Items,
-                            opt => opt.MapFrom(src => src.OrderItems));
+                            opt => opt.MapFrom(src => src.OrderItems))
+                .ForMember(dest => dest.Restaurant,
+                        opt => opt.MapFrom(src => src.Restaurant));
             CreateMap<OrderItem, OrderItemDto>()
                 .ForMember(dest => dest.DishName,
                            opt => opt.MapFrom(src => src.Dish != null ? src.Dish.Name : null));
