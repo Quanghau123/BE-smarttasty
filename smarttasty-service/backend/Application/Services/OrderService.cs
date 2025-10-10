@@ -87,7 +87,7 @@ namespace backend.Application.Services
         {
             var order = await _context.Orders
                 .Include(o => o.OrderItems).ThenInclude(i => i.Dish)
-                  .Include(o => o.Restaurant)
+                .Include(o => o.Restaurant)
                 .Include(o => o.Payment)
                 .FirstOrDefaultAsync(o => o.Id == id);
 
@@ -333,6 +333,7 @@ namespace backend.Application.Services
         {
             var orders = await _context.Orders
                 .Include(o => o.OrderItems).ThenInclude(i => i.Dish)
+                .Include(o => o.Restaurant)
                 .Where(o => o.UserId == userId)
                 .ToListAsync();
 
@@ -350,6 +351,7 @@ namespace backend.Application.Services
         {
             var orders = await _context.Orders
                 .Include(o => o.OrderItems)
+                .Include(o => o.Restaurant)
                 .Where(o => o.Status == status)
                 .ToListAsync();
 
