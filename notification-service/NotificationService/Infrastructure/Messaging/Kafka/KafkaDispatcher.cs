@@ -74,6 +74,21 @@ namespace NotificationService.Infrastructure.Messaging.Kafka
                     }
                     break;
 
+                case "PasswordResetRequested":
+                    try
+                    {
+                        var resetPayload = JsonSerializer.Deserialize<PasswordResetRequestedPayload>(payload.GetRawText());
+                        if (resetPayload != null)
+                        {
+                            await _notificationHandler.HandlePasswordResetAsync(resetPayload, txId);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error handling PasswordResetRequested event, TxId={TxId}", txId);
+                    }
+                    break;
+
                 default:
                     _logger.LogWarning("Unknown event: {Event}, TxId={TxId}", @event, txId);
                     break;

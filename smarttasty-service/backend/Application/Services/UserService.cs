@@ -280,98 +280,29 @@ namespace backend.Application.Services
 
             await _context.SaveChangesAsync();
 
-            var gmail = _config["EmailSettings:Gmail"];
-            var appPassword = _config["EmailSettings:AppPassword"];
-
-            var smtpClient = new SmtpClient("smtp.gmail.com")
-            {
-                Port = 587,
-                Credentials = new NetworkCredential(gmail, appPassword),
-                EnableSsl = true,
-            };
-
             var resetLink = $"http://localhost:3000/reset-password?token={resetToken}";
 
-            var mailMessage = new MailMessage
+            var resetEvent = new KafkaEnvelope<PasswordResetRequestedPayload>
             {
-                From = new MailAddress(gmail!),
-                Subject = "Yêu cầu đặt lại mật khẩu",
-                Body = $@"
-                <html>
-                <head>
-                  <style>
-                    body {{
-                      font-family: Arial, sans-serif;
-                      background-color: #f3f3f3;
-                      padding: 20px;
-                      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-                    }}
-                    .email-container {{
-                      background-color: #ffffff;
-                      max-width: 600px;
-                      margin: auto;
-                      border-radius: 8px;
-                      padding: 30px;
-                      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-                    }}
-                    .content {{
-                      text-align: center;
-                    }}
-                    .token-box {{
-                      background-color: #f9f9f9;
-                      border: 1px dashed #ccc;
-                      padding: 15px;
-                      margin: 20px 0;
-                      font-family: monospace;
-                      font-size: 16px;
-                      color: #333;
-                    }}
-                    .button {{
-                      display: inline-block;
-                      margin-top: 25px;
-                      padding: 12px 25px;
-                      font-size: 16px;
-                      background-color: #007bff;
-                      color: white;
-                      text-decoration: none;
-                      border-radius: 5px;
-                    }}
-                    .footer {{
-                      margin-top: 30px;
-                      font-size: 12px;
-                      color: #777;
-                      text-align: center;
-                    }}
-                  </style>
-                </head>
-                <body>
-                  <div class='email-container'>
-                    <div class='content'>
-                      <h2>Xin chào {user.UserName},</h2>
-                      <p>Bạn đã yêu cầu đặt lại mật khẩu cho tài khoản của mình.</p>
-                      <p><strong>Mã token của bạn:</strong></p>
-                      <div class='token-box'>{resetToken}</div>
-                      <p>Bạn có thể nhấn vào nút bên dưới để đặt lại mật khẩu. Liên kết chỉ có hiệu lực trong <strong>30 phút</strong>.</p>
-                      <a class='button' href='{resetLink}'>Đặt lại mật khẩu</a>
-                    </div>
-                    <div class='footer'>
-                      Nếu bạn không yêu cầu hành động này, hãy bỏ qua email này.<br/>
-                      © 2025 SmartTasty. All rights reserved.
-                    </div>
-                  </div>
-                </body>
-                </html>
-                ",
-                IsBodyHtml = true
+                Event = "PasswordResetRequested",
+                Target = user.UserId.ToString(),
+                Payload = new PasswordResetRequestedPayload
+                {
+                    UserId = user.UserId.ToString(),
+                    Email = user.Email,
+                    Username = user.UserName,
+                    Token = resetToken,
+                    ResetLink = resetLink,
+                    ExpiresAt = expiration
+                }
             };
 
-            mailMessage.To.Add(email);
-            await smtpClient.SendMailAsync(mailMessage);
+            await _kafkaProducer.SendMessageAsync(resetEvent, topic: "notifications");
 
             return new ApiResponse<object>
             {
                 ErrCode = ErrorCode.Success,
-                ErrMessage = "Password reset email sent!"
+                ErrMessage = "Password reset request queued (notification service will send email)."
             };
         }
 

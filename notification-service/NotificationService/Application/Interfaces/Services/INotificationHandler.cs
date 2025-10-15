@@ -6,5 +6,6 @@ namespace NotificationService.Application.Interfaces.Services
     public interface INotificationHandler
     {
         Task HandleAsync(NotificationPayload payload, string txId);
+        Task HandlePasswordResetAsync(PasswordResetRequestedPayload payload, string txId);
     }
 }

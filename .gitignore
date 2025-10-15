@@ -1,6 +1,7 @@
 # ENV
 .env
 .env.local
+.env.prod
 
 # Visual Studio 
 .vscode/
