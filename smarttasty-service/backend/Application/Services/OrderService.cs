@@ -111,6 +111,54 @@ namespace backend.Application.Services
             };
         }
 
+        public async Task<ApiResponse<object>> UpdateOrderAsync(int orderId, UpdateOrderRequest request)
+        {
+            var order = await _context.Orders
+                .Include(o => o.OrderItems)
+                .Include(o => o.Restaurant)
+                .FirstOrDefaultAsync(o => o.Id == orderId);
+
+            if (order == null)
+            {
+                return new ApiResponse<object>
+                {
+                    ErrCode = ErrorCode.NotFound,
+                    ErrMessage = "Order not found",
+                    Data = null
+                };
+            }
+
+            if (order.Status == OrderStatus.Paid || order.Status == OrderStatus.Cancelled)
+            {
+                return new ApiResponse<object>
+                {
+                    ErrCode = ErrorCode.ValidationError,
+                    ErrMessage = "Cannot update a paid or cancelled order",
+                    Data = null
+                };
+            }
+
+            // Cập nhật thông tin giao hàng (không xử lý items ở đây)
+            if (!string.IsNullOrWhiteSpace(request.DeliveryAddress))
+                order.DeliveryAddress = request.DeliveryAddress;
+            if (!string.IsNullOrWhiteSpace(request.RecipientName))
+                order.RecipientName = request.RecipientName;
+            if (!string.IsNullOrWhiteSpace(request.RecipientPhone))
+                order.RecipientPhone = request.RecipientPhone;
+
+            order.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            var orderDto = _mapper.Map<backend.Application.DTOs.Order.OrderDto>(order);
+
+            return new ApiResponse<object>
+            {
+                ErrCode = ErrorCode.Success,
+                ErrMessage = "Order updated successfully",
+                Data = orderDto
+            };
+        }
+
         public async Task<ApiResponse<object>> DeleteOrderAsync(int id)
         {
             var order = await _context.Orders.FindAsync(id);
@@ -187,7 +235,8 @@ namespace backend.Application.Services
             var existingItem = order.OrderItems.FirstOrDefault(i => i.DishId == dishId);
             if (existingItem != null)
             {
-                existingItem.Quantity += quantity;
+                // Thay đổi: gán quantity mới (thay vì cộng thêm)
+                existingItem.Quantity = quantity;
                 order.UpdatedAt = DateTime.UtcNow;
             }
             else
@@ -204,7 +253,7 @@ namespace backend.Application.Services
             return new ApiResponse<object>
             {
                 ErrCode = ErrorCode.Success,
-                ErrMessage = "Item added successfully",
+                ErrMessage = "Item added/updated successfully",
                 Data = orderDto
             };
         }

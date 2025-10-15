@@ -9,6 +9,7 @@ namespace backend.Application.Interfaces
         // CRUD
         Task<ApiResponse<object>> CreateOrderAsync(CreateOrderRequest request);
         Task<ApiResponse<object>> GetByIdAsync(int id);
+        Task<ApiResponse<object>> UpdateOrderAsync(int orderId, UpdateOrderRequest request);
         Task<ApiResponse<object>> DeleteOrderAsync(int id);
 
         // Order Items

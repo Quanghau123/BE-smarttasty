@@ -49,6 +49,13 @@ namespace backend.WebApi.Controllers
             return CreateResult(res);
         }
 
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateOrderRequest request)
+        {
+            var res = await _orderService.UpdateOrderAsync(id, request);
+            return CreateResult(res);
+        }
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
