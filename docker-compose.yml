@@ -67,7 +67,7 @@ services:
     container_name: n8n
     restart: unless-stopped
     ports:
-      - "8081:5678"   # tránh trùng port
+      - "5678:5678"   # tránh trùng port
     environment:
       - N8N_HOST=${N8N_HOST}
       - N8N_PORT=${N8N_PORT}
