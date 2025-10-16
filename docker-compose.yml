@@ -63,21 +63,17 @@ services:
     restart: unless-stopped 
 
   n8n:
-    image: n8nio/n8n:latest
+    image: n8nio/n8n:1.115.3
     container_name: n8n
     restart: unless-stopped
     ports:
-      - "5678:5678"   # tránh trùng port
-    env_file:
-      - .env
+      - "5678:5678"   # nếu trùng port, đổi host:container thành "8081:5678"
     environment:
       - N8N_HOST=${N8N_HOST}
       - N8N_PORT=${N8N_PORT}
       - N8N_PROTOCOL=${N8N_PROTOCOL}
       - WEBHOOK_URL=${WEBHOOK_URL}
-      - N8N_EXPRESS_TRUST_PROXY=true
-      - N8N_TRUST_PROXY=true
-      - N8N_ENCRYPTION_KEY=1jO2wZyntqwLwYcisgK+aFV2EqAZlafN
+      - N8N_TRUSTED_PROXIES=${N8N_TRUSTED_PROXIES}
       - N8N_BASIC_AUTH_ACTIVE=${N8N_BASIC_AUTH_ACTIVE}
       - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER}
       - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD}
