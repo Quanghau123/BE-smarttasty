@@ -83,6 +83,20 @@ namespace backend.WebApi.Controllers
             return CreateResult(res);
         }
 
+        [HttpDelete("{orderId}/items/{orderItemId}")]
+        public async Task<IActionResult> RemoveItem(int orderId, int orderItemId)
+        {
+            var result = await _orderService.RemoveItemAsync(orderId, orderItemId);
+
+            return result.ErrCode switch
+            {
+                ErrorCode.Success => Ok(result),
+                ErrorCode.ValidationError => BadRequest(result),
+                ErrorCode.NotFound => NotFound(result),
+                _ => StatusCode(500, result)
+            };
+        }
+
         // ---------------- Update Status ----------------
         [HttpPatch("{id}/status")]
         public async Task<IActionResult> UpdateOrderStatus(int id, [FromQuery] OrderStatus newStatus)

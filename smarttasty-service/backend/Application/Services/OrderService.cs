@@ -21,7 +21,7 @@ namespace backend.Application.Services
             _mapper = mapper;
         }
 
-        // ---------------- Order CRUD ----------------
+        // ---------------- Order CRUD ----\------------
         public async Task<ApiResponse<object>> CreateOrderAsync(CreateOrderRequest request)
         {
             if (request.Items == null || !request.Items.Any())
@@ -168,7 +168,6 @@ namespace backend.Application.Services
                 Data = orderDto
             };
         }
-
         public async Task<ApiResponse<object>> GetByIdAsync(int id)
         {
             var order = await _context.Orders
@@ -196,7 +195,6 @@ namespace backend.Application.Services
                 Data = orderDto
             };
         }
-
         public async Task<ApiResponse<object>> UpdateOrderAsync(int orderId, UpdateOrderRequest request)
         {
             var order = await _context.Orders
@@ -322,7 +320,6 @@ namespace backend.Application.Services
                 Data = null
             };
         }
-
         // ---------------- Order Items ----------------
         public async Task<ApiResponse<object>> RemoveItemAsync(int orderId, int orderItemId)
         {
