@@ -42,6 +42,26 @@ namespace backend.WebApi.Controllers
             return CreateResult(res);
         }
 
+        [HttpPost("{orderId}/items")]
+        public async Task<IActionResult> AddItem(int orderId, [FromBody] AddItemRequest req)
+        {
+            if (req == null)
+                return BadRequest(new ApiResponse<object> { ErrCode = ErrorCode.ValidationError, ErrMessage = "Request body is required." });
+
+            if (!ModelState.IsValid)
+                return BadRequest(new ApiResponse<object> { ErrCode = ErrorCode.ValidationError, ErrMessage = "Invalid request payload." });
+
+            var result = await _orderService.AddItemOrderAsync(orderId, req.DishId, req.Quantity);
+
+            return result.ErrCode switch
+            {
+                ErrorCode.Success => Ok(result),
+                ErrorCode.ValidationError => BadRequest(result),
+                ErrorCode.NotFound => NotFound(result),
+                _ => StatusCode(500, result)
+            };
+        }
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
@@ -60,21 +80,6 @@ namespace backend.WebApi.Controllers
         public async Task<IActionResult> Delete(int id)
         {
             var res = await _orderService.DeleteOrderAsync(id);
-            return CreateResult(res);
-        }
-
-        // ---------------- Order Items ----------------
-        [HttpPost("{id}/items")]
-        public async Task<IActionResult> AddItem(int id, [FromQuery] int dishId, [FromQuery] int quantity)
-        {
-            var res = await _orderService.AddItemAsync(id, dishId, quantity);
-            return CreateResult(res);
-        }
-
-        [HttpDelete("{orderId}/items/{orderItemId}")]
-        public async Task<IActionResult> RemoveItem(int orderId, int orderItemId)
-        {
-            var res = await _orderService.RemoveItemAsync(orderId, orderItemId);
             return CreateResult(res);
         }
 
