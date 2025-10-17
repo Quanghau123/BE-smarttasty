@@ -70,6 +70,7 @@ services:
       - "5678:5678"   # nếu trùng port, đổi host:container thành "8081:5678"
     environment:
       - N8N_HOST=${N8N_HOST}
+      - WEBHOOK_URL=${N8N_HOST}
       - N8N_PORT=${N8N_PORT}
       - N8N_PROTOCOL=${N8N_PROTOCOL}
       - WEBHOOK_URL=${WEBHOOK_URL}
