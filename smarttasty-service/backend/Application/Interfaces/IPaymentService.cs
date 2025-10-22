@@ -20,6 +20,7 @@ namespace backend.Application.Interfaces
         Task<ApiResponse<object>> HandleVNPayReturn(IQueryCollection query);
         Task<object> HandleVNPayIpn(IQueryCollection query);
         Task<ApiResponse<object>> CreateCodPaymentAsync(Payment payment);
+        Task<ApiResponse<object>> GetPaymentsByUserIdAsync(int userId);
         Task<ApiResponse<object>> ConfirmCodPaymentAsync(int codPaymentId);
     }
 }

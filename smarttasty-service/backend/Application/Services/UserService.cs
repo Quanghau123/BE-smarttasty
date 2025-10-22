@@ -31,33 +31,29 @@ namespace backend.Application.Services
         private readonly JwtSettings _jwtSettings;
         private readonly IConfiguration _config;
         private readonly KafkaProducerService _kafkaProducer;
+        private readonly IUserSessionService _userSessionService;
 
-        public UserService(ApplicationDbContext context, IOptions<JwtSettings> jwtOptions, IConfiguration config, KafkaProducerService kafkaProducer)
+        public UserService(ApplicationDbContext context, IOptions<JwtSettings> jwtOptions, IConfiguration config, KafkaProducerService kafkaProducer, IUserSessionService userSessionService)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _jwtSettings = jwtOptions.Value ?? throw new ArgumentNullException(nameof(jwtOptions));
             _config = config;
             _kafkaProducer = kafkaProducer;
+            _userSessionService = userSessionService;
 
             if (string.IsNullOrEmpty(_jwtSettings.SecretKey))
                 throw new InvalidOperationException("SecretKey is not configured.");
         }
 
-        public async Task<ApiResponse<object>> HandleUserLogin(string email, string password)
+        private string GenerateAccessToken(User user)
         {
-            var user = await _context.Users.Where(u => u.Email == email).FirstOrDefaultAsync();
-            if (user == null)
-                return new ApiResponse<object> { ErrCode = ErrorCode.NotFound, ErrMessage = "Email does not exist." };
-
-            if (!BCrypt.Net.BCrypt.Verify(password, user.UserPassword))
-                return new ApiResponse<object> { ErrCode = ErrorCode.ValidationError, ErrMessage = "Wrong password" };
-
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(_jwtSettings.SecretKey);
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
-                Subject = new ClaimsIdentity(new[] {
+                Subject = new ClaimsIdentity(new[]
+                {
             new Claim(JwtRegisteredClaimNames.Sub, user.UserId.ToString()),
             new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
             new Claim(ClaimTypes.Email, user.Email),
@@ -68,30 +64,49 @@ namespace backend.Application.Services
             };
 
             var token = tokenHandler.CreateToken(tokenDescriptor);
-            var jwt = tokenHandler.WriteToken(token);
+            return tokenHandler.WriteToken(token);
+        }
+        private string GenerateRefreshToken()
+        {
+            return Convert.ToBase64String(Guid.NewGuid().ToByteArray());
+        }
+        public async Task<ApiResponse<object>> HandleUserLogin(string email, string password)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            if (user == null)
+                return new ApiResponse<object> { ErrCode = ErrorCode.NotFound, ErrMessage = "Email does not exist." };
 
-            var loginEvent = new KafkaEnvelope<UserLoggedInPayload>
+            if (!BCrypt.Net.BCrypt.Verify(password, user.UserPassword))
+                return new ApiResponse<object> { ErrCode = ErrorCode.ValidationError, ErrMessage = "Wrong password" };
+
+            // --- Xoa Token cu ---
+            var oldTokens = _context.RefreshTokens
+                .Where(t => t.UserId == user.UserId && (t.IsRevoked || t.ExpiresAt < DateTime.UtcNow));
+
+            _context.RefreshTokens.RemoveRange(oldTokens);
+            await _context.SaveChangesAsync();
+
+            // --- Tạo Access Token và Refresh Token ---
+            var accessToken = GenerateAccessToken(user);
+
+            var refreshToken = new RefreshToken
             {
-                Event = "UserLoggedIn",
-                Target = user.UserId.ToString(),
-                Payload = new UserLoggedInPayload
-                {
-                    UserId = user.UserId.ToString(),
-                    Username = user.UserName,
-                    Jwt = jwt,
-                    Timestamp = DateTime.UtcNow
-                }
+                UserId = user.UserId,
+                Token = Guid.NewGuid().ToString(),
+                ExpiresAt = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpireDays),
+                CreatedAt = DateTime.UtcNow
             };
-
-            await _kafkaProducer.SendMessageAsync(loginEvent);
+            await _context.RefreshTokens.AddAsync(refreshToken);
+            await _context.SaveChangesAsync();
 
             return new ApiResponse<object>
             {
                 ErrCode = ErrorCode.Success,
-                ErrMessage = "OK",
+                ErrMessage = "Login success",
                 Data = new
                 {
-                    token = jwt,
+                    access_token = accessToken,
+                    refresh_token = refreshToken.Token,
                     user = new
                     {
                         user.UserId,
@@ -102,6 +117,88 @@ namespace backend.Application.Services
                         Role = user.Role.ToString()
                     }
                 }
+            };
+        }
+        public async Task<ApiResponse<object>> RefreshTokenAsync(string accessToken, string refreshToken)
+        {
+            var tokenHandler = new JwtSecurityTokenHandler();
+            SecurityToken validatedToken;
+
+            try
+            {
+                var principal = tokenHandler.ValidateToken(accessToken, new TokenValidationParameters
+                {
+                    ValidateIssuer = false,
+                    ValidateAudience = false,
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_jwtSettings.SecretKey)),
+                    ValidateLifetime = false // cho phép token hết hạn để đọc claim
+                }, out validatedToken);
+
+                var userId = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId))
+                    return new ApiResponse<object> { ErrCode = ErrorCode.ValidationError, ErrMessage = "Invalid token." };
+
+                // Tìm RefreshToken trong DB
+                var dbToken = await _context.RefreshTokens
+                    .FirstOrDefaultAsync(x => x.Token == refreshToken && x.UserId.ToString() == userId && !x.IsRevoked && x.ExpiresAt > DateTime.UtcNow);
+
+                if (dbToken == null)
+                    return new ApiResponse<object> { ErrCode = ErrorCode.ValidationError, ErrMessage = "Refresh token is invalid or expired." };
+
+                // Tạo AccessToken mới
+                var key = Encoding.ASCII.GetBytes(_jwtSettings.SecretKey);
+                var newTokenDescriptor = new SecurityTokenDescriptor
+                {
+                    Subject = new ClaimsIdentity(principal.Claims),
+                    Expires = DateTime.UtcNow.AddMinutes(_jwtSettings.AccessTokenExpireMinutes),
+                    SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+                };
+
+                var newAccessToken = tokenHandler.CreateToken(newTokenDescriptor);
+                var jwt = tokenHandler.WriteToken(newAccessToken);
+
+                // Tạo RefreshToken mới (và thu hồi cái cũ)
+                dbToken.IsRevoked = true;
+                var newRefreshToken = new RefreshToken
+                {
+                    UserId = int.Parse(userId),
+                    Token = Guid.NewGuid().ToString(),
+                    ExpiresAt = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpireDays),
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                _context.RefreshTokens.Add(newRefreshToken);
+                await _context.SaveChangesAsync();
+
+                return new ApiResponse<object>
+                {
+                    ErrCode = ErrorCode.Success,
+                    ErrMessage = "Token refreshed successfully.",
+                    Data = new
+                    {
+                        access_token = jwt,
+                        refresh_token = newRefreshToken.Token
+                    }
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<object> { ErrCode = ErrorCode.ServerError, ErrMessage = $"Token refresh failed: {ex.Message}" };
+            }
+        }
+        public async Task<ApiResponse<object>> HandleUserLogout(int userId)
+        {
+            var tokens = _context.RefreshTokens.Where(t => t.UserId == userId && !t.IsRevoked);
+            foreach (var token in tokens)
+                token.IsRevoked = true;
+
+            await _context.SaveChangesAsync();
+
+            return new ApiResponse<object>
+            {
+                ErrCode = ErrorCode.Success,
+                ErrMessage = "Logged out and refresh tokens revoked."
             };
         }
 

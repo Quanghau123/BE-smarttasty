@@ -202,5 +202,29 @@ namespace backend.WebApi.Controllers
                 Data = codPaymentDto
             });
         }
+
+        [HttpGet("history/{userId}")]
+        public async Task<IActionResult> GetPaymentHistoryByUser(int userId)
+        {
+            var result = await _paymentService.GetPaymentsByUserIdAsync(userId);
+
+            // Nếu trả về entity, bạn nên map sang DTO trước khi trả về FE
+            List<InfoPaymentDto> dtos = new();
+            if (result.Data is List<Payment> payments)
+            {
+                dtos = payments.Select(p => _mapper.Map<InfoPaymentDto>(p)).ToList();
+            }
+            else if (result.Data is List<InfoPaymentDto> infoPaymentDtos)
+            {
+                dtos = infoPaymentDtos;
+            }
+
+            return CreateResult(new ApiResponse<List<InfoPaymentDto>>
+            {
+                ErrCode = result.ErrCode,
+                ErrMessage = result.ErrMessage,
+                Data = dtos
+            });
+        }
     }
 }

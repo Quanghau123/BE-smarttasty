@@ -12,6 +12,7 @@ namespace backend.Infrastructure.Data
         }
 
         public DbSet<User> Users { get; set; }
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
         public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
         public DbSet<Restaurant> Restaurants { get; set; }
         public DbSet<Dish> Dishes { get; set; }
@@ -133,7 +134,7 @@ namespace backend.Infrastructure.Data
 }
 
 //add + update (add mà không update là lỗi nguyên db vì không so sánh với migrations cũ được)
-//dotnet ef migrations add UpdateSeedReviews_v1
+//dotnet ef migrations add UpdateTokenRefest_v1
 //dotnet ef database update
 
 //delete migrations nếu update bị lỗi

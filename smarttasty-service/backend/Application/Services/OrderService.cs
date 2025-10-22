@@ -5,6 +5,7 @@ using backend.Domain.Models;
 using backend.Domain.Models.Requests.Order;
 using backend.Infrastructure.Data;
 using backend.Infrastructure.Helpers.Commons.Response;
+using backend.Infrastructure.Helpers;
 using Microsoft.EntityFrameworkCore;
 using AutoMapper;
 
@@ -14,11 +15,13 @@ namespace backend.Application.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
+        private readonly IImageHelper _imageHelper;
 
-        public OrderService(ApplicationDbContext context, IMapper mapper) // Sửa constructor
+        public OrderService(ApplicationDbContext context, IMapper mapper, IImageHelper imageHelper)
         {
             _context = context;
             _mapper = mapper;
+            _imageHelper = imageHelper;
         }
 
         // ---------------- Order CRUD ----\------------
@@ -451,6 +454,18 @@ namespace backend.Application.Services
 
             var orderDtos = _mapper.Map<List<backend.Application.DTOs.Order.OrderDto>>(orders);
 
+            // Cập nhật lại Image thành URL đầy đủ
+            foreach (var order in orderDtos)
+            {
+                if (order.Items != null)
+                {
+                    foreach (var item in order.Items)
+                    {
+                        item.Image = _imageHelper.GetImageUrl(item.Image);
+                    }
+                }
+            }
+
             return new ApiResponse<object>
             {
                 ErrCode = ErrorCode.Success,
@@ -458,7 +473,6 @@ namespace backend.Application.Services
                 Data = orderDtos
             };
         }
-
         public async Task<ApiResponse<object>> GetOrdersByStatusAsync(OrderStatus status)
         {
             var orders = await _context.Orders

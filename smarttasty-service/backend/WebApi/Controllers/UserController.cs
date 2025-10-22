@@ -1,6 +1,7 @@
 using backend.Application.Interfaces;
 using backend.Domain.Models;
 using backend.Domain.Models.Requests.User;
+using backend.Domain.Models.Requests.Auth;
 using backend.Infrastructure.Helpers.Commons.Response;
 using backend.Domain.Enums.Commons.Response;
 using Microsoft.AspNetCore.Authorization;
@@ -49,6 +50,29 @@ namespace backend.WebApi.Controllers
 
             var result = await _userService.HandleUserLogin(request.Email, request.UserPassword);
             return CreateResult(result);
+        }
+
+        [HttpPost("refresh-token")]
+        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request)
+        {
+            if (string.IsNullOrEmpty(request.AccessToken) || string.IsNullOrEmpty(request.RefreshToken))
+            {
+                return CreateResult(new ApiResponse<object>
+                {
+                    ErrCode = ErrorCode.ValidationError,
+                    ErrMessage = "Missing required token fields."
+                });
+            }
+
+            var result = await _userService.RefreshTokenAsync(request.AccessToken, request.RefreshToken);
+            return CreateResult(result);
+        }
+
+        [HttpPost("logout/{userId}")]
+        public async Task<IActionResult> HandleLogout(int userId)
+        {
+            var result = await _userService.HandleUserLogout(userId);
+            return Ok(result);
         }
 
         [HttpGet]

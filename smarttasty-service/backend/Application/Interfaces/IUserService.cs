@@ -7,6 +7,8 @@ namespace backend.Application.Interfaces
     public interface IUserService
     {
         Task<ApiResponse<object>> HandleUserLogin(string email, string password);
+        Task<ApiResponse<object>> RefreshTokenAsync(string accessToken, string refreshToken);
+        Task<ApiResponse<object>> HandleUserLogout(int userId);
         Task<ApiResponse<object>> GetAllUsers();
         Task<ApiResponse<object>> GetUserById(int id);
         Task<ApiResponse<object>> CreateNewUser(CreateUserRequest data);

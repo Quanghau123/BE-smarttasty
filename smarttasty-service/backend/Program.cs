@@ -13,6 +13,7 @@ using backend.Application.Services.Commons;
 using backend.Infrastructure.Helpers;
 using backend.Infrastructure.Extensions;
 using backend.Infrastructure.Messaging.Kafka;
+using backend.Infrastructure.Cache;
 using backend.Application.Jobs;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -23,6 +24,8 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Caching.StackExchangeRedis;
+
 using Hangfire;
 using Hangfire.PostgreSql;
 
@@ -198,6 +201,14 @@ builder.Services.AddHangfire(config =>
 
 builder.Services.AddHangfireServer();
 
+// ==========================
+// Redis Cache
+// ==========================
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = builder.Configuration.GetConnectionString("Redis");
+});
+builder.Services.AddScoped<IUserSessionService, RedisUserSessionService>();
 var app = builder.Build();
 
 // ==========================

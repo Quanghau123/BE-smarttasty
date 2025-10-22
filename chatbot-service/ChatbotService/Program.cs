@@ -6,8 +6,12 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Đăng ký HttpClient + N8nWebhookService
+// HttpClient + DI services
 builder.Services.AddHttpClient<N8nWebhookService>();
+builder.Services.AddHttpClient<SmartTastyServiceClient>();
+
+builder.Services.AddScoped<N8nWebhookService>();
+builder.Services.AddScoped<SmartTastyServiceClient>();
 
 var app = builder.Build();
 

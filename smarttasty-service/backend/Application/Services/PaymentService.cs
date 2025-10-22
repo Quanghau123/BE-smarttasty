@@ -141,7 +141,6 @@ namespace backend.Application.Services
                 return (true, false, "TXN123456", null);
             return (false, true, null, "VNPay báo thất bại");
         }
-
         public async Task<ApiResponse<object>> HandleVNPayReturn(IQueryCollection query)
         {
             if (!_vnPayService.ValidateSignature(query))
@@ -192,7 +191,6 @@ namespace backend.Application.Services
                 };
             }
         }
-
         public async Task<object> HandleVNPayIpn(IQueryCollection query)
         {
             if (!_vnPayService.ValidateSignature(query))
@@ -222,7 +220,6 @@ namespace backend.Application.Services
                 return new { RspCode = "00", Message = "Confirm Failed" };
             }
         }
-
         public async Task<ApiResponse<object>> CreateCodPaymentAsync(Payment payment)
         {
             using var tx = await _db.Database.BeginTransactionAsync();
@@ -246,7 +243,25 @@ namespace backend.Application.Services
                 return new ApiResponse<object> { ErrCode = ErrorCode.ServerError, ErrMessage = ex.Message, Data = null };
             }
         }
+        public async Task<ApiResponse<object>> GetPaymentsByUserIdAsync(int userId)
+        {
+            var payments = await _db.Payments
+               .Include(p => p.Order)
+                    .ThenInclude(o => o.OrderItems)
+                        .ThenInclude(oi => oi.Dish)
+                .Include(p => p.Order)
+                    .ThenInclude(o => o.Restaurant)
+                .Where(p => p.Order.UserId == userId)
+                .OrderByDescending(p => p.CreatedAt)
+                .ToListAsync();
 
+            return new ApiResponse<object>
+            {
+                ErrCode = ErrorCode.Success,
+                ErrMessage = "OK",
+                Data = payments
+            };
+        }
         public async Task<ApiResponse<object>> ConfirmCodPaymentAsync(int codPaymentId)
         {
             return await _codService.ConfirmCodPaymentAsync(codPaymentId);
