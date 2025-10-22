@@ -1,12 +1,12 @@
-using Confluent.Kafka;
+﻿using Confluent.Kafka;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
-using NotificationService.Application.DTOs.Kafka;
+using ChatbotService.Application.DTOs.Kafka;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace NotificationService.Infrastructure.Messaging.Kafka
+namespace ChatbotService.Infrastructure.Messaging.Kafka
 {
     public class KafkaConsumerService : BackgroundService
     {

@@ -13,7 +13,6 @@ using backend.Application.Services.Commons;
 using backend.Infrastructure.Helpers;
 using backend.Infrastructure.Extensions;
 using backend.Infrastructure.Messaging.Kafka;
-using backend.Infrastructure.Cache;
 using backend.Application.Jobs;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -201,14 +200,6 @@ builder.Services.AddHangfire(config =>
 
 builder.Services.AddHangfireServer();
 
-// ==========================
-// Redis Cache
-// ==========================
-builder.Services.AddStackExchangeRedisCache(options =>
-{
-    options.Configuration = builder.Configuration.GetConnectionString("Redis");
-});
-builder.Services.AddScoped<IUserSessionService, RedisUserSessionService>();
 var app = builder.Build();
 
 // ==========================

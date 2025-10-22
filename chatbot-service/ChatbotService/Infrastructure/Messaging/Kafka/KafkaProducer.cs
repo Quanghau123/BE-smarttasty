@@ -1,11 +1,11 @@
-using Confluent.Kafka;
+﻿using Confluent.Kafka;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
-using NotificationService.Application.DTOs.Kafka;
-using NotificationService.Application.DTOs.KafkaPayload;
+using ChatbotService.Application.DTOs.Kafka;
+using ChatbotService.Application.DTOs.KafkaPayload;
 
-namespace NotificationService.Infrastructure.Messaging.Kafka
+namespace ChatbotService.Infrastructure.Messaging.Kafka
 {
     public class KafkaProducerService
     {

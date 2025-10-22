@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
-using ChatbotService.Services;
 using System.Threading.Tasks;
+using ChatbotService.Application.Services;
 
-namespace ChatbotService.Controllers
+namespace ChatbotService.WebApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
@@ -18,15 +18,14 @@ namespace ChatbotService.Controllers
         [HttpPost("create")]
         public async Task<IActionResult> CreateOrder([FromBody] OrderDto order)
         {
-            await _n8nWebhook.SendOrderCreatedAsync(order.UserId, order.Id, order.Amount);
-
+            await _n8nWebhook.SendOrderCreatedAsync(order.UserId.ToString(), order.Id, order.Amount);
             return Ok(new { message = "Order created & sent to n8n" });
         }
     }
 
     public class OrderDto
     {
-        public int UserId { get; set; }  // user đăng nhập
+        public int UserId { get; set; }
         public int Id { get; set; }
         public decimal Amount { get; set; }
     }

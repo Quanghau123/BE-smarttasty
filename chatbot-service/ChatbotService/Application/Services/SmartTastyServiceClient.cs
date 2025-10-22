@@ -3,7 +3,7 @@ using System.Net.Http.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 
-namespace ChatbotService.Services
+namespace ChatbotService.Application.Services
 {
     public class SmartTastyServiceClient
     {

@@ -1,4 +1,5 @@
-using ChatbotService.Services;
+using ChatbotService.Application.Interfaces;
+using ChatbotService.Application.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,6 +8,9 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // HttpClient + DI services
+builder.Services.AddMemoryCache();
+builder.Services.AddScoped<IUserStatusService, UserStatusService>();
+
 builder.Services.AddHttpClient<N8nWebhookService>();
 builder.Services.AddHttpClient<SmartTastyServiceClient>();
 

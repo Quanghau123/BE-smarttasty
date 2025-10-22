@@ -1,4 +1,4 @@
-namespace backend.Application.DTOs.KafkaPayload
+namespace ChatbotService.Application.DTOs.KafkaPayload
 {
     public class UserLoggedInPayload
     {

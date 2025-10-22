@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using NotificationService.Application.Interfaces.Services;
 using NotificationService.Application.DTOs.KafkaPayload;
