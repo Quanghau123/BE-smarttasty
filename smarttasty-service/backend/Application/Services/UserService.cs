@@ -53,20 +53,23 @@ namespace backend.Application.Services
                 {
             new Claim(JwtRegisteredClaimNames.Sub, user.UserId.ToString()),
             new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
-            new Claim(ClaimTypes.Email, user.Email),
+            new Claim(ClaimTypes.Name, user.UserName ?? string.Empty),
+            new Claim(ClaimTypes.Email, user.Email ?? string.Empty),
             new Claim(ClaimTypes.Role, user.Role.ToString())
         }),
-                Expires = DateTime.UtcNow.AddHours(2),
+                Expires = DateTime.UtcNow.AddMinutes(_jwtSettings.AccessTokenExpireMinutes),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
 
             var token = tokenHandler.CreateToken(tokenDescriptor);
             return tokenHandler.WriteToken(token);
         }
+
         private string GenerateRefreshToken()
         {
             return Convert.ToBase64String(Guid.NewGuid().ToByteArray());
         }
+
         public async Task<ApiResponse<object>> HandleUserLogin(string email, string password)
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
@@ -112,6 +115,7 @@ namespace backend.Application.Services
             };
 
             await _kafkaProducer.SendMessageAsync(loginEvent, topic: "chatbot-auth");
+            await _kafkaProducer.SendMessageAsync(loginEvent, topic: "login");
 
             return new ApiResponse<object>
             {
@@ -161,11 +165,23 @@ namespace backend.Application.Services
                 if (dbToken == null)
                     return new ApiResponse<object> { ErrCode = ErrorCode.ValidationError, ErrMessage = "Refresh token is invalid or expired." };
 
-                // Tạo AccessToken mới
+                // Lấy user thật từ DB (để lấy username + role chính xác)
+                var user = await _context.Users.FindAsync(int.Parse(userIdClaim));
+                if (user == null)
+                    return new ApiResponse<object> { ErrCode = ErrorCode.NotFound, ErrMessage = "User not found." };
+
+                // Tạo AccessToken mới (dùng dữ liệu trực tiếp từ DB để đảm bảo có username & role)
                 var key = Encoding.ASCII.GetBytes(_jwtSettings.SecretKey);
                 var newTokenDescriptor = new SecurityTokenDescriptor
                 {
-                    Subject = new ClaimsIdentity(principal.Claims),
+                    Subject = new ClaimsIdentity(new[]
+                    {
+                new Claim(JwtRegisteredClaimNames.Sub, user.UserId.ToString()),
+                new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
+                new Claim(ClaimTypes.Name, user.UserName ?? string.Empty),
+                new Claim(ClaimTypes.Email, user.Email ?? string.Empty),
+                new Claim(ClaimTypes.Role, user.Role.ToString())
+            }),
                     Expires = DateTime.UtcNow.AddMinutes(_jwtSettings.AccessTokenExpireMinutes),
                     SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
                 };
@@ -173,11 +189,11 @@ namespace backend.Application.Services
                 var newAccessToken = tokenHandler.CreateToken(newTokenDescriptor);
                 var jwt = tokenHandler.WriteToken(newAccessToken);
 
-                // Tạo RefreshToken mới (và thu hồi cái cũ)
+                // Thu hồi refresh token cũ và tạo refresh token mới
                 dbToken.IsRevoked = true;
                 var newRefreshToken = new RefreshToken
                 {
-                    UserId = int.Parse(userIdClaim),
+                    UserId = user.UserId,
                     Token = Guid.NewGuid().ToString(),
                     ExpiresAt = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpireDays),
                     CreatedAt = DateTime.UtcNow
@@ -186,24 +202,21 @@ namespace backend.Application.Services
                 _context.RefreshTokens.Add(newRefreshToken);
                 await _context.SaveChangesAsync();
 
-                // --- Gửi event Kafka thông báo token đã được refresh ---
-                var jwtToken = tokenHandler.ReadJwtToken(jwt);
-                var userIdForEvent = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
-                var role = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value ?? string.Empty;
-
+                // Gửi event Kafka (dùng user từ DB để chắc chắn có Username + Role)
                 var refreshEvent = new KafkaEnvelope<UserTokenRefreshedPayload>
                 {
                     Event = "UserTokenRefreshed",
-                    Target = userIdForEvent ?? userIdClaim,
+                    Target = user.UserId.ToString(),
                     Payload = new UserTokenRefreshedPayload
                     {
-                        UserId = userIdForEvent ?? userIdClaim,
-                        Role = role,
+                        UserId = user.UserId.ToString(),
+                        Username = user.UserName ?? string.Empty,
+                        Role = user.Role.ToString(),
                         AccessToken = jwt
                     }
                 };
 
-                await _kafkaProducer.SendMessageAsync(refreshEvent, topic: "user-events");
+                await _kafkaProducer.SendMessageAsync(refreshEvent, topic: "user-events-token-refreshed");
 
                 return new ApiResponse<object>
                 {

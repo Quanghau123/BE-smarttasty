@@ -28,10 +28,11 @@ namespace ChatbotService.Infrastructure.Messaging.Kafka
                         var data = JsonSerializer.Deserialize<UserLoggedInPayload>(payload.GetRawText());
                         if (data == null) break;
 
-                        _logger.LogInformation("User {UserId} logged in, role={Role}", data.UserId, data.Role);
+                        _logger.LogInformation("User {UserId} logged in, username={Username}, role={Role}", data.UserId, data.Username, data.Role);
 
                         await _userStatusService.UpdateUserSessionAsync(
                             data.UserId,
+                            data.Username,
                             data.Role,
                             data.Jwt,
                             isOnline: true);
@@ -43,10 +44,11 @@ namespace ChatbotService.Infrastructure.Messaging.Kafka
                         var data = JsonSerializer.Deserialize<UserTokenRefreshedPayload>(payload.GetRawText());
                         if (data == null) break;
 
-                        _logger.LogInformation("User {UserId} token refreshed", data.UserId);
+                        _logger.LogInformation("User {UserId} token refreshed, username={Username}, role={Role}", data.UserId, data.Username, data.Role);
 
                         await _userStatusService.UpdateUserSessionAsync(
                             data.UserId,
+                            data.Username,
                             data.Role,
                             data.AccessToken,
                             isOnline: true);

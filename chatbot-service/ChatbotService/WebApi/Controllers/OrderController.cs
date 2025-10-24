@@ -1,32 +1,44 @@
 using Microsoft.AspNetCore.Mvc;
-using System.Threading.Tasks;
 using ChatbotService.Application.Services;
+using System.Threading.Tasks;
 
 namespace ChatbotService.WebApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class OrderController : ControllerBase
+    public class ChatController : ControllerBase
     {
         private readonly N8nWebhookService _n8nWebhook;
 
-        public OrderController(N8nWebhookService n8nWebhook)
+        public ChatController(N8nWebhookService n8nWebhook)
         {
             _n8nWebhook = n8nWebhook;
         }
 
-        [HttpPost("create")]
-        public async Task<IActionResult> CreateOrder([FromBody] OrderDto order)
+        [HttpPost("send")]
+        public async Task<IActionResult> SendMessage([FromForm] ChatMessageDto message)
         {
-            await _n8nWebhook.SendOrderCreatedAsync(order.UserId.ToString(), order.Id, order.Amount);
-            return Ok(new { message = "Order created & sent to n8n" });
+            // Gửi dữ liệu đến n8n và chờ phản hồi
+            var botReply = await _n8nWebhook.SendChatMessageAsync(
+                message.SessionId,
+                message.Text,
+                message.ImgText,
+                message.ImgPhoto
+            );
+
+            return Ok(new
+            {
+                user = message.Text,
+                bot = botReply
+            });
         }
     }
 
-    public class OrderDto
+    public class ChatMessageDto
     {
-        public int UserId { get; set; }
-        public int Id { get; set; }
-        public decimal Amount { get; set; }
+        public string SessionId { get; set; } = "";
+        public string Text { get; set; } = "";
+        public string? ImgText { get; set; }
+        public IFormFile? ImgPhoto { get; set; }
     }
 }
