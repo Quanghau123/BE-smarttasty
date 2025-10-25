@@ -154,4 +154,3 @@ services:
 
 volumes:
   redisinsight-data:
-  n8n_tmp:
