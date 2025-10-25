@@ -83,7 +83,7 @@ services:
       - N8N_DEFAULT_BINARY_DATA_PATH=/home/node/.n8n/files
     volumes:
       - ./data/n8n_data:/home/node/.n8n
-      - n8n_tmp:/tmp
+      - ./data/n8n_tmp:/tmp
     depends_on:
       - kafka
       - redis
