@@ -82,6 +82,7 @@ services:
     volumes:
       - ./data/n8n_data:/home/node/.n8n
       - n8n_tmp:/tmp
+    command: bash -c "chmod 1777 /tmp && tini -- /docker-entrypoint.sh n8n"
     depends_on:
       - kafka
       - redis
