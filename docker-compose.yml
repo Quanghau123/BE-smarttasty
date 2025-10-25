@@ -79,9 +79,14 @@ services:
       - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER}
       - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD}
       - GENERIC_TIMEZONE=${GENERIC_TIMEZONE}
+      - N8N_BINARY_DATA_MODE=filesystem
+      - N8N_DEFAULT_BINARY_DATA_PATH=/home/node/.n8n/files
+      - N8N_USER_FOLDER=/home/node/.n8n
+      - N8N_TEMPLATES_DIR=/home/node/.n8n/templates
+      - TMPDIR=/home/node/.n8n/tmp
     volumes:
       - ./data/n8n_data:/home/node/.n8n
-      - ./data/n8n_tmp:/tmp
+      - ./data/n8n_tmp:/home/node/.n8n/tmp
     depends_on:
       - kafka
       - redis
