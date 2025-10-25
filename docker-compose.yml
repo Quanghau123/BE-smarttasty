@@ -81,7 +81,7 @@ services:
       - GENERIC_TIMEZONE=${GENERIC_TIMEZONE}
     volumes:
       - ./data/n8n_data:/home/node/.n8n
-      - /tmp:/tmp
+      - n8n_tmp:/tmp
     depends_on:
       - kafka
       - redis
@@ -157,3 +157,4 @@ services:
 
 volumes:
   redisinsight-data:
+  n8n_tmp:
