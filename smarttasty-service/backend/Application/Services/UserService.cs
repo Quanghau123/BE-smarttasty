@@ -107,9 +107,9 @@ namespace backend.Application.Services
                 Payload = new UserLoggedInPayload
                 {
                     UserId = user.UserId.ToString(),
-                    Username = user.UserName,        // NOTE: DTO dùng 'Username'
-                    Role = user.Role.ToString(),     // nếu DTO có Role
-                    Jwt = accessToken,               // gửi access token nếu cần
+                    Username = user.UserName,
+                    Role = user.Role.ToString(),
+                    Jwt = accessToken,
                     Timestamp = DateTime.UtcNow
                 }
             };
@@ -129,9 +129,6 @@ namespace backend.Application.Services
                     {
                         user.UserId,
                         user.UserName,
-                        user.Email,
-                        user.Phone,
-                        user.Address,
                         Role = user.Role.ToString()
                     }
                 }

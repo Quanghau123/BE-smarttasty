@@ -1,29 +1,28 @@
 using Microsoft.AspNetCore.Mvc;
 using ChatbotService.Application.Services;
+using ChatbotService.Application.DTOs;
 using System.Threading.Tasks;
 
 namespace ChatbotService.WebApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class ChatController : ControllerBase
+    public class ChatControllerJson : ControllerBase
     {
         private readonly N8nWebhookService _n8nWebhook;
 
-        public ChatController(N8nWebhookService n8nWebhook)
+        public ChatControllerJson(N8nWebhookService n8nWebhook)
         {
             _n8nWebhook = n8nWebhook;
         }
 
-        [HttpPost("send")]
-        public async Task<IActionResult> SendMessage([FromForm] ChatMessageDto message)
+        [HttpPost("send-form")]
+        public async Task<IActionResult> SendMessage([FromForm] ChatMessageFormDto message)
         {
-            // Gửi dữ liệu đến n8n và chờ phản hồi
             var botReply = await _n8nWebhook.SendChatMessageAsync(
-                message.SessionId,
+                message.AccessToken, // FE chỉ gửi token
                 message.Text,
-                message.ImgText,
-                message.ImgPhoto
+                message.Image
             );
 
             return Ok(new
@@ -32,13 +31,5 @@ namespace ChatbotService.WebApi.Controllers
                 bot = botReply
             });
         }
-    }
-
-    public class ChatMessageDto
-    {
-        public string SessionId { get; set; } = "";
-        public string Text { get; set; } = "";
-        public string? ImgText { get; set; }
-        public IFormFile? ImgPhoto { get; set; }
     }
 }
