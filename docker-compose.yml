@@ -99,8 +99,12 @@ services:
     environment:
       - DOTNET_ENVIRONMENT=Development
       - N8N_URL=${N8N_URL}
+    volumes:
+      - ./chatbot-service/ChatbotService/appsettings.json:/app/appsettings.json:ro
+      - ./data/protection-keys/chatbot:/root/.aspnet/DataProtection-Keys
     depends_on:
       - n8n
+      - kafka
 
   smarttastyservice:
     image: quanghau123/smarttasty-service:latest
