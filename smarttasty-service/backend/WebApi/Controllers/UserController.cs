@@ -4,6 +4,7 @@ using backend.Domain.Models.Requests.User;
 using backend.Domain.Models.Requests.Auth;
 using backend.Infrastructure.Helpers.Commons.Response;
 using backend.Domain.Enums.Commons.Response;
+using backend.Application.DTOs.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -50,39 +51,25 @@ namespace backend.WebApi.Controllers
 
             var result = await _userService.HandleUserLogin(request.Email, request.UserPassword);
 
+            if (result == null)
+                return StatusCode(500, new ApiResponse<object> { ErrCode = ErrorCode.ServerError, ErrMessage = "Invalid response." });
+
             if (result.ErrCode != ErrorCode.Success)
-                return BadRequest(result);
+                return CreateResult(result);
 
-            // --- ADDED: bảo vệ null trước khi cast sang dynamic ---
-            if (result.Data == null)
+            // set refresh token cookie if present
+            if (result.Data?.RefreshToken is string rt && !string.IsNullOrEmpty(rt))
             {
-                return BadRequest(new ApiResponse<object>
-                {
-                    ErrCode = ErrorCode.ServerError,
-                    ErrMessage = "Login succeeded but no response data."
-                });
-            }
-
-            var data = result.Data as dynamic;
-            var refreshToken = data?.refresh_token?.ToString();
-
-            if (!string.IsNullOrEmpty(refreshToken))
-            {
-                Response.Cookies.Append("refresh_token", refreshToken, new CookieOptions
+                Response.Cookies.Append("refresh_token", rt, new CookieOptions
                 {
                     HttpOnly = true,
-                    Secure = true,          // dùng HTTPS mới bật
+                    Secure = true,
                     SameSite = SameSiteMode.Strict,
                     Expires = DateTime.UtcNow.AddDays(7)
                 });
             }
 
-            // chỉ trả access token cho FE
-            return Ok(new
-            {
-                access_token = data?.access_token,
-                user = data?.user
-            });
+            return CreateResult(result);
         }
 
         [HttpPost("refresh-token")]
@@ -96,25 +83,16 @@ namespace backend.WebApi.Controllers
 
             var result = await _userService.RefreshTokenAsync(accessToken, refreshToken);
 
+            if (result == null)
+                return StatusCode(500, new ApiResponse<object> { ErrCode = ErrorCode.ServerError, ErrMessage = "Invalid response." });
+
             if (result.ErrCode != ErrorCode.Success)
-                return BadRequest(result);
+                return CreateResult(result);
 
-            // --- ADDED: bảo vệ null trước khi cast sang dynamic ---
-            if (result.Data == null)
+            // set new refresh token cookie if present
+            if (result.Data?.RefreshToken is string newRt && !string.IsNullOrEmpty(newRt))
             {
-                return BadRequest(new ApiResponse<object>
-                {
-                    ErrCode = ErrorCode.ServerError,
-                    ErrMessage = "Refresh succeeded but no response data."
-                });
-            }
-
-            var data = result.Data as dynamic;
-            var newRefreshToken = data?.refresh_token?.ToString();
-
-            if (!string.IsNullOrEmpty(newRefreshToken))
-            {
-                Response.Cookies.Append("refresh_token", newRefreshToken, new CookieOptions
+                Response.Cookies.Append("refresh_token", newRt, new CookieOptions
                 {
                     HttpOnly = true,
                     Secure = true,
@@ -123,7 +101,7 @@ namespace backend.WebApi.Controllers
                 });
             }
 
-            return Ok(new { access_token = data?.access_token });
+            return CreateResult(result);
         }
 
         [HttpPost("logout/{userId}")]
@@ -133,7 +111,7 @@ namespace backend.WebApi.Controllers
 
             Response.Cookies.Delete("refresh_token");
 
-            return Ok(result);
+            return CreateResult(result);
         }
 
         [HttpGet]
