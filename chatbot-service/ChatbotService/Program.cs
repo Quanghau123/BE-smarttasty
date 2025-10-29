@@ -4,16 +4,21 @@ using ChatbotService.Infrastructure.Messaging.Kafka;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// CORS
+// ==========================
+// HttpContext + CORS
+// ==========================
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
+    options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.AllowAnyOrigin()
+        policy.WithOrigins("http://localhost:3000", "https://smart-tasty.io.vn") // các FE cần truy cập
+              .AllowAnyHeader()
               .AllowAnyMethod()
-              .AllowAnyHeader();
+              .AllowCredentials(); // cần khi FE gửi cookie / withCredentials
     });
 });
+
 
 // ===== Kafka Services =====
 builder.Services.AddSingleton<KafkaProducerService>();
@@ -46,7 +51,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseCors("AllowAll");
+app.UseHttpsRedirection();
+app.UseCors("AllowFrontend");
 app.UseAuthorization();
 app.MapControllers();
 app.Run();
