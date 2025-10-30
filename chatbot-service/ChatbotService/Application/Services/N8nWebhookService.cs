@@ -21,7 +21,7 @@ namespace ChatbotService.Application.Services
         {
             _httpClient = httpClient;
             _config = config;
-            _n8nUrl = config["N8N_URL"] ?? string.Empty;
+            _n8nUrl = config["PRODUCTION_URL"] ?? string.Empty;
             _userStatusService = userStatusService;
         }
 
@@ -68,7 +68,7 @@ namespace ChatbotService.Application.Services
             }
 
             // 🪵 Log kiểm tra URL và dữ liệu gửi đi
-            Console.WriteLine($"[N8N DEBUG] N8N_URL config value: {_n8nUrl}");
+            Console.WriteLine($"[N8N DEBUG] PRODUCTION_URL config value: {_n8nUrl}");
             Console.WriteLine($"[N8N DEBUG] Sending message to N8N: text='{text}', userId='{userSession.UserId}'");
 
             try
