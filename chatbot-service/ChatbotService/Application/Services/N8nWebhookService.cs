@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Http;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.Extensions.Configuration;
 using ChatbotService.Application.Interfaces;
 using System.IO;
 
@@ -28,7 +27,7 @@ namespace ChatbotService.Application.Services
 
         public async Task<string> SendChatMessageAsync(string accessToken, string? text, IFormFile? imageFile)
         {
-            // ✅ Xác thực token
+            // Xác thực token
             var jwtHelper = new JwtHelper(_config["JwtSettings:SecretKey"]);
             ClaimsPrincipal principal;
             try
@@ -46,19 +45,19 @@ namespace ChatbotService.Application.Services
             if (string.IsNullOrEmpty(userId))
                 throw new Exception("Cannot find userId in token");
 
-            // ✅ Lấy session từ cache
+            // Lấy session từ cache
             var userSession = await _userStatusService.GetUserSessionAsync(userId);
             if (userSession == null)
                 throw new Exception($"No active session for user {userId}");
 
-            // ✅ Tạo form-data
+            // Tạo form-data
             var formData = new MultipartFormDataContent
-    {
-        { new StringContent(userSession.UserId), "sessionId" },
-        { new StringContent(userSession.Username ?? ""), "username" },
-        { new StringContent(userSession.Role ?? ""), "role" },
-        { new StringContent(text ?? ""), "text" }
-    };
+            {
+                { new StringContent(userSession.UserId), "sessionId" },
+                { new StringContent(userSession.Username ?? ""), "username" },
+                { new StringContent(userSession.Role ?? ""), "role" },
+                { new StringContent(text ?? ""), "text" }
+            };
 
             if (imageFile != null && imageFile.Length > 0)
             {
@@ -68,12 +67,27 @@ namespace ChatbotService.Application.Services
                 formData.Add(fileContent, "image", imageFile.FileName);
             }
 
-            var response = await _httpClient.PostAsync(_n8nUrl, formData);
-            var responseText = await response.Content.ReadAsStringAsync();
+            // 🪵 Log kiểm tra URL và dữ liệu gửi đi
+            Console.WriteLine($"[N8N DEBUG] N8N_URL config value: {_n8nUrl}");
+            Console.WriteLine($"[N8N DEBUG] Sending message to N8N: text='{text}', userId='{userSession.UserId}'");
 
-            response.EnsureSuccessStatusCode();
+            try
+            {
+                var response = await _httpClient.PostAsync(_n8nUrl, formData);
+                var responseText = await response.Content.ReadAsStringAsync();
 
-            return responseText;
+                Console.WriteLine($"[N8N DEBUG] Response status: {response.StatusCode}");
+                Console.WriteLine($"[N8N DEBUG] Response body: {responseText}");
+
+                response.EnsureSuccessStatusCode();
+
+                return responseText;
+            }
+            catch (HttpRequestException ex)
+            {
+                Console.WriteLine($"[N8N ERROR] Request to N8N failed: {ex.Message}");
+                throw;
+            }
         }
     }
 }
