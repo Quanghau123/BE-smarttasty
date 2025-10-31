@@ -65,9 +65,15 @@ namespace backend.Application.Services
 
         public async Task<ApiResponse<object>> GetRestaurantByIdAsync(int id)
         {
-            var restaurant = await _context.Restaurants.Include(r => r.Owner).FirstOrDefaultAsync(r => r.Id == id);
+            var restaurant = await _context.Restaurants
+                .Include(r => r.Owner)
+                .FirstOrDefaultAsync(r => r.Id == id);
+
             if (restaurant == null)
                 return new ApiResponse<object> { ErrCode = ErrorCode.NotFound, ErrMessage = "Restaurant not found" };
+
+            var totalReviews = await _context.Reviews
+                .CountAsync(r => r.RestaurantId == id);
 
             var dto = _mapper.Map<RestaurantDto>(restaurant);
             dto.ImageUrl = _imageHelper.GetImageUrl(restaurant.ImagePublicId ?? "");
@@ -76,7 +82,11 @@ namespace backend.Application.Services
             {
                 ErrCode = ErrorCode.Success,
                 ErrMessage = "OK",
-                Data = dto
+                Data = new
+                {
+                    Restaurant = dto,
+                    TotalReviews = totalReviews
+                }
             };
         }
 
