@@ -2,9 +2,11 @@ namespace backend.Domain.Enums
 {
     public enum OrderStatus
     {
-        Pending,
-        Paid,
+        Pending,     // Mới tạo, chưa thanh toán
+        Paid,        // Đã thanh toán (hoàn tất)
         Cancelled,
-        Failed
+        Failed,
+        Processing,  // Đang xử lý (sau khi thanh toán thành công VNPAY)
+        Completed    // Đã giao và thanh toán xong
     }
 }

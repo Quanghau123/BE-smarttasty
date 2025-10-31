@@ -407,7 +407,10 @@ namespace backend.Application.Services
 
         public async Task<ApiResponse<object>> UpdateDeliveryStatusAsync(int orderId, DeliveryStatus newStatus)
         {
-            var order = await _context.Orders.FindAsync(orderId);
+            var order = await _context.Orders
+                .Include(o => o.Payment)
+                .FirstOrDefaultAsync(o => o.Id == orderId);
+
             if (order == null)
                 return new ApiResponse<object>
                 {
@@ -416,21 +419,64 @@ namespace backend.Application.Services
                     Data = null
                 };
 
-            if (order.Status != OrderStatus.Paid && order.Status != OrderStatus.Paid)
-            {
+            var payment = order.Payment;
+
+            if (order.Status == OrderStatus.Cancelled)
                 return new ApiResponse<object>
                 {
                     ErrCode = ErrorCode.ValidationError,
-                    ErrMessage = "Cannot update delivery status before payment",
+                    ErrMessage = "Cannot update a cancelled order",
                     Data = null
                 };
-            }
 
             order.DeliveryStatus = newStatus;
+            order.UpdatedAt = DateTime.UtcNow;
+
             if (newStatus == DeliveryStatus.Delivered)
+            {
                 order.DeliveredAt = DateTime.UtcNow;
 
-            order.UpdatedAt = DateTime.UtcNow;
+                // Nếu là thanh toán online (VNPAY, ZaloPay)
+                if (payment != null &&
+                    (payment.Method == PaymentMethod.VNPay || payment.Method == PaymentMethod.ZaloPay))
+                {
+                    // Đã thanh toán xong trước đó
+                    if (payment.Status == PaymentStatus.Success)
+                    {
+                        order.Status = OrderStatus.Paid;
+                    }
+                    else
+                    {
+                        // Nếu chưa thanh toán thành công mà hàng đã giao, lỗi nghiệp vụ
+                        return new ApiResponse<object>
+                        {
+                            ErrCode = ErrorCode.ValidationError,
+                            ErrMessage = "Cannot mark as delivered before successful online payment",
+                            Data = null
+                        };
+                    }
+                }
+
+                // Nếu là COD
+                if (payment != null && payment.Method == PaymentMethod.COD)
+                {
+                    if (payment.Status == PaymentStatus.Success)
+                    {
+                        order.Status = OrderStatus.Paid;
+                    }
+                    else
+                    {
+                        // Trường hợp shipper chưa thu tiền mà đã giao hàng → báo lỗi
+                        return new ApiResponse<object>
+                        {
+                            ErrCode = ErrorCode.ValidationError,
+                            ErrMessage = "Cannot mark COD order as delivered before confirming payment",
+                            Data = null
+                        };
+                    }
+                }
+            }
+
             await _context.SaveChangesAsync();
 
             var orderDto = _mapper.Map<backend.Application.DTOs.Order.OrderDto>(order);

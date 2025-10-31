@@ -127,9 +127,11 @@ namespace backend.WebApi.Controllers
         [HttpGet("vnpay-ipn")]
         public async Task<IActionResult> VNPayIpn()
         {
-            var res = await _paymentService.HandleVNPayIpn(HttpContext.Request.Query);
-            // Fix: Handle anonymous object result
-            return Ok(res);
+            var result = await _paymentService.ProcessVNPayIpnAsync(HttpContext.Request.Query);
+            return StatusCode(
+                result.ErrCode == ErrorCode.Success ? 200 : 400,
+                result.Data
+            );
         }
 
         [HttpGet("pending")]

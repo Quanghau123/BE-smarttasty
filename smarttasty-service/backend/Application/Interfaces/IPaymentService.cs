@@ -18,7 +18,8 @@ namespace backend.Application.Interfaces
         Task<List<Payment>> GetPendingPayments();
         Task<(bool IsSuccess, bool IsFailed, string? TransactionNo, string? Message)> VerifyWithVNPay(Payment payment);
         Task<ApiResponse<object>> HandleVNPayReturn(IQueryCollection query);
-        Task<object> HandleVNPayIpn(IQueryCollection query);
+        Task<ApiResponse<object>> ProcessVNPayIpnAsync(IQueryCollection query);
+
         Task<ApiResponse<object>> CreateCodPaymentAsync(Payment payment);
         Task<ApiResponse<object>> GetPaymentsByUserIdAsync(int userId);
         Task<ApiResponse<object>> ConfirmCodPaymentAsync(int codPaymentId);

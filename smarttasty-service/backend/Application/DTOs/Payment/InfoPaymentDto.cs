@@ -1,5 +1,6 @@
 using backend.Application.DTOs.Order;
 using backend.Application.DTOs.Restaurant;
+using backend.Domain.Enums;
 
 namespace backend.Application.DTOs.Payment
 {
@@ -7,7 +8,7 @@ namespace backend.Application.DTOs.Payment
     {
         public int Id { get; set; }
         public decimal Amount { get; set; }
-        public string Status { get; set; } = string.Empty;
+        public PaymentStatus Status { get; set; }
         public OrderDto Order { get; set; } = null!;
     }
 }

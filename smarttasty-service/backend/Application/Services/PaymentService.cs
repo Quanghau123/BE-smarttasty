@@ -191,35 +191,79 @@ namespace backend.Application.Services
                 };
             }
         }
-        public async Task<object> HandleVNPayIpn(IQueryCollection query)
+        public async Task<ApiResponse<object>> ProcessVNPayIpnAsync(IQueryCollection query)
         {
+            // Kiểm tra chữ ký bảo mật
             if (!_vnPayService.ValidateSignature(query))
-                return new { RspCode = "97", Message = "Invalid signature" };
+            {
+                return new ApiResponse<object>
+                {
+                    ErrCode = ErrorCode.ValidationError,
+                    ErrMessage = "Invalid signature",
+                    Data = new { RspCode = "97", Message = "Invalid signature" }
+                };
+            }
 
             var txnRef = query["vnp_TxnRef"].ToString();
             var transactionNo = query["vnp_TransactionNo"].ToString();
             var responseCode = query["vnp_ResponseCode"].ToString();
 
-            var payment = await GetPaymentByOrderIdAsync(txnRef); // now uses string overload
+            // Tìm payment tương ứng
+            var payment = await GetPaymentByOrderIdAsync(txnRef);
             if (payment == null)
-                return new { RspCode = "01", Message = "Payment not found" };
+            {
+                return new ApiResponse<object>
+                {
+                    ErrCode = ErrorCode.NotFound,
+                    ErrMessage = "Payment not found",
+                    Data = new { RspCode = "01", Message = "Payment not found" }
+                };
+            }
 
+            // Nếu đã xác nhận rồi thì bỏ qua
             if (payment.Status == PaymentStatus.Success)
-                return new { RspCode = "02", Message = "Payment already confirmed" };
+            {
+                return new ApiResponse<object>
+                {
+                    ErrCode = ErrorCode.Success,
+                    ErrMessage = "Payment already confirmed",
+                    Data = new { RspCode = "02", Message = "Payment already confirmed" }
+                };
+            }
 
+            // Xử lý kết quả từ VNPay
             if (responseCode == "00")
             {
                 await UpdatePaymentSuccess(payment, transactionNo);
                 await LogTransactionAsync(payment, PaymentStatus.Success, query);
-                return new { RspCode = "00", Message = "Confirm Success" };
+
+                // Cập nhật trạng thái đơn hàng (đảm bảo có entity Order)
+                if (payment.Order != null)
+                {
+                    payment.Order.Status = OrderStatus.Processing;
+                    await _db.SaveChangesAsync();
+                }
+
+                return new ApiResponse<object>
+                {
+                    ErrCode = ErrorCode.Success,
+                    ErrMessage = "Payment confirmed successfully",
+                    Data = new { RspCode = "00", Message = "Confirm Success" }
+                };
             }
             else
             {
                 await UpdatePaymentFail(payment, $"VNPay failed with code {responseCode}");
                 await LogTransactionAsync(payment, PaymentStatus.Failed, query);
-                return new { RspCode = "00", Message = "Confirm Failed" };
+                return new ApiResponse<object>
+                {
+                    ErrCode = ErrorCode.ValidationError,
+                    ErrMessage = "VNPay failed",
+                    Data = new { RspCode = "00", Message = "Confirm Failed" }
+                };
             }
         }
+
         public async Task<ApiResponse<object>> CreateCodPaymentAsync(Payment payment)
         {
             using var tx = await _db.Database.BeginTransactionAsync();

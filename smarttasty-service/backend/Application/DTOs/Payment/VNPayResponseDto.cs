@@ -1,7 +1,7 @@
+using backend.Domain.Enums;
+
 namespace backend.Application.DTOs.Payment
 {
-    using backend.Domain.Enums;
-
     public class VNPayResponseDto
     {
         public string ResponseCode { get; set; } = string.Empty;

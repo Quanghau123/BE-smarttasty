@@ -1,4 +1,5 @@
 using backend.Application.DTOs.Restaurant;
+using backend.Domain.Enums;
 
 namespace backend.Application.DTOs.Order
 {
@@ -7,9 +8,11 @@ namespace backend.Application.DTOs.Order
         public int Id { get; set; }
         public int UserId { get; set; }
         public int RestaurantId { get; set; }
+        public OrderStatus Status { get; set; }
         public string DeliveryAddress { get; set; } = string.Empty;
         public string RecipientName { get; set; } = string.Empty;
         public string RecipientPhone { get; set; } = string.Empty;
+        public DeliveryStatus DeliveryStatus { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
         public List<OrderItemDto> Items { get; set; } = new();
