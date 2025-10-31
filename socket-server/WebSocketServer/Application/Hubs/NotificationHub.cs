@@ -10,7 +10,7 @@ namespace WebSocketServer.Application.Hubs
     public class NotificationHub : Hub
     {
         private readonly ILogger<NotificationHub> _logger;
-        private readonly HttpClient _httpClient; // Gọi Notification-service API
+        private readonly HttpClient _httpClient;
 
         public NotificationHub(ILogger<NotificationHub> logger, IHttpClientFactory httpFactory)
         {
@@ -23,7 +23,6 @@ namespace WebSocketServer.Application.Hubs
             var userId = Context.UserIdentifier;
             _logger.LogInformation("User connected: {ConnectionId}, UserId={UserId}", Context.ConnectionId, userId);
 
-            // Gọi Notification-service API lấy offline notification
             try
             {
                 var response = await _httpClient.GetFromJsonAsync<NotificationPayload[]>($"api/notifications/offline/pop/{userId}");
@@ -35,7 +34,6 @@ namespace WebSocketServer.Application.Hubs
                         {
                             await Clients.User(userId)
                                 .SendAsync("ReceiveNotification", notif.Title, notif.Message);
-
                             _logger.LogInformation("Sent offline notification to {UserId}: {Title}", userId, notif.Title);
                         }
                     }
@@ -53,6 +51,13 @@ namespace WebSocketServer.Application.Hubs
         {
             _logger.LogInformation("User disconnected: {ConnectionId}", Context.ConnectionId);
             return base.OnDisconnectedAsync(exception);
+        }
+
+        //Thêm endpoint để FE join room
+        public async Task JoinRestaurantRoom(string restaurantId)
+        {
+            await Groups.AddToGroupAsync(Context.ConnectionId, restaurantId);
+            _logger.LogInformation("User {ConnectionId} joined restaurant room {RestaurantId}", Context.ConnectionId, restaurantId);
         }
     }
 }

@@ -11,6 +11,7 @@ namespace backend.Application.Interfaces
         Task<ApiResponse<PromotionDto?>> CreatePromotionAsync(CreatePromotionRequest dto);
         Task<ApiResponse<List<PromotionDto>>> GetPromotionsByRestaurantIdAsync(int restaurantId);
         Task<ApiResponse<PromotionDto?>> GetPromotionByIdAsync(int id);
+        Task<ApiResponse<List<PromotionDto>>> GetAllPromotionsAsync();
         Task<ApiResponse<PromotionDto?>> UpdatePromotionAsync(int id, Promotion updated);
         Task<ApiResponse<object>> DeletePromotionAsync(int id);
     }

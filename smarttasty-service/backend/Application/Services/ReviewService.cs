@@ -10,16 +10,21 @@ using backend.Domain.Models;
 using backend.Domain.Models.Requests.Review;
 using backend.Infrastructure.Helpers.Commons.Response;
 using backend.Domain.Enums.Commons.Response;
+using backend.Infrastructure.Messaging.Kafka;
+using backend.Application.DTOs.Kafka;
+using backend.Application.DTOs.KafkaPayload;
 
 namespace backend.Application.Services
 {
     public class ReviewService : IReviewService
     {
         private readonly ApplicationDbContext _context;
+        private readonly KafkaProducerService _kafkaProducer;
 
-        public ReviewService(ApplicationDbContext context)
+        public ReviewService(ApplicationDbContext context, KafkaProducerService kafkaProducer)
         {
             _context = context;
+            _kafkaProducer = kafkaProducer;
         }
 
         public async Task<ApiResponse<ReviewDTO>> CreateReviewAsync(CreateReviewRequest request)
@@ -39,10 +44,39 @@ namespace backend.Application.Services
             await _context.Entry(review).Reference(r => r.User).LoadAsync();
             await _context.Entry(review).Reference(r => r.Restaurant).LoadAsync();
 
+            var avgRating = await _context.Reviews
+                .Where(r => r.RestaurantId == request.RestaurantId)
+                .AverageAsync(r => r.Rating);
+            var totalReviews = await _context.Reviews
+                .CountAsync(r => r.RestaurantId == request.RestaurantId);
+
+            var restaurant = await _context.Restaurants.FindAsync(request.RestaurantId);
+            if (restaurant != null)
+            {
+                restaurant.AverageRating = avgRating;
+                await _context.SaveChangesAsync();
+            }
+
+            var payload = new RatingUpdatedPayload
+            {
+                RestaurantId = request.RestaurantId,
+                AverageRating = avgRating,
+                TotalReviews = totalReviews
+            };
+
+            var envelope = new KafkaEnvelope<RatingUpdatedPayload>
+            {
+                Event = "restaurant.rating.updated",
+                Payload = payload,
+                Target = "socket-service"
+            };
+
+            await _kafkaProducer.SendMessageAsync(envelope, "rating-topic");
+
             return new ApiResponse<ReviewDTO>
             {
                 ErrCode = ErrorCode.Success,
-                ErrMessage = "Review created successfully",
+                ErrMessage = "Review created and restaurant rating updated successfully",
                 Data = MapToDTO(review)
             };
         }

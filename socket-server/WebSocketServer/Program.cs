@@ -76,10 +76,11 @@ var app = builder.Build();
 Console.WriteLine("2️⃣ App built");
 
 // ===== 7️⃣ Middleware =====
-app.UseRouting();
 app.UseCors("CorsPolicy");
+app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
+
 Console.WriteLine("3️⃣ Middleware configured");
 
 // ===== 8️⃣ Map SignalR Hub =====

@@ -50,6 +50,13 @@ namespace backend.WebApi.Controllers
             return CreateResult(res);
         }
 
+        [HttpGet("all")]
+        public async Task<IActionResult> GetAllPromotions()
+        {
+            var result = await _promotionService.GetAllPromotionsAsync();
+            return CreateResult(result);
+        }
+
         [Authorize(Roles = "business")]
         [HttpPost]
         public async Task<IActionResult> CreatePromotion([FromBody] CreatePromotionRequest dto)

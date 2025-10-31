@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
+using System.Threading.Tasks;
 using WebSocketServer.Application.DTOs.KafkaPayload;
 using WebSocketServer.Application.Hubs;
-using System.Threading.Tasks;
 
 namespace WebSocketServer.Application.Services
 {
@@ -28,6 +28,24 @@ namespace WebSocketServer.Application.Services
                 await _hub.Clients.User(userId)
                           .SendAsync("ReceiveNotification", payload.Title, payload.Message);
             }
+        }
+
+        // Push cập nhật rating của nhà hàng
+        public async Task PushRestaurantRatingUpdateAsync(RatingUpdatedPayload payload)
+        {
+            var message = new
+            {
+                type = "restaurant_rating_update",
+                data = payload
+            };
+
+            await BroadcastToRestaurantRoomAsync(payload.RestaurantId.ToString(), message);
+        }
+
+        private async Task BroadcastToRestaurantRoomAsync(string restaurantId, object message)
+        {
+            _logger.LogInformation("Broadcasting rating update to restaurant {RestaurantId}", restaurantId);
+            await _hub.Clients.Group(restaurantId).SendAsync("ReceiveRestaurantUpdate", message);
         }
     }
 }

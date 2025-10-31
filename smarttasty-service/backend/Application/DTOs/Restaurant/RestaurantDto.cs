@@ -13,6 +13,7 @@ namespace backend.Application.DTOs.Restaurant
 
         public string Name { get; set; } = "";
         public RestaurantCategory Category { get; set; }
+        public double AverageRating { get; set; } = 0.0;
         public string Address { get; set; } = "";
         public string ImagePublicId { get; set; } = "";
         public string? ImageUrl { get; set; } = "";

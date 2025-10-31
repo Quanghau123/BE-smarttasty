@@ -115,6 +115,23 @@ namespace backend.Application.Services
             };
         }
 
+        public async Task<ApiResponse<List<PromotionDto>>> GetAllPromotionsAsync()
+        {
+            var promos = await _context.Promotions
+                .Include(p => p.Restaurant)
+                .OrderByDescending(p => p.StartDate)
+                .ToListAsync();
+
+            var data = _mapper.Map<List<PromotionDto>>(promos);
+
+            return new ApiResponse<List<PromotionDto>>
+            {
+                ErrCode = ErrorCode.Success,
+                ErrMessage = "OK",
+                Data = data
+            };
+        }
+
         public async Task<ApiResponse<PromotionDto?>> UpdatePromotionAsync(int id, Promotion updated)
         {
             if (_userContext.Role != "business")

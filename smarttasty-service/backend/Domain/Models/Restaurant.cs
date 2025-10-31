@@ -33,6 +33,8 @@ namespace backend.Domain.Models
         [Required]
         public double Longitude { get; set; }
 
+        public double AverageRating { get; set; } = 0.0;
+
         [Required]
         public string Description { get; set; } = string.Empty;
 

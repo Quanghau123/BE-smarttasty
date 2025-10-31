@@ -21,29 +21,23 @@ namespace WebSocketServer.Infrastructure.Messaging.Kafka
         {
             _logger.LogInformation("Received event {Event}, TxId={TxId}", @event, txId);
 
-            if (@event == "RealtimeNotification")
+            switch (@event)
             {
-                try
-                {
+                case "RealtimeNotification":
                     var notifPayload = JsonSerializer.Deserialize<NotificationPayload>(payload.GetRawText());
                     if (notifPayload != null)
-                    {
                         await _socketService.PushRealtimeNotificationAsync(notifPayload);
-                        _logger.LogInformation("Notification pushed successfully, TxId={TxId}", txId);
-                    }
-                    else
-                    {
-                        _logger.LogWarning("Failed to deserialize payload, TxId={TxId}", txId);
-                    }
-                }
-                catch (System.Exception ex)
-                {
-                    _logger.LogError(ex, "Error handling RealtimeNotification, TxId={TxId}", txId);
-                }
-            }
-            else
-            {
-                _logger.LogWarning("Unknown event: {Event}, TxId={TxId}", @event, txId);
+                    break;
+
+                case "restaurant.rating.updated":
+                    var ratingPayload = JsonSerializer.Deserialize<RatingUpdatedPayload>(payload.GetRawText());
+                    if (ratingPayload != null)
+                        await _socketService.PushRestaurantRatingUpdateAsync(ratingPayload);
+                    break;
+
+                default:
+                    _logger.LogWarning("Unknown event: {Event}, TxId={TxId}", @event, txId);
+                    break;
             }
         }
     }
