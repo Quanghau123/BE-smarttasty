@@ -63,8 +63,8 @@ namespace backend.WebApi.Controllers
                 Response.Cookies.Append("refresh_token", rt, new CookieOptions
                 {
                     HttpOnly = true,
-                    Secure = true,
-                    SameSite = SameSiteMode.Strict,
+                    Secure = false,
+                    SameSite = SameSiteMode.None,
                     Expires = DateTime.UtcNow.AddDays(7)
                 });
             }
