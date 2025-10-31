@@ -7,43 +7,45 @@ using WebSocketServer.Application.Services;
 using WebSocketServer.Infrastructure.Messaging.Kafka;
 
 var builder = WebApplication.CreateBuilder(args);
-Console.WriteLine("1️⃣ Builder created");
+Console.WriteLine("Builder created");
 
-// ===== 0️⃣ Register HttpClientFactory =====
-// 🔑 để resolve IHttpClientFactory trong NotificationHub
+// ===== Register HttpClientFactory =====
+// resolve IHttpClientFactory trong NotificationHub
 builder.Services.AddHttpClient("NotificationService", client =>
 {
     client.BaseAddress = new Uri("http://localhost:5088/");
 });
 
-// ===== 1️⃣ CORS =====
-var allowedOrigin = "http://localhost:3000";
+// ==========================
+// HttpContext + CORS
+// ==========================
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("CorsPolicy", policy =>
+    options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins(allowedOrigin)
+        policy.WithOrigins("http://localhost:3000", "https://smart-tasty.io.vn") // các FE cần truy cập
               .AllowAnyHeader()
               .AllowAnyMethod()
-              .AllowCredentials(); // bắt buộc với JWT + SignalR
+              .AllowCredentials(); // cần khi FE gửi cookie / withCredentials
     });
 });
 
-// ===== 2️⃣ SignalR =====
+// ===== SignalR =====
 builder.Services.AddSignalR();
 
-// ===== 3️⃣ SocketNotificationService =====
-// ✅ FIX: đăng ký Singleton để hub + KafkaDispatcher dùng chung
+// ===== SocketNotificationService =====
+// FIX: đăng ký Singleton để hub + KafkaDispatcher dùng chung
 builder.Services.AddSingleton<SocketNotificationService>();
 
-// ===== 4️⃣ KafkaDispatcher =====
-// ✅ FIX: vẫn giữ Scoped, resolve bằng scope trong KafkaConsumerService
+// ===== KafkaDispatcher =====
+// FIX: vẫn giữ Scoped, resolve bằng scope trong KafkaConsumerService
 builder.Services.AddScoped<KafkaDispatcher>();
 
-// ===== 5️⃣ KafkaConsumerService =====
+// ===== KafkaConsumerService =====
 builder.Services.AddHostedService<KafkaConsumerService>();
 
-// ===== 6️⃣ JWT Authentication =====
+// ===== JWT Authentication =====
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -73,20 +75,21 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 var app = builder.Build();
-Console.WriteLine("2️⃣ App built");
+Console.WriteLine("App built");
 
-// ===== 7️⃣ Middleware =====
-app.UseCors("CorsPolicy");
+// ===== Middleware =====
+app.UseHttpsRedirection();
+app.UseCors("AllowFrontend");
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-Console.WriteLine("3️⃣ Middleware configured");
+Console.WriteLine("Middleware configured");
 
-// ===== 8️⃣ Map SignalR Hub =====
+// ===== Map SignalR Hub =====
 app.MapHub<NotificationHub>("/hubs/notification");
-Console.WriteLine("4️⃣ Hubs mapped");
+Console.WriteLine("Hubs mapped");
 
-// ===== 9️⃣ Run =====
-Console.WriteLine("5️⃣ Running app");
+// ===== Run =====
+Console.WriteLine("Running app");
 app.Run();
