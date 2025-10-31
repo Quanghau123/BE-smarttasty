@@ -133,6 +133,7 @@ services:
       - ./data/protection-keys/socket:/root/.aspnet/DataProtection-Keys
     environment:
       - DOTNET_ENVIRONMENT=Development
+      - DOTNET_URLS=http://0.0.0.0:8000
 
   notification-service:
     image: quanghau123/notification-service:latest
