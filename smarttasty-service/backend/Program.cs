@@ -221,5 +221,15 @@ RecurringJob.AddOrUpdate<PaymentJob>(
     job => job.CheckPendingPayments(),
     "*/5 * * * *"
 );
+RecurringJob.AddOrUpdate<PromotionJob>(
+    "cleanup-expired-promotions",
+    job => job.CleanupExpiredPromotions(),
+    Cron.Hourly
+);
+RecurringJob.AddOrUpdate<VoucherJob>(
+    "cleanup-expired-vouchers",
+    job => job.CleanupExpiredVouchers(),
+    Cron.Daily
+);
 
 app.Run();

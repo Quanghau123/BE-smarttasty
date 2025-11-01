@@ -6,6 +6,7 @@ using backend.Domain.Enums.Commons.Response;
 using backend.Infrastructure.Helpers.Commons.Response;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 
 namespace backend.WebApi.Controllers
 {
@@ -59,20 +60,22 @@ namespace backend.WebApi.Controllers
 
         [Authorize(Roles = "business")]
         [HttpPost]
-        public async Task<IActionResult> CreatePromotion([FromBody] CreatePromotionRequest dto)
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> CreatePromotion([FromForm] CreatePromotionRequest dto, IFormFile? file)
         {
             dto.StartDate = DateTime.SpecifyKind(dto.StartDate, DateTimeKind.Utc);
             dto.EndDate = DateTime.SpecifyKind(dto.EndDate, DateTimeKind.Utc);
 
-            var res = await _promotionService.CreatePromotionAsync(dto);
+            var res = await _promotionService.CreatePromotionAsync(dto, file);
             return CreateResult(res);
         }
 
         [Authorize(Roles = "business")]
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdatePromotion(int id, [FromBody] Promotion updatedPromotion)
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> UpdatePromotion(int id, [FromForm] Promotion updatedPromotion, IFormFile? file)
         {
-            var res = await _promotionService.UpdatePromotionAsync(id, updatedPromotion);
+            var res = await _promotionService.UpdatePromotionAsync(id, updatedPromotion, file);
             return CreateResult(res);
         }
 

@@ -8,6 +8,8 @@ using backend.Domain.Models.Requests.Promotion;
 using backend.Domain.Enums.Commons.Response;
 using backend.Infrastructure.Helpers.Commons.Response;
 using Microsoft.EntityFrameworkCore;
+using backend.Infrastructure.Helpers;
+using Microsoft.AspNetCore.Http;
 
 namespace backend.Application.Services
 {
@@ -16,15 +18,19 @@ namespace backend.Application.Services
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
         private readonly IUserContextService _userContext;
+        private readonly IPhotoService _photoService;
+        private readonly IImageHelper _imageHelper;
 
-        public PromotionService(ApplicationDbContext context, IMapper mapper, IUserContextService userContext)
+        public PromotionService(ApplicationDbContext context, IMapper mapper, IUserContextService userContext, IPhotoService photoService, IImageHelper imageHelper)
         {
             _context = context;
             _mapper = mapper;
             _userContext = userContext;
+            _photoService = photoService;
+            _imageHelper = imageHelper;
         }
 
-        public async Task<ApiResponse<PromotionDto?>> CreatePromotionAsync(CreatePromotionRequest dto)
+        public async Task<ApiResponse<PromotionDto?>> CreatePromotionAsync(CreatePromotionRequest dto, IFormFile? file)
         {
             if (_userContext.Role != "business")
                 return new ApiResponse<PromotionDto?>
@@ -63,16 +69,35 @@ namespace backend.Application.Services
                 TargetType = dto.TargetType
             };
 
+            if (file != null)
+            {
+                var uploadedPublicId = await _photoService.UploadPhotoAsync(file, "promotions");
+                if (uploadedPublicId == null)
+                {
+                    return new ApiResponse<PromotionDto?>
+                    {
+                        ErrCode = ErrorCode.ServerError,
+                        ErrMessage = "Failed to upload image",
+                        Data = null
+                    };
+                }
+                promotion.Image = uploadedPublicId;
+            }
+
             _context.Promotions.Add(promotion);
             await _context.SaveChangesAsync();
 
             await _context.Entry(promotion).Reference(p => p.Restaurant).LoadAsync();
 
+            var dtoOut = _mapper.Map<PromotionDto>(promotion);
+            if (dtoOut != null && !string.IsNullOrEmpty(dtoOut.Image))
+                dtoOut.ImageUrl = _imageHelper.GetImageUrl(dtoOut.Image);
+
             return new ApiResponse<PromotionDto?>
             {
                 ErrCode = ErrorCode.Success,
                 ErrMessage = "Created successfully",
-                Data = _mapper.Map<PromotionDto>(promotion)
+                Data = dtoOut
             };
         }
 
@@ -84,6 +109,15 @@ namespace backend.Application.Services
                 .ToListAsync();
 
             var data = _mapper.Map<List<PromotionDto>>(promos);
+
+            if (data != null)
+            {
+                foreach (var d in data)
+                {
+                    if (!string.IsNullOrEmpty(d.Image))
+                        d.ImageUrl = _imageHelper.GetImageUrl(d.Image);
+                }
+            }
 
             return new ApiResponse<List<PromotionDto>>
             {
@@ -107,11 +141,15 @@ namespace backend.Application.Services
                     Data = null
                 };
 
+            var dtoOut = _mapper.Map<PromotionDto>(promo);
+            if (dtoOut != null && !string.IsNullOrEmpty(dtoOut.Image))
+                dtoOut.ImageUrl = _imageHelper.GetImageUrl(dtoOut.Image);
+
             return new ApiResponse<PromotionDto?>
             {
                 ErrCode = ErrorCode.Success,
                 ErrMessage = "OK",
-                Data = _mapper.Map<PromotionDto>(promo)
+                Data = dtoOut
             };
         }
 
@@ -124,6 +162,15 @@ namespace backend.Application.Services
 
             var data = _mapper.Map<List<PromotionDto>>(promos);
 
+            if (data != null)
+            {
+                foreach (var d in data)
+                {
+                    if (!string.IsNullOrEmpty(d.Image))
+                        d.ImageUrl = _imageHelper.GetImageUrl(d.Image);
+                }
+            }
+
             return new ApiResponse<List<PromotionDto>>
             {
                 ErrCode = ErrorCode.Success,
@@ -132,7 +179,7 @@ namespace backend.Application.Services
             };
         }
 
-        public async Task<ApiResponse<PromotionDto?>> UpdatePromotionAsync(int id, Promotion updated)
+        public async Task<ApiResponse<PromotionDto?>> UpdatePromotionAsync(int id, Promotion updated, IFormFile? file)
         {
             if (_userContext.Role != "business")
                 return new ApiResponse<PromotionDto?>
@@ -170,13 +217,34 @@ namespace backend.Application.Services
             promo.DiscountValue = updated.DiscountValue;
             promo.TargetType = updated.TargetType;
 
+            if (file != null)
+            {
+                if (!string.IsNullOrEmpty(promo.Image))
+                {
+                    await _photoService.DeletePhotoAsync(promo.Image);
+                }
+
+                var uploadedPublicId = await _photoService.UploadPhotoAsync(file, "promotions");
+                if (uploadedPublicId == null) return new ApiResponse<PromotionDto?>
+                {
+                    ErrCode = ErrorCode.ServerError,
+                    ErrMessage = "Failed to upload image",
+                    Data = null
+                };
+                promo.Image = uploadedPublicId;
+            }
+
             await _context.SaveChangesAsync();
+
+            var dtoOut = _mapper.Map<PromotionDto>(promo);
+            if (dtoOut != null && !string.IsNullOrEmpty(dtoOut.Image))
+                dtoOut.ImageUrl = _imageHelper.GetImageUrl(dtoOut.Image);
 
             return new ApiResponse<PromotionDto?>
             {
                 ErrCode = ErrorCode.Success,
                 ErrMessage = "Updated successfully",
-                Data = _mapper.Map<PromotionDto>(promo)
+                Data = dtoOut
             };
         }
 
@@ -210,6 +278,18 @@ namespace backend.Application.Services
                     Data = null
                 };
 
+            if (!string.IsNullOrEmpty(promo.Image))
+            {
+                var deleted = await _photoService.DeletePhotoAsync(promo.Image);
+                if (!deleted)
+                    return new ApiResponse<object>
+                    {
+                        ErrCode = ErrorCode.ServerError,
+                        ErrMessage = "Failed to delete image",
+                        Data = null
+                    };
+            }
+
             _context.Promotions.Remove(promo);
             await _context.SaveChangesAsync();
             return new ApiResponse<object>
@@ -218,6 +298,20 @@ namespace backend.Application.Services
                 ErrMessage = "Deleted successfully",
                 Data = null
             };
+        }
+
+        public async Task RemoveExpiredPromotionsAsync()
+        {
+            var now = DateTime.UtcNow;
+            var expiredPromotions = await _context.Promotions
+                .Where(p => p.EndDate < now)
+                .ToListAsync();
+
+            if (expiredPromotions.Any())
+            {
+                _context.Promotions.RemoveRange(expiredPromotions);
+                await _context.SaveChangesAsync();
+            }
         }
     }
 }

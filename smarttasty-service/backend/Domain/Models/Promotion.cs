@@ -35,6 +35,9 @@ namespace backend.Domain.Models
         [Required]
         public PromotionTarget TargetType { get; set; }
 
+        // store photo public id/key (nullable)
+        public string? Image { get; set; }
+
         public List<DishPromotion> DishPromotions { get; set; } = new();
 
         public List<OrderPromotion> OrderPromotions { get; set; } = new();

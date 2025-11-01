@@ -134,7 +134,7 @@ namespace backend.Infrastructure.Data
 }
 
 //add + update (add mà không update là lỗi nguyên db vì không so sánh với migrations cũ được)
-//dotnet ef migrations add AddAverageRatingforRestaurant
+//dotnet ef migrations add AddPromotionImageField
 //dotnet ef database update
 
 //delete migrations nếu update bị lỗi

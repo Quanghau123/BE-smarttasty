@@ -12,5 +12,6 @@ namespace backend.Application.Interfaces
         Task<ApiResponse<VoucherDto?>> CreateVoucherAsync(CreateVoucherRequest dto);
         Task<ApiResponse<List<VoucherDto>>> GetUserVouchersAsync(int userId);
         Task<ApiResponse<object>> MarkAsUsedAsync(int id);
+        Task RemoveExpiredVouchersAsync();
     }
 }

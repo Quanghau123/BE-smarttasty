@@ -14,6 +14,12 @@ namespace backend.Application.DTOs.Promotion
         public DateTime EndDate { get; set; }
 
         public RestaurantForPromotionDto Restaurant { get; set; } = null!;
+
+        // store public id/key of uploaded image
+        public string? Image { get; set; }
+
+        // full URL for UI
+        public string? ImageUrl { get; set; }
     }
 
     public class RestaurantForPromotionDto

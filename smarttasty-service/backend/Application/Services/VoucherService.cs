@@ -127,5 +127,18 @@ namespace backend.Application.Services
                 Data = null
             };
         }
+        public async Task RemoveExpiredVouchersAsync()
+        {
+            var now = DateTime.UtcNow;
+            var expiredVouchers = await _context.Vouchers
+                .Where(v => v.ExpiredAt < now)
+                .ToListAsync();
+
+            if (expiredVouchers.Any())
+            {
+                _context.Vouchers.RemoveRange(expiredVouchers);
+                await _context.SaveChangesAsync();
+            }
+        }
     }
 }

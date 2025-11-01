@@ -47,5 +47,26 @@ namespace backend.WebApi.Controllers
             var res = await _reservationService.UpdateStatusAsync(id, status, changedBy, note);
             return CreateResult(res);
         }
+
+        [HttpGet("restaurant/{restaurantId}")]
+        public async Task<IActionResult> GetByRestaurant(int restaurantId)
+        {
+            var res = await _reservationService.GetReservationsByRestaurantAsync(restaurantId);
+            return CreateResult(res);
+        }
+
+        [HttpGet("user/{userId}")]
+        public async Task<IActionResult> GetByUser(int userId)
+        {
+            var res = await _reservationService.GetReservationsByUserAsync(userId);
+            return CreateResult(res);
+        }
+
+        [HttpDelete("{reservationId}")]
+        public async Task<IActionResult> Delete(int reservationId, [FromQuery] int userId)
+        {
+            var res = await _reservationService.DeleteReservationAsync(reservationId, userId);
+            return CreateResult(res);
+        }
     }
 }
