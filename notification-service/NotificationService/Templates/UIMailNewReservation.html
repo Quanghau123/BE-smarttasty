@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Đơn đặt bàn mới - SmartTasty</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #f4f6f8;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+          'Helvetica Neue', Arial, 'Noto Sans', 'Liberation Sans', sans-serif;
+        color: #333333;
+        -webkit-text-size-adjust: 100%;
+      }
+      .email-wrapper {
+        width: 100%;
+        padding: 20px 0;
+      }
+      .email-content {
+        max-width: 600px;
+        margin: 0 auto;
+        background: #ffffff;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+      }
+      .header {
+        background: #ff6b35;
+        color: #ffffff;
+        padding: 20px;
+        text-align: center;
+      }
+      .header h1 {
+        margin: 0;
+        font-size: 20px;
+        line-height: 1.2;
+      }
+      .body {
+        padding: 20px;
+        font-size: 15px;
+        line-height: 1.5;
+      }
+      .details {
+        background: #f8fafb;
+        border: 1px solid #eef2f5;
+        padding: 14px;
+        margin: 16px 0;
+        border-radius: 6px;
+      }
+      .detail-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 6px 0;
+        border-bottom: 1px dashed rgba(0, 0, 0, 0.04);
+      }
+      .detail-row:last-child {
+        border-bottom: none;
+      }
+      .cta {
+        text-align: center;
+        margin: 18px 0 8px;
+      }
+      .btn {
+        display: inline-block;
+        padding: 10px 18px;
+        background: #ff6b35;
+        color: #ffffff;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: 600;
+      }
+      .footer {
+        padding: 14px 20px;
+        font-size: 13px;
+        color: #7a8a94;
+        text-align: center;
+        background: #fbfcfd;
+        border-top: 1px solid #eef2f5;
+      }
+      @media (max-width: 480px) {
+        .body {
+          padding: 14px;
+        }
+        .header {
+          padding: 16px;
+        }
+        .detail-row {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="email-wrapper">
+      <div
+        class="email-content"
+        role="article"
+        aria-roledescription="email"
+        aria-label="Đơn đặt bàn mới"
+      >
+        <div class="header">
+          <h1>SmartTasty - Đơn đặt bàn mới</h1>
+        </div>
+
+        <div class="body">
+          <p>Xin chào Quý nhà hàng,</p>
+
+          <p>
+            Bạn vừa nhận được một <strong>đơn đặt bàn mới</strong> qua hệ thống
+            SmartTasty. Dưới đây là thông tin chi tiết:
+          </p>
+
+          <div class="details" aria-labelledby="reservation-details">
+            <div
+              id="reservation-details"
+              style="font-weight: 600; margin-bottom: 6px"
+            >
+              Thông tin đặt bàn
+            </div>
+
+            <div class="detail-row">
+              <div>Tên khách hàng:</div>
+              <div>{{contactName}}</div>
+            </div>
+
+            <div class="detail-row">
+              <div>Ngày đến:</div>
+              <div>{{arrivalDate}}</div>
+            </div>
+
+            <div class="detail-row">
+              <div>Thời gian đặt:</div>
+              <div>{{reservationTime}}</div>
+            </div>
+
+            <div class="detail-row">
+              <div>Mã đơn:</div>
+              <div>#{{reservationId}}</div>
+            </div>
+          </div>
+
+          <p>
+            Vui lòng kiểm tra thông tin và chuẩn bị sẵn sàng để tiếp đón khách
+            hàng đúng thời gian.
+          </p>
+
+          <!-- <div class="cta">
+            <a href="#" class="btn" aria-label="Xem chi tiết đơn đặt bàn"
+              >Xem chi tiết đơn đặt bàn</a
+            >
+          </div> -->
+
+          <p>Trân trọng,<br />Hệ thống SmartTasty</p>
+        </div>
+
+        <div class="footer">
+          <div>
+            SmartTasty · Thông báo tự động, vui lòng không trả lời email này.
+          </div>
+          <div style="margin-top: 6px">© SmartTasty</div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

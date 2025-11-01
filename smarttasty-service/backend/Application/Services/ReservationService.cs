@@ -6,20 +6,32 @@ using backend.Infrastructure.Helpers.Commons.Response;
 using backend.Domain.Enums.Commons.Response;
 using backend.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
+using backend.Infrastructure.Messaging.Kafka;
+using backend.Application.DTOs.Kafka;
+using backend.Application.DTOs.KafkaPayload;
 
 namespace backend.Application.Services
 {
     public class ReservationService : IReservationService
     {
         private readonly ApplicationDbContext _context;
+        private readonly KafkaProducerService _kafkaProducer;
 
-        public ReservationService(ApplicationDbContext context)
+        public ReservationService(ApplicationDbContext context, KafkaProducerService kafkaProducer)
         {
             _context = context;
+            _kafkaProducer = kafkaProducer;
         }
 
         public async Task<ApiResponse<object>> CreateReservationAsync(CreateReservationRequest request)
         {
+            if (string.IsNullOrWhiteSpace(request.ContactName))
+                return new ApiResponse<object>(ErrorCode.ValidationError, "ContactName is required");
+
+            if (string.IsNullOrWhiteSpace(request.Email))
+                return new ApiResponse<object>(ErrorCode.ValidationError, "ContactEmail is required");
+
+            // Tạo Reservation
             var reservation = new Reservation
             {
                 UserId = request.UserId,
@@ -32,10 +44,10 @@ namespace backend.Application.Services
                 Status = ReservationStatus.Pending,
                 CreatedAt = DateTime.UtcNow
             };
-
             _context.Reservations.Add(reservation);
             await _context.SaveChangesAsync();
 
+            // Tạo BookingCustomer
             var bookingCustomer = new BookingCustomer
             {
                 ReservationId = reservation.Id,
@@ -43,9 +55,9 @@ namespace backend.Application.Services
                 Phone = request.Phone,
                 Email = request.Email
             };
-
             _context.BookingCustomers.Add(bookingCustomer);
 
+            // Tạo Notification trong DB (log hiển thị cho business)
             var notification = new Notification
             {
                 UserId = reservation.RestaurantId,
@@ -54,8 +66,37 @@ namespace backend.Application.Services
                 CreatedAt = DateTime.UtcNow
             };
             _context.Notifications.Add(notification);
-
             await _context.SaveChangesAsync();
+
+            var restaurant = await _context.Restaurants
+                            .Include(r => r.Owner)
+                            .FirstOrDefaultAsync(r => r.Id == reservation.RestaurantId);
+
+            if (restaurant == null)
+            {
+                return new ApiResponse<object>(ErrorCode.NotFound, "Restaurant not found");
+            }
+
+            // Gửi message Kafka cho NotificationService (gửi email)
+            var payload = new ReservationCreatedPayload
+            {
+                ReservationId = reservation.Id,
+                RestaurantId = reservation.RestaurantId,
+                BusinessEmail = restaurant.Owner.Email,
+                ContactName = request.ContactName,
+                ContactEmail = request.Email,
+                ArrivalDate = reservation.ArrivalDate,
+                ReservationTime = reservation.ReservationTime
+            };
+
+            var envelope = new KafkaEnvelope<ReservationCreatedPayload>
+            {
+                Target = "notification-service",
+                Event = "reservation.created",
+                Payload = payload
+            };
+
+            await _kafkaProducer.SendMessageAsync(envelope, "notification-reservation");
 
             return new ApiResponse<object>
             {
@@ -93,7 +134,48 @@ namespace backend.Application.Services
             _context.ReservationStatusHistories.Add(history);
             await _context.SaveChangesAsync();
 
-            return new ApiResponse<object>(ErrorCode.Success, "Status updated");
+            // Lấy thông tin khách hàng và nhà hàng
+            var reservationWithDetails = await _context.Reservations
+                .Include(r => r.Customers)
+                .Include(r => r.Restaurant)
+                .FirstOrDefaultAsync(r => r.Id == reservationId);
+
+            if (reservationWithDetails != null)
+            {
+                var customer = reservationWithDetails.Customers?.FirstOrDefault();
+                if (customer != null)
+                {
+                    var payload = new ReservationStatusUpdatedPayload
+                    {
+                        ReservationId = reservationWithDetails.Id,
+                        RestaurantName = reservationWithDetails.Restaurant?.Name,
+                        ContactName = customer.ContactName ?? string.Empty,
+                        ContactEmail = customer.Email ?? string.Empty,
+                        NewStatus = newStatus.ToString(),
+                        Note = note
+                    };
+
+                    var envelope = new KafkaEnvelope<ReservationStatusUpdatedPayload>
+                    {
+                        Target = "notification-service",
+                        Event = "reservation.status_updated",
+                        Payload = payload
+                    };
+
+                    await _kafkaProducer.SendMessageAsync(envelope, "notification-reservation");
+                }
+            }
+
+            return new ApiResponse<object>
+            {
+                ErrCode = ErrorCode.Success,
+                ErrMessage = "Reservation status updated",
+                Data = new
+                {
+                    reservation.Id,
+                    reservation.Status
+                }
+            };
         }
 
         public async Task<ApiResponse<object>> GetReservationsByRestaurantAsync(int restaurantId)
@@ -208,8 +290,51 @@ namespace backend.Application.Services
             _context.ReservationStatusHistories.Add(history);
             await _context.SaveChangesAsync();
 
-            return new ApiResponse<object>(ErrorCode.Success, "Reservation canceled successfully");
-        }
+            // Lấy thông tin nhà hàng và khách hàng
+            var reservationWithDetails = await _context.Reservations
+                .Include(r => r.Restaurant)
+                    .ThenInclude(res => res!.Owner)
+                .Include(r => r.Customers)
+                .FirstOrDefaultAsync(r => r.Id == reservationId);
 
+            if (reservationWithDetails != null && reservationWithDetails.Restaurant?.Owner != null)
+            {
+                var customer = reservationWithDetails.Customers?.FirstOrDefault();
+
+                var payload = new ReservationCanceledByUserPayload
+                {
+                    ReservationId = reservationWithDetails.Id,
+                    RestaurantId = reservationWithDetails.RestaurantId,
+                    BusinessEmail = reservationWithDetails.Restaurant?.Owner?.Email ?? string.Empty,
+                    ContactName = customer?.ContactName ?? string.Empty,
+                    ContactEmail = customer?.Email ?? string.Empty,
+                    ArrivalDate = reservationWithDetails.ArrivalDate,
+                    ReservationTime = reservationWithDetails.ReservationTime
+                };
+
+                var envelope = new KafkaEnvelope<ReservationCanceledByUserPayload>
+                {
+                    Target = "notification-service",
+                    Event = "reservation.canceled_by_user",
+                    Payload = payload
+                };
+
+                await _kafkaProducer.SendMessageAsync(envelope, "notification-reservation");
+            }
+
+            // reservation đã được kiểm tra non-null ở đầu hàm, sử dụng null-forgiving để loại bỏ cảnh báo
+            var res = reservation!;
+
+            return new ApiResponse<object>
+            {
+                ErrCode = ErrorCode.Success,
+                ErrMessage = "Reservation cancelled",
+                Data = new
+                {
+                    res.Id,
+                    res.Status
+                }
+            };
+        }
     }
 }

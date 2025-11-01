@@ -122,6 +122,12 @@ namespace backend.Infrastructure.Data
                 .HasForeignKey<Payment>(p => p.OrderId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            modelBuilder.Entity<Payment>()
+                .HasOne(p => p.CODPayment)
+                .WithOne(c => c.Payment)
+                .HasForeignKey<CODPayment>(c => c.PaymentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             // Seeder
             modelBuilder.SeedUsers();
             modelBuilder.SeedRestaurants();
@@ -134,7 +140,7 @@ namespace backend.Infrastructure.Data
 }
 
 //add + update (add mà không update là lỗi nguyên db vì không so sánh với migrations cũ được)
-//dotnet ef migrations add AddPromotionImageField
+//dotnet ef migrations add AddStaffManagement
 //dotnet ef database update
 
 //delete migrations nếu update bị lỗi

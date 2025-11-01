@@ -199,5 +199,49 @@ namespace backend.WebApi.Controllers
 
             return Ok(result);
         }
+
+        [Authorize(Roles = "business")]
+        [HttpPost("business/staff")]
+        public async Task<IActionResult> CreateStaff([FromBody] CreateStaffRequest req)
+        {
+            if (!int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var businessId))
+                return BadRequest(new ApiResponse<object>(ErrorCode.ValidationError, "Invalid business id"));
+
+            var res = await _userService.CreateStaffAsync(req, businessId);
+            return StatusCode(res.ErrCode == ErrorCode.Success ? 200 : 400, res);
+        }
+
+        [Authorize(Roles = "business")]
+        [HttpGet("business/staff")]
+        public async Task<IActionResult> GetStaffs()
+        {
+            if (!int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var businessId))
+                return BadRequest(new ApiResponse<object>(ErrorCode.ValidationError, "Invalid business id"));
+
+            var res = await _userService.GetStaffsByBusinessAsync(businessId);
+            return StatusCode(res.ErrCode == ErrorCode.Success ? 200 : 400, res);
+        }
+
+        [Authorize(Roles = "business")]
+        [HttpPut("business/staff")]
+        public async Task<IActionResult> UpdateStaff([FromBody] UpdateStaffRequest req)
+        {
+            if (!int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var businessId))
+                return BadRequest(new ApiResponse<object>(ErrorCode.ValidationError, "Invalid business id"));
+
+            var res = await _userService.UpdateStaffAsync(req, businessId);
+            return StatusCode(res.ErrCode == ErrorCode.Success ? 200 : 400, res);
+        }
+
+        [Authorize(Roles = "business")]
+        [HttpDelete("business/staff/{id:int}")]
+        public async Task<IActionResult> DeleteStaff(int id)
+        {
+            if (!int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var businessId))
+                return BadRequest(new ApiResponse<object>(ErrorCode.ValidationError, "Invalid business id"));
+
+            var res = await _userService.DeleteStaffAsync(id, businessId);
+            return StatusCode(res.ErrCode == ErrorCode.Success ? 200 : 400, res);
+        }
     }
 }

@@ -10,5 +10,6 @@ namespace backend.Application.DTOs.Payment
         public decimal Amount { get; set; }
         public PaymentStatus Status { get; set; }
         public OrderDto Order { get; set; } = null!;
+        public CODPaymentDto? CODPayment { get; set; }
     }
 }

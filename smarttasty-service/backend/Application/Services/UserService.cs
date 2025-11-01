@@ -10,6 +10,7 @@ using backend.Infrastructure.Messaging.Kafka;
 using backend.Application.DTOs.KafkaPayload;
 using backend.Application.DTOs.Kafka;
 using backend.Application.DTOs.Auth;
+using backend.Domain.Enums;
 using BCrypt.Net;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -513,6 +514,137 @@ namespace backend.Application.Services
             {
                 ErrCode = ErrorCode.Success,
                 ErrMessage = "Password changed successfully."
+            };
+        }
+
+        public async Task<ApiResponse<object>> CreateStaffAsync(CreateStaffRequest request, int businessOwnerId)
+        {
+            var owner = await _context.Users.FindAsync(businessOwnerId);
+            if (owner == null || owner.Role != UserRole.business)
+                return new ApiResponse<object>(ErrorCode.NotFound, "Business owner not found");
+
+            if (string.IsNullOrWhiteSpace(request.UserName) ||
+                string.IsNullOrWhiteSpace(request.Email) ||
+                string.IsNullOrWhiteSpace(request.Phone))
+            {
+                return new ApiResponse<object>(ErrorCode.ValidationError, "UserName, Email and Phone are required");
+            }
+
+            if (!ValidationHelper.IsValidEmail(request.Email))
+                return new ApiResponse<object>(ErrorCode.ValidationError, "Invalid email");
+
+            if (await _context.Users.AnyAsync(u => u.Email.ToLower() == request.Email.ToLower()))
+                return new ApiResponse<object>(ErrorCode.ValidationError, "Email already used");
+
+            var password = string.IsNullOrWhiteSpace(request.Password)
+                ? Guid.NewGuid().ToString("N").Substring(0, 8)
+                : request.Password!;
+
+            var staff = new User
+            {
+                UserName = request.UserName,
+                Email = request.Email,
+                Phone = request.Phone,
+                Address = request.Address ?? string.Empty,
+                Role = UserRole.staff,
+                UserPassword = BCrypt.Net.BCrypt.HashPassword(password),
+                BusinessOwnerId = businessOwnerId,
+                CreatedAt = DateTime.UtcNow,
+                IsActive = true
+            };
+
+            await _context.Users.AddAsync(staff);
+            await _context.SaveChangesAsync();
+
+            return new ApiResponse<object>
+            {
+                ErrCode = ErrorCode.Success,
+                ErrMessage = "Staff created",
+                Data = new { staff.UserId, staff.UserName, staff.Email, TempPassword = password }
+            };
+        }
+
+        public async Task<ApiResponse<object>> GetStaffsByBusinessAsync(int businessOwnerId)
+        {
+            var owner = await _context.Users.FindAsync(businessOwnerId);
+            if (owner == null || owner.Role != UserRole.business)
+                return new ApiResponse<object>(ErrorCode.NotFound, "Business owner not found");
+
+            var staffs = await _context.Users
+                .Where(u => u.BusinessOwnerId == businessOwnerId && u.Role == UserRole.staff)
+                .Select(u => new
+                {
+                    u.UserId,
+                    u.UserName,
+                    u.Email,
+                    u.Phone,
+                    u.Address,
+                    u.IsActive,
+                    u.CreatedAt
+                })
+                .ToListAsync();
+
+            return new ApiResponse<object>
+            {
+                ErrCode = ErrorCode.Success,
+                ErrMessage = "OK",
+                Data = staffs
+            };
+        }
+
+        public async Task<ApiResponse<object>> UpdateStaffAsync(UpdateStaffRequest request, int businessOwnerId)
+        {
+            var owner = await _context.Users.FindAsync(businessOwnerId);
+            if (owner == null || owner.Role != UserRole.business)
+                return new ApiResponse<object>(ErrorCode.NotFound, "Business owner not found");
+
+            var staff = await _context.Users.FindAsync(request.UserId);
+            if (staff == null || staff.Role != UserRole.staff || staff.BusinessOwnerId != businessOwnerId)
+                return new ApiResponse<object>(ErrorCode.NotFound, "Staff not found or not managed by this business");
+
+            if (!string.IsNullOrWhiteSpace(request.Email))
+            {
+                if (!ValidationHelper.IsValidEmail(request.Email))
+                    return new ApiResponse<object>(ErrorCode.ValidationError, "Invalid email");
+
+                if (await _context.Users.AnyAsync(u => u.Email.ToLower() == request.Email.ToLower() && u.UserId != staff.UserId))
+                    return new ApiResponse<object>(ErrorCode.ValidationError, "Email already used");
+                staff.Email = request.Email;
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.UserName)) staff.UserName = request.UserName;
+            if (!string.IsNullOrWhiteSpace(request.Phone)) staff.Phone = request.Phone;
+            if (!string.IsNullOrWhiteSpace(request.Address)) staff.Address = request.Address;
+            if (request.IsActive.HasValue) staff.IsActive = request.IsActive.Value;
+
+            _context.Users.Update(staff);
+            await _context.SaveChangesAsync();
+
+            return new ApiResponse<object>
+            {
+                ErrCode = ErrorCode.Success,
+                ErrMessage = "Staff updated",
+                Data = new { staff.UserId, staff.UserName, staff.Email }
+            };
+        }
+
+        public async Task<ApiResponse<object>> DeleteStaffAsync(int staffId, int businessOwnerId)
+        {
+            var owner = await _context.Users.FindAsync(businessOwnerId);
+            if (owner == null || owner.Role != UserRole.business)
+                return new ApiResponse<object>(ErrorCode.NotFound, "Business owner not found");
+
+            var staff = await _context.Users.FindAsync(staffId);
+            if (staff == null || staff.Role != UserRole.staff || staff.BusinessOwnerId != businessOwnerId)
+                return new ApiResponse<object>(ErrorCode.NotFound, "Staff not found or not managed by this business");
+
+            _context.Users.Remove(staff);
+            await _context.SaveChangesAsync();
+
+            return new ApiResponse<object>
+            {
+                ErrCode = ErrorCode.Success,
+                ErrMessage = "Staff deleted"
             };
         }
     }

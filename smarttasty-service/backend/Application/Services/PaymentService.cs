@@ -96,8 +96,8 @@ namespace backend.Application.Services
                .Include(p => p.Order)
                     .ThenInclude(o => o.OrderItems)
                         .ThenInclude(oi => oi.Dish)
-                .Include(p => p.Order)
-                    .ThenInclude(o => o.Restaurant)
+                .Include(p => p.Order.Restaurant)
+                .Include(p => p.CODPayment)
                 .Where(p => p.Order != null && p.Order.RestaurantId == restaurantId)
                 .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();

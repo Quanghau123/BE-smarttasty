@@ -7,5 +7,9 @@ namespace NotificationService.Application.Interfaces.Services
     {
         Task HandleAsync(NotificationPayload payload, string txId);
         Task HandlePasswordResetAsync(PasswordResetRequestedPayload payload, string txId);
+        Task HandleReservationCreatedAsync(ReservationCreatedPayload payload, string txId);
+        Task HandleReservationStatusUpdatedAsync(ReservationStatusUpdatedPayload payload, string txId);
+        Task HandleReservationCanceledByUserAsync(ReservationCanceledByUserPayload payload, string txId);
+
     }
 }

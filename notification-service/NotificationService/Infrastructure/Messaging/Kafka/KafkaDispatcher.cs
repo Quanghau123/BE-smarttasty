@@ -89,6 +89,50 @@ namespace NotificationService.Infrastructure.Messaging.Kafka
                     }
                     break;
 
+                case "reservation.created":
+                    try
+                    {
+                        var reservationPayload = JsonSerializer.Deserialize<ReservationCreatedPayload>(payload.GetRawText());
+                        if (reservationPayload != null)
+                        {
+                            await _notificationHandler.HandleReservationCreatedAsync(reservationPayload, txId);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error handling ReservationCreated event, TxId={TxId}", txId);
+                    }
+                    break;
+                case "reservation.status_updated":
+                    try
+                    {
+                        var statusPayload = JsonSerializer.Deserialize<ReservationStatusUpdatedPayload>(payload.GetRawText());
+                        if (statusPayload != null)
+                        {
+                            await _notificationHandler.HandleReservationStatusUpdatedAsync(statusPayload, txId);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error handling reservation.status_updated event, TxId={TxId}", txId);
+                    }
+                    break;
+
+                case "reservation.canceled_by_user":
+                    try
+                    {
+                        var cancelPayload = JsonSerializer.Deserialize<ReservationCanceledByUserPayload>(payload.GetRawText());
+                        if (cancelPayload != null)
+                        {
+                            await _notificationHandler.HandleReservationCanceledByUserAsync(cancelPayload, txId);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error handling reservation.canceled_by_user event, TxId={TxId}", txId);
+                    }
+                    break;
+
                 default:
                     _logger.LogWarning("Unknown event: {Event}, TxId={TxId}", @event, txId);
                     break;

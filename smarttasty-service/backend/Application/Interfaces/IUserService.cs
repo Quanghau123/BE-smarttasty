@@ -18,5 +18,9 @@ namespace backend.Application.Interfaces
         Task<ApiResponse<object>> SendResetPasswordEmail(string email);
         Task<ApiResponse<object>> ResetPassword(string token, string newPassword);
         Task<ApiResponse<object>> ChangePasswordAsync(string userId, string currentPassword, string newPassword);
+        Task<ApiResponse<object>> CreateStaffAsync(CreateStaffRequest request, int businessOwnerId);
+        Task<ApiResponse<object>> GetStaffsByBusinessAsync(int businessOwnerId);
+        Task<ApiResponse<object>> UpdateStaffAsync(UpdateStaffRequest request, int businessOwnerId);
+        Task<ApiResponse<object>> DeleteStaffAsync(int staffId, int businessOwnerId);
     }
 }

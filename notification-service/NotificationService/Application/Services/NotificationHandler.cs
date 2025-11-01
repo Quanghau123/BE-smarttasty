@@ -27,7 +27,7 @@ namespace NotificationService.Application.Services
             _userStatus = userStatus;
             _offlineRepo = offlineRepo;
             _kafkaProducer = kafkaProducer;
-            _emailService = emailService; // <-- assign
+            _emailService = emailService;
         }
 
         public async Task HandleAsync(NotificationPayload payload, string txId)
@@ -95,7 +95,6 @@ namespace NotificationService.Application.Services
 
             await Task.WhenAll(tasks);
         }
-
         public async Task HandlePasswordResetAsync(PasswordResetRequestedPayload payload, string txId)
         {
             _logger.LogInformation("Handling PasswordResetRequested for UserId={UserId} tx={TxId}", payload.UserId, txId);
@@ -124,5 +123,93 @@ namespace NotificationService.Application.Services
                 _logger.LogError(ex, "Error sending password reset email for UserId={UserId} tx={TxId}", payload.UserId, txId);
             }
         }
+        public async Task HandleReservationCreatedAsync(ReservationCreatedPayload payload, string txId)
+        {
+            _logger.LogInformation("Handling ReservationCreated for ReservationId={ReservationId} tx={TxId}", payload.ReservationId, txId);
+
+            var emailReq = new EmailReq
+            {
+                Email = payload.BusinessEmail,
+                Subject = "Bạn có đơn đặt bàn mới - SmartTasty",
+                EmailTemplate = "UIMailNewReservation.html",
+                Params = new Dictionary<string, object>
+    {
+        { "contactName", payload.ContactName },
+        { "arrivalDate", payload.ArrivalDate.ToString("u") },
+        { "reservationTime", payload.ReservationTime.ToString() },
+        { "reservationId", payload.ReservationId }
+    }
+            };
+
+            try
+            {
+                await _emailService.SendEmailAsync(emailReq, txId);
+                _logger.LogInformation("Reservation created email sent for ReservationId={ReservationId} tx={TxId}", payload.ReservationId, txId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending reservation created email for ReservationId={ReservationId} tx={TxId}", payload.ReservationId, txId);
+            }
+        }
+        public async Task HandleReservationStatusUpdatedAsync(ReservationStatusUpdatedPayload payload, string txId)
+        {
+            _logger.LogInformation("Handling ReservationStatusUpdated for ReservationId={ReservationId} tx={TxId}", payload.ReservationId, txId);
+
+            var emailReq = new EmailReq
+            {
+                Email = payload.ContactEmail,
+                Subject = "Trạng thái đặt bàn của bạn đã được cập nhật - SmartTasty",
+                EmailTemplate = "UIMailReservationStatusUpdated.html",
+                Params = new Dictionary<string, object>
+        {
+            { "contactName", payload.ContactName },
+            { "restaurantName", payload.RestaurantName },
+            { "newStatus", payload.NewStatus },
+            { "note", payload.Note ?? "" },
+            { "reservationId", payload.ReservationId }
+        }
+            };
+
+            try
+            {
+                await _emailService.SendEmailAsync(emailReq, txId);
+                _logger.LogInformation("Reservation status updated email sent for ReservationId={ReservationId} tx={TxId}", payload.ReservationId, txId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending reservation status updated email for ReservationId={ReservationId} tx={TxId}", payload.ReservationId, txId);
+            }
+        }
+
+        public async Task HandleReservationCanceledByUserAsync(ReservationCanceledByUserPayload payload, string txId)
+        {
+            _logger.LogInformation("Handling ReservationCanceledByUser for ReservationId={ReservationId} tx={TxId}", payload.ReservationId, txId);
+
+            var emailReq = new EmailReq
+            {
+                Email = payload.BusinessEmail,
+                Subject = "Khách hàng đã hủy đơn đặt bàn - SmartTasty",
+                EmailTemplate = "UIMailReservationCanceled.html",
+                Params = new Dictionary<string, object>
+        {
+            { "contactName", payload.ContactName },
+            { "contactEmail", payload.ContactEmail },
+            { "arrivalDate", payload.ArrivalDate.ToString("u") },
+            { "reservationTime", payload.ReservationTime.ToString() },
+            { "reservationId", payload.ReservationId }
+        }
+            };
+
+            try
+            {
+                await _emailService.SendEmailAsync(emailReq, txId);
+                _logger.LogInformation("Reservation canceled by user email sent for ReservationId={ReservationId} tx={TxId}", payload.ReservationId, txId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending reservation canceled email for ReservationId={ReservationId} tx={TxId}", payload.ReservationId, txId);
+            }
+        }
+
     }
 }

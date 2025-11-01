@@ -4,6 +4,7 @@
     {
         admin,
         business,
-        user
+        user,
+        staff
     }
 }
