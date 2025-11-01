@@ -243,5 +243,28 @@ namespace backend.WebApi.Controllers
                 _ => CreateResult(result)
             };
         }
+
+        [HttpGet("restaurant/{restaurantId}")]
+        public async Task<IActionResult> GetPaymentsByRestaurant(int restaurantId)
+        {
+            var result = await _paymentService.GetPaymentsByRestaurantIdAsync(restaurantId);
+
+            List<InfoPaymentDto> dtos = new();
+            if (result.Data is List<Payment> payments)
+            {
+                dtos = payments.Select(p => _mapper.Map<InfoPaymentDto>(p)).ToList();
+            }
+            else if (result.Data is List<InfoPaymentDto> infoPaymentDtos)
+            {
+                dtos = infoPaymentDtos;
+            }
+
+            return CreateResult(new ApiResponse<List<InfoPaymentDto>>
+            {
+                ErrCode = result.ErrCode,
+                ErrMessage = result.ErrMessage,
+                Data = dtos
+            });
+        }
     }
 }

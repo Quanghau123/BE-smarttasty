@@ -63,6 +63,16 @@ namespace backend.Application.Services
 
         public async Task<ApiResponse<object>> UpdatePaymentSuccess(Payment payment, string transactionNo)
         {
+            if (payment.Method == PaymentMethod.COD)
+            {
+                return new ApiResponse<object>
+                {
+                    ErrCode = ErrorCode.ValidationError,
+                    ErrMessage = "COD payment cannot be auto-confirmed",
+                    Data = null
+                };
+            }
+
             payment.Status = PaymentStatus.Success;
             payment.TransactionId = transactionNo;
             payment.PaidAt = DateTime.UtcNow;
@@ -77,6 +87,26 @@ namespace backend.Application.Services
                 ErrCode = ErrorCode.Success,
                 ErrMessage = "Payment success updated",
                 Data = payment
+            };
+        }
+
+        public async Task<ApiResponse<object>> GetPaymentsByRestaurantIdAsync(int restaurantId)
+        {
+            var payments = await _db.Payments
+               .Include(p => p.Order)
+                    .ThenInclude(o => o.OrderItems)
+                        .ThenInclude(oi => oi.Dish)
+                .Include(p => p.Order)
+                    .ThenInclude(o => o.Restaurant)
+                .Where(p => p.Order != null && p.Order.RestaurantId == restaurantId)
+                .OrderByDescending(p => p.CreatedAt)
+                .ToListAsync();
+
+            return new ApiResponse<object>
+            {
+                ErrCode = ErrorCode.Success,
+                ErrMessage = "OK",
+                Data = payments
             };
         }
 
