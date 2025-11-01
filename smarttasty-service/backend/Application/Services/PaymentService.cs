@@ -141,6 +141,7 @@ namespace backend.Application.Services
                 return (true, false, "TXN123456", null);
             return (false, true, null, "VNPay báo thất bại");
         }
+
         public async Task<ApiResponse<object>> HandleVNPayReturn(IQueryCollection query)
         {
             if (!_vnPayService.ValidateSignature(query))
@@ -154,10 +155,8 @@ namespace backend.Application.Services
             }
 
             var txnRef = query["vnp_TxnRef"].ToString();
-            var transactionNo = query["vnp_TransactionNo"].ToString();
-            var responseCode = query["vnp_ResponseCode"].ToString();
 
-            var payment = await GetPaymentByOrderIdAsync(txnRef); // now uses string overload
+            var payment = await GetPaymentByOrderIdAsync(txnRef); // giả sử trả về Payment entity
             if (payment == null)
             {
                 return new ApiResponse<object>
@@ -168,29 +167,40 @@ namespace backend.Application.Services
                 };
             }
 
-            if (responseCode == "00")
+            string message;
+            ErrorCode errCode;
+
+            switch (payment.Status)
             {
-                await UpdatePaymentSuccess(payment, transactionNo);
-                await LogTransactionAsync(payment, PaymentStatus.Success, query);
-                return new ApiResponse<object>
-                {
-                    ErrCode = ErrorCode.Success,
-                    ErrMessage = "Payment successful",
-                    Data = payment
-                };
+                case PaymentStatus.Success:
+                    errCode = ErrorCode.Success;
+                    message = "Payment successful";
+                    break;
+                case PaymentStatus.Failed:
+                    errCode = ErrorCode.ValidationError;
+                    message = "Payment failed";
+                    break;
+                default:
+                    errCode = ErrorCode.UnknownError;
+                    message = "Payment pending";
+                    break;
             }
-            else
+
+            return new ApiResponse<object>
             {
-                await UpdatePaymentFail(payment, $"VNPay failed with code {responseCode}");
-                await LogTransactionAsync(payment, PaymentStatus.Failed, query);
-                return new ApiResponse<object>
+                ErrCode = errCode,
+                ErrMessage = message,
+                Data = new
                 {
-                    ErrCode = ErrorCode.ValidationError,
-                    ErrMessage = $"Payment failed with code {responseCode}",
-                    Data = payment
-                };
-            }
+                    payment.Id,
+                    payment.Amount,
+                    payment.Status,
+                    payment.OrderId,
+                    OrderStatus = payment.Order?.Status
+                }
+            };
         }
+
         public async Task<ApiResponse<object>> ProcessVNPayIpnAsync(IQueryCollection query)
         {
             // Kiểm tra chữ ký bảo mật
@@ -263,7 +273,6 @@ namespace backend.Application.Services
                 };
             }
         }
-
         public async Task<ApiResponse<object>> CreateCodPaymentAsync(Payment payment)
         {
             using var tx = await _db.Database.BeginTransactionAsync();
@@ -309,6 +318,72 @@ namespace backend.Application.Services
         public async Task<ApiResponse<object>> ConfirmCodPaymentAsync(int codPaymentId)
         {
             return await _codService.ConfirmCodPaymentAsync(codPaymentId);
+        }
+        public async Task<ApiResponse<object>> CancelOrderAsync(int orderId)
+        {
+            // Lấy order kèm payment
+            var order = await _db.Orders
+                .Include(o => o.Payment)
+                .Include(o => o.OrderItems)
+                .FirstOrDefaultAsync(o => o.Id == orderId);
+
+            if (order == null)
+            {
+                return new ApiResponse<object>
+                {
+                    ErrCode = ErrorCode.NotFound,
+                    ErrMessage = "Order not found",
+                    Data = null
+                };
+            }
+
+            if (order.Status == OrderStatus.Paid)
+            {
+                return new ApiResponse<object>
+                {
+                    ErrCode = ErrorCode.ValidationError,
+                    ErrMessage = "Paid orders cannot be cancelled",
+                    Data = null
+                };
+            }
+
+            using var tx = await _db.Database.BeginTransactionAsync();
+            try
+            {
+                // Nếu có payment thì xóa logs và payment (hoặc xử lý khác tuỳ yêu cầu)
+                if (order.Payment != null)
+                {
+                    var logs = _db.PaymentTransactionLogs.Where(l => l.PaymentId == order.Payment.Id);
+                    _db.PaymentTransactionLogs.RemoveRange(logs);
+                    _db.Payments.Remove(order.Payment);
+                }
+
+                // Xóa order items trước
+                _db.OrderItems.RemoveRange(order.OrderItems);
+
+                // Xóa order hoặc đánh dấu cancelled tuỳ logic
+                _db.Orders.Remove(order);
+
+                await _db.SaveChangesAsync();
+                await tx.CommitAsync();
+
+                return new ApiResponse<object>
+                {
+                    ErrCode = ErrorCode.Success,
+                    ErrMessage = "Order cancelled successfully",
+                    Data = null
+                };
+            }
+            catch (Exception ex)
+            {
+                await tx.RollbackAsync();
+                return new ApiResponse<object>
+                {
+                    ErrCode = ErrorCode.ServerError,
+                    ErrMessage = $"Failed to cancel order: {ex.Message}",
+                    Data = null
+                };
+            }
         }
     }
 }

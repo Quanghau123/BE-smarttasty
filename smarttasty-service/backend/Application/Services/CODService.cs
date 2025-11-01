@@ -66,8 +66,9 @@ namespace backend.Application.Services
             codPayment.Payment.Status = PaymentStatus.Success;
             codPayment.Payment.PaidAt = DateTime.UtcNow;
 
-            if (codPayment.Payment.Order != null)
-                codPayment.Payment.Order.Status = OrderStatus.Paid;
+            // **Không set OrderStatus ở đây**, để shipper đánh dấu Delivered mới update status
+            // if (codPayment.Payment.Order != null)
+            //     codPayment.Payment.Order.Status = OrderStatus.Paid;
 
             await _db.SaveChangesAsync();
 

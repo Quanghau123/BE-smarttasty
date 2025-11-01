@@ -7,6 +7,5 @@ namespace backend.Domain.Enums
         Cancelled,
         Failed,
         Processing,  // Đang xử lý (sau khi thanh toán thành công VNPAY)
-        Completed    // Đã giao và thanh toán xong
     }
 }

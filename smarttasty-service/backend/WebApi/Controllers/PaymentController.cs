@@ -228,5 +228,20 @@ namespace backend.WebApi.Controllers
                 Data = dtos
             });
         }
+
+        [HttpDelete("cancel/{orderId}")]
+        public async Task<IActionResult> CancelOrder(int orderId)
+        {
+            var result = await _paymentService.CancelOrderAsync(orderId);
+
+            return result.ErrCode switch
+            {
+                ErrorCode.Success => CreateResult(result),
+                ErrorCode.NotFound => CreateResult(result),
+                ErrorCode.ValidationError => CreateResult(result),
+                ErrorCode.ServerError => CreateResult(result),
+                _ => CreateResult(result)
+            };
+        }
     }
 }
