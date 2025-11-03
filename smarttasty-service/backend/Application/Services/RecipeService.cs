@@ -82,6 +82,28 @@ namespace backend.Application.Services
             };
         }
 
+        public async Task<ApiResponse<List<RecipeDto>>> GetAllRecipesAsync()
+        {
+            var recipes = await _context.Recipes
+                .Include(d => d.User)
+                .OrderByDescending(r => r.CreatedAt)
+                .ToListAsync();
+
+            var recipeDtos = _mapper.Map<List<RecipeDto>>(recipes);
+
+            foreach (var dto in recipeDtos)
+            {
+                dto.ImageUrl = _imageHelper.GetImageUrl(dto.Image);
+            }
+
+            return new ApiResponse<List<RecipeDto>>
+            {
+                ErrCode = ErrorCode.Success,
+                ErrMessage = "OK",
+                Data = recipeDtos
+            };
+        }
+
         public async Task<ApiResponse<List<RecipeDto>>> GetRecipeByUserIdAsync(int userId)
         {
             var recipes = await _context.Recipes

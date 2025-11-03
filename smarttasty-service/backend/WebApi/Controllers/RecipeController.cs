@@ -43,6 +43,13 @@ namespace backend.WebApi.Controllers
             return CreateResult(res);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetAll()
+        {
+            var result = await _recipeService.GetAllRecipesAsync();
+            return StatusCode(result.ErrCode == ErrorCode.Success ? 200 : 400, result);
+        }
+
         [HttpGet("user/{userId}")]
         public async Task<IActionResult> GetRecipesByUser(int userId)
         {

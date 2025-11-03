@@ -22,6 +22,7 @@ namespace backend.Application.Interfaces
         Task<ApiResponse<object>> CreateCodPaymentAsync(Payment payment);
         Task<ApiResponse<object>> GetPaymentsByUserIdAsync(int userId);
         Task<ApiResponse<object>> GetPaymentsByRestaurantIdAsync(int restaurantId);
+        Task<ApiResponse<object>> GetPendingPaymentsByRestaurantIdAsync(int restaurantId);
         Task<ApiResponse<object>> ConfirmCodPaymentAsync(int codPaymentId);
         Task<ApiResponse<object>> CancelOrderAsync(int orderId);
     }

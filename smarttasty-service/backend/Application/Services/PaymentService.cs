@@ -163,6 +163,26 @@ namespace backend.Application.Services
                 .ToListAsync();
         }
 
+        public async Task<ApiResponse<object>> GetPendingPaymentsByRestaurantIdAsync(int restaurantId)
+        {
+            var payments = await _db.Payments
+               .Include(p => p.Order)
+                    .ThenInclude(o => o.OrderItems)
+                        .ThenInclude(oi => oi.Dish)
+                .Include(p => p.Order.Restaurant)
+                .Include(p => p.CODPayment)
+                .Where(p => p.Order != null && p.Order.RestaurantId == restaurantId && p.Status == PaymentStatus.Pending)
+                .OrderByDescending(p => p.CreatedAt)
+                .ToListAsync();
+
+            return new ApiResponse<object>
+            {
+                ErrCode = ErrorCode.Success,
+                ErrMessage = "OK",
+                Data = payments
+            };
+        }
+
         public async Task<(bool IsSuccess, bool IsFailed, string? TransactionNo, string? Message)> VerifyWithVNPay(Payment payment)
         {
             // Demo logic xác thực VNPay
