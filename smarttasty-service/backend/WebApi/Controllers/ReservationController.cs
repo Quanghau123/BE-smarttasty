@@ -4,6 +4,7 @@ using backend.Domain.Models.Requests.Reservation;
 using backend.Domain.Enums;
 using backend.Domain.Enums.Commons.Response;
 using backend.Infrastructure.Helpers.Commons.Response;
+using Microsoft.AspNetCore.Authorization;
 
 namespace backend.WebApi.Controllers
 {
@@ -34,6 +35,7 @@ namespace backend.WebApi.Controllers
             _ => 500
         };
 
+        [Authorize(Roles = "user")]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateReservationRequest request)
         {
@@ -41,6 +43,7 @@ namespace backend.WebApi.Controllers
             return CreateResult(res);
         }
 
+        [Authorize(Roles = "business")]
         [HttpPut("{id}/status")]
         public async Task<IActionResult> UpdateStatus(int id, [FromQuery] ReservationStatus status, [FromQuery] int changedBy, [FromQuery] string? note)
         {
@@ -48,6 +51,7 @@ namespace backend.WebApi.Controllers
             return CreateResult(res);
         }
 
+        [Authorize(Roles = "business")]
         [HttpGet("restaurant/{restaurantId}")]
         public async Task<IActionResult> GetByRestaurant(int restaurantId)
         {
@@ -55,6 +59,7 @@ namespace backend.WebApi.Controllers
             return CreateResult(res);
         }
 
+        [Authorize(Roles = "business,user")]
         [HttpGet("user/{userId}")]
         public async Task<IActionResult> GetByUser(int userId)
         {
@@ -62,11 +67,21 @@ namespace backend.WebApi.Controllers
             return CreateResult(res);
         }
 
+        [Authorize(Roles = "user")]
         [HttpDelete("{reservationId}")]
         public async Task<IActionResult> Delete(int reservationId, [FromQuery] int userId)
         {
             var res = await _reservationService.DeleteReservationAsync(reservationId, userId);
             return CreateResult(res);
         }
+
+        [Authorize(Roles = "business")]
+        [HttpDelete("business/{reservationId}")]
+        public async Task<IActionResult> DeleteReservationForBusiness(int reservationId, [FromQuery] int userId)
+        {
+            var res = await _reservationService.DeleteReservationForBusinessAsync(reservationId, userId);
+            return CreateResult(res);
+        }
+
     }
 }

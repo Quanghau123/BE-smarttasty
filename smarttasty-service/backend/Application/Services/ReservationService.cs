@@ -242,11 +242,11 @@ namespace backend.Application.Services
 
             return new ApiResponse<object>(ErrorCode.Success, "Fetched successfully", reservations);
         }
-
         public async Task<ApiResponse<object>> GetReservationsByUserAsync(int userId)
         {
             var reservations = await _context.Reservations
                 .Include(r => r.Restaurant)
+                 .Include(r => r.User)
                 .Where(r => r.UserId == userId)
                 .OrderByDescending(r => r.CreatedAt)
                 .Select(r => new
@@ -260,7 +260,9 @@ namespace backend.Application.Services
                     r.ReservationTime,
                     r.Note,
                     r.Status,
-                    r.CreatedAt
+                    r.CreatedAt,
+                    UserEmail = r.User != null ? r.User.Email : null,
+                    UserPhone = r.User != null ? r.User.Phone : null
                 })
                 .ToListAsync();
 
@@ -333,6 +335,72 @@ namespace backend.Application.Services
                 {
                     res.Id,
                     res.Status
+                }
+            };
+        }
+
+        public async Task<ApiResponse<object>> DeleteReservationForBusinessAsync(int reservationId, int userId)
+        {
+            var reservation = await _context.Reservations.FindAsync(reservationId);
+
+            if (reservation == null)
+                return new ApiResponse<object>(ErrorCode.NotFound, "Reservation not found");
+
+            // Business có quyền hủy bất kỳ reservation nào
+            reservation.Status = ReservationStatus.Cancelled;
+
+            var history = new ReservationStatusHistory
+            {
+                ReservationId = reservation.Id,
+                Status = ReservationStatus.Cancelled,
+                ChangedAt = DateTime.UtcNow,
+                ChangedBy = userId,
+                Note = "Business canceled the reservation"
+            };
+
+            _context.ReservationStatusHistories.Add(history);
+            await _context.SaveChangesAsync();
+
+            // Lấy thêm thông tin để gửi notification
+            var reservationWithDetails = await _context.Reservations
+                .Include(r => r.Restaurant)
+                    .ThenInclude(res => res!.Owner)
+                .Include(r => r.Customers)
+                .FirstOrDefaultAsync(r => r.Id == reservationId);
+
+            if (reservationWithDetails != null)
+            {
+                var customer = reservationWithDetails.Customers?.FirstOrDefault();
+
+                var payload = new ReservationCanceledByBusinessPayload
+                {
+                    ReservationId = reservationWithDetails.Id,
+                    RestaurantId = reservationWithDetails.RestaurantId,
+                    BusinessEmail = reservationWithDetails.Restaurant?.Owner?.Email ?? string.Empty,
+                    ContactName = customer?.ContactName ?? string.Empty,
+                    ContactEmail = customer?.Email ?? string.Empty,
+                    ArrivalDate = reservationWithDetails.ArrivalDate,
+                    ReservationTime = reservationWithDetails.ReservationTime
+                };
+
+                var envelope = new KafkaEnvelope<ReservationCanceledByBusinessPayload>
+                {
+                    Target = "notification-service",
+                    Event = "reservation.canceled_by_business",
+                    Payload = payload
+                };
+
+                await _kafkaProducer.SendMessageAsync(envelope, "notification-reservation");
+            }
+
+            return new ApiResponse<object>
+            {
+                ErrCode = ErrorCode.Success,
+                ErrMessage = "Reservation cancelled by business",
+                Data = new
+                {
+                    reservation.Id,
+                    reservation.Status
                 }
             };
         }

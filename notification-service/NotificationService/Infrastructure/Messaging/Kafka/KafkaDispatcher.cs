@@ -133,6 +133,21 @@ namespace NotificationService.Infrastructure.Messaging.Kafka
                     }
                     break;
 
+                case "reservation.canceled_by_business":
+                    try
+                    {
+                        var cancelPayload = JsonSerializer.Deserialize<ReservationCanceledByBusinessPayload>(payload.GetRawText());
+                        if (cancelPayload != null)
+                        {
+                            await _notificationHandler.HandleReservationCanceledByBusinessAsync(cancelPayload, txId);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error handling reservation.canceled_by_business event, TxId={TxId}", txId);
+                    }
+                    break;
+
                 default:
                     _logger.LogWarning("Unknown event: {Event}, TxId={TxId}", @event, txId);
                     break;

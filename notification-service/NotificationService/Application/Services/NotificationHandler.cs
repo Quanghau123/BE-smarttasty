@@ -211,5 +211,35 @@ namespace NotificationService.Application.Services
             }
         }
 
+        public async Task HandleReservationCanceledByBusinessAsync(ReservationCanceledByBusinessPayload payload, string txId)
+        {
+            _logger.LogInformation("Handling ReservationCanceledByBusiness for ReservationId={ReservationId} tx={TxId}", payload.ReservationId, txId);
+
+            var emailReq = new EmailReq
+            {
+                Email = payload.ContactEmail,
+                Subject = "Nhà hàng đã hủy đơn đặt bàn - SmartTasty",
+                EmailTemplate = "UIMailReservationCanceledForBusiness.html",
+                Params = new Dictionary<string, object>
+        {
+            { "contactName", payload.ContactName },
+            { "contactEmail", payload.ContactEmail },
+            { "arrivalDate", payload.ArrivalDate.ToString("u") },
+            { "reservationTime", payload.ReservationTime.ToString() },
+            { "reservationId", payload.ReservationId }
+        }
+            };
+
+            try
+            {
+                await _emailService.SendEmailAsync(emailReq, txId);
+                _logger.LogInformation("Reservation canceled by user email sent for ReservationId={ReservationId} tx={TxId}", payload.ReservationId, txId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending reservation canceled email for ReservationId={ReservationId} tx={TxId}", payload.ReservationId, txId);
+            }
+        }
+
     }
 }

@@ -126,5 +126,16 @@ namespace backend.WebApi.Controllers
             var res = await _orderService.GetOrdersByStatusAsync(status);
             return CreateResult(res);
         }
+
+        [HttpGet("restaurant/{restaurantId}/revenue")]
+        public async Task<IActionResult> GetRevenue(int restaurantId, [FromQuery] int? year, [FromQuery] int? month)
+        {
+            var now = DateTime.UtcNow;
+            var y = year ?? now.Year;
+            var m = month ?? now.Month;
+
+            var result = await _orderService.GetRevenueDashboardAsync(restaurantId, y, m);
+            return StatusCode(result.ErrCode == ErrorCode.Success ? 200 : 400, result);
+        }
     }
 }

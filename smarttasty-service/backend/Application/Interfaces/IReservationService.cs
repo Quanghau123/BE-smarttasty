@@ -15,5 +15,6 @@ namespace backend.Application.Interfaces
         Task<ApiResponse<object>> GetReservationsByUserAsync(int userId);
 
         Task<ApiResponse<object>> DeleteReservationAsync(int reservationId, int userId);
+        Task<ApiResponse<object>> DeleteReservationForBusinessAsync(int reservationId, int userId);
     }
 }

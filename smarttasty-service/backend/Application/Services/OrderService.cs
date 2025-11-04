@@ -536,5 +536,155 @@ namespace backend.Application.Services
                 Data = orderDtos
             };
         }
+
+        public async Task<ApiResponse<object>> GetRevenueDashboardAsync(int restaurantId, int year, int month)
+        {
+            // validate month/year to avoid DateTime overflow (AddMonths/AddYears)
+            if (year < 1 || year > 9999 || month < 1 || month > 12)
+            {
+                return new ApiResponse<object>
+                {
+                    ErrCode = ErrorCode.ValidationError,
+                    ErrMessage = "Invalid year or month",
+                    Data = null
+                };
+            }
+
+            // ensure UTC kinds so Npgsql maps to timestamptz correctly
+            var monthStart = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
+            var monthEnd = monthStart.AddMonths(1);
+
+            // compute prev month/year safely
+            bool prevMonthAvailable = true;
+            DateTime prevMonthStart = DateTime.MinValue;
+            DateTime prevMonthEnd = monthStart;
+            try
+            {
+                prevMonthStart = monthStart.AddMonths(-1);
+            }
+            catch
+            {
+                prevMonthAvailable = false;
+            }
+
+            bool prevYearAvailable = true;
+            DateTime yearStart = new DateTime(year, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            DateTime yearEnd = yearStart.AddYears(1);
+            DateTime prevYearStart = DateTime.MinValue;
+            DateTime prevYearEnd = yearStart;
+            try
+            {
+                prevYearStart = yearStart.AddYears(-1);
+            }
+            catch
+            {
+                prevYearAvailable = false;
+            }
+
+            // filter các order đã thanh toán (Paid)
+            var paidQuery = _context.Orders.AsQueryable()
+                .Where(o => o.RestaurantId == restaurantId && o.Status == OrderStatus.Paid);
+
+            var allQuery = _context.Orders.AsQueryable()
+                .Where(o => o.RestaurantId == restaurantId);
+
+            // tháng hiện tại / tháng trước
+            var monthRevenue = await paidQuery
+                .Where(o => o.CreatedAt >= monthStart && o.CreatedAt < monthEnd)
+                .SumAsync(o => (decimal?)o.FinalPrice) ?? 0m;
+            var monthPaidCount = await paidQuery
+                .Where(o => o.CreatedAt >= monthStart && o.CreatedAt < monthEnd)
+                .CountAsync();
+            var monthTotalCount = await allQuery
+                .Where(o => o.CreatedAt >= monthStart && o.CreatedAt < monthEnd)
+                .CountAsync();
+
+            decimal prevMonthRevenue = 0m;
+            int prevMonthPaidCount = 0;
+            int prevMonthTotalCount = 0;
+            if (prevMonthAvailable)
+            {
+                prevMonthRevenue = await paidQuery
+                    .Where(o => o.CreatedAt >= prevMonthStart && o.CreatedAt < prevMonthEnd)
+                    .SumAsync(o => (decimal?)o.FinalPrice) ?? 0m;
+                prevMonthPaidCount = await paidQuery
+                    .Where(o => o.CreatedAt >= prevMonthStart && o.CreatedAt < prevMonthEnd)
+                    .CountAsync();
+                prevMonthTotalCount = await allQuery
+                    .Where(o => o.CreatedAt >= prevMonthStart && o.CreatedAt < prevMonthEnd)
+                    .CountAsync();
+            }
+
+            // năm hiện tại / năm trước
+            var yearRevenue = await paidQuery
+                .Where(o => o.CreatedAt >= yearStart && o.CreatedAt < yearEnd)
+                .SumAsync(o => (decimal?)o.FinalPrice) ?? 0m;
+            var yearPaidCount = await paidQuery
+                .Where(o => o.CreatedAt >= yearStart && o.CreatedAt < yearEnd)
+                .CountAsync();
+            var yearTotalCount = await allQuery
+                .Where(o => o.CreatedAt >= yearStart && o.CreatedAt < yearEnd)
+                .CountAsync();
+
+            decimal prevYearRevenue = 0m;
+            int prevYearPaidCount = 0;
+            int prevYearTotalCount = 0;
+            if (prevYearAvailable)
+            {
+                prevYearRevenue = await paidQuery
+                    .Where(o => o.CreatedAt >= prevYearStart && o.CreatedAt < prevYearEnd)
+                    .SumAsync(o => (decimal?)o.FinalPrice) ?? 0m;
+                prevYearPaidCount = await paidQuery
+                    .Where(o => o.CreatedAt >= prevYearStart && o.CreatedAt < prevYearEnd)
+                    .CountAsync();
+                prevYearTotalCount = await allQuery
+                    .Where(o => o.CreatedAt >= prevYearStart && o.CreatedAt < prevYearEnd)
+                    .CountAsync();
+            }
+
+            static decimal CalcPercentChange(decimal current, decimal previous)
+            {
+                if (previous == 0m)
+                    return current == 0m ? 0m : 100m;
+                return Math.Round((current - previous) / previous * 100m, 2);
+            }
+
+            var monthChangePercent = CalcPercentChange(monthRevenue, prevMonthRevenue);
+            var yearChangePercent = CalcPercentChange(yearRevenue, prevYearRevenue);
+
+            var data = new
+            {
+                Month = new
+                {
+                    Year = year,
+                    Month = month,
+                    Revenue = monthRevenue,
+                    PaidOrders = monthPaidCount,
+                    TotalOrders = monthTotalCount,
+                    PrevRevenue = prevMonthRevenue,
+                    PrevPaidOrders = prevMonthPaidCount,
+                    PrevTotalOrders = prevMonthTotalCount,
+                    RevenueChangePercent = monthChangePercent
+                },
+                Year = new
+                {
+                    Year = year,
+                    Revenue = yearRevenue,
+                    PaidOrders = yearPaidCount,
+                    TotalOrders = yearTotalCount,
+                    PrevRevenue = prevYearRevenue,
+                    PrevPaidOrders = prevYearPaidCount,
+                    PrevTotalOrders = prevYearTotalCount,
+                    RevenueChangePercent = yearChangePercent
+                }
+            };
+
+            return new ApiResponse<object>
+            {
+                ErrCode = ErrorCode.Success,
+                ErrMessage = "OK",
+                Data = data
+            };
+        }
     }
 }

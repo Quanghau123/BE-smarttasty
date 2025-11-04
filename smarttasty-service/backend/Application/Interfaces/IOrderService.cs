@@ -12,16 +12,11 @@ namespace backend.Application.Interfaces
         Task<ApiResponse<object>> GetByIdAsync(int id);
         Task<ApiResponse<object>> UpdateOrderAsync(int orderId, UpdateOrderRequest request);
         Task<ApiResponse<object>> DeleteOrderAsync(int id);
-
-        // Order Items
         Task<ApiResponse<object>> RemoveItemAsync(int orderId, int orderItemId);
-
-        // Update Status
         Task<ApiResponse<object>> UpdateOrderStatusAsync(int orderId, OrderStatus newStatus);
         Task<ApiResponse<object>> UpdateDeliveryStatusAsync(int orderId, DeliveryStatus newStatus);
-
-        // Queries
         Task<ApiResponse<object>> GetOrdersByUserAsync(int userId);
         Task<ApiResponse<object>> GetOrdersByStatusAsync(OrderStatus status);
+        Task<ApiResponse<object>> GetRevenueDashboardAsync(int restaurantId, int year, int month);
     }
 }
