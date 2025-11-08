@@ -14,6 +14,7 @@ using backend.Infrastructure.Helpers;
 using backend.Infrastructure.Extensions;
 using backend.Infrastructure.Messaging.Kafka;
 using backend.Application.Jobs;
+using backend.Infrastructure.Elastic;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -97,6 +98,9 @@ builder.Services.AddSingleton<KafkaProducerService>();
 builder.Services.AddSingleton<KafkaDispatcher>();
 builder.Services.AddHostedService<KafkaConsumerService>();
 
+// ===== Elastic Search ======
+builder.Services.AddSingleton<ElasticClientProvider>();
+
 // ==========================
 // Dependency Injection - Application Services
 // ==========================
@@ -120,6 +124,7 @@ builder.Services.AddScoped<IVNPayService, VNPayService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IRefundService, RefundService>();
+builder.Services.AddScoped<ISearchService, SearchService>();
 builder.Services.AddScoped<ICODService, CODService>();
 builder.Services.AddScoped<PaymentJob>();
 

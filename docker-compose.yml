@@ -9,6 +9,8 @@ services:
     ports:
       - "${ZOOKEEPER_PORT}:2181"
     restart: unless-stopped 
+    networks:
+      - monitor-net
 
   kafka:
     image: bitnami/kafka:${KAFKA_VERSION}
@@ -29,6 +31,8 @@ services:
       - zookeeper
     restart: unless-stopped 
     mem_limit: ${KAFKA_MEMORY_LIMIT}
+    networks:
+      - monitor-net
 
   kafdrop:
     image: obsidiandynamics/kafdrop:${KAFDROP_VERSION}
@@ -41,6 +45,43 @@ services:
     depends_on:
       - kafka
     restart: unless-stopped 
+    networks:
+      - monitor-net 
+
+  # logstash:
+  #   image: docker.elastic.co/logstash/logstash:8.11.2
+  #   container_name: logstash
+  #   env_file:
+  #     - .env
+  #   depends_on:
+  #     - postgres
+  #     - elasticsearch
+  #   restart: unless-stopped 
+  #   volumes:
+  #     - ./logstash/config/logstash_dishes.conf:/usr/share/logstash/pipeline/logstash_dishes.conf:ro
+  #     - ./logstash/config/logstash_restaurants.conf:/usr/share/logstash/pipeline/logstash_restaurants.conf:ro
+  #     - ./drivers/postgresql-42.5.1/postgresql-42.5.1.jar:/usr/share/logstash/logstash-core/lib/jars/postgresql-42.5.1.jar:ro
+  #     - ./data/logstash:/usr/share/logstash/data  
+  #   environment:
+  #     - LS_JAVA_OPTS=-Xmx512m -Xms512m
+  #   networks:
+  #     - monitor-net
+
+  postgres:
+    image: postgres:${POSTGRES_VERSION}
+    container_name: ${POSTGRES_CONTAINER}
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      GENERIC_TIMEZONE: ${GENERIC_TIMEZONE}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - ./data/postgres-data:/var/lib/postgresql/data
+    networks:
+      - monitor-net
 
   redis:
     image: redis:${REDIS_VERSION}
@@ -50,9 +91,11 @@ services:
       - "${REDIS_PORT}:6379"
     restart: unless-stopped
     mem_limit: ${REDIS_MEMORY_LIMIT} 
+    networks:
+      - monitor-net
 
   redisinsight:
-    image: redislabs/redisinsight:1.14.0   # dùng version ổn định
+    image: redislabs/redisinsight:1.14.0  
     container_name: redisinsight
     ports:
       - "8001:8001"
@@ -61,6 +104,8 @@ services:
     volumes:
       - redisinsight-data:/db
     restart: unless-stopped 
+    networks:
+      - monitor-net
 
   n8n:
     image: n8nio/n8n:1.115.3
@@ -90,6 +135,8 @@ services:
     depends_on:
       - kafka
       - redis
+    networks:
+      - monitor-net
 
   chatbot-service:
     image: quanghau123/chatbot-service:latest
@@ -105,6 +152,40 @@ services:
     depends_on:
       - n8n
       - kafka
+    networks:
+      - monitor-net
+
+  # elasticsearch:
+  #   image: docker.elastic.co/elasticsearch/elasticsearch:${ELASTIC_VERSION}
+  #   container_name: ${ELASTIC_CONTAINER}
+  #   environment:
+  #     - discovery.type=single-node
+  #     - xpack.security.enabled=${ELASTIC_SECURITY}
+  #     - ES_JAVA_OPTS=-Xms${ELASTIC_JAVA_XMS} -Xmx${ELASTIC_JAVA_XMX}
+  #   ulimits:
+  #     memlock:
+  #       soft: -1
+  #       hard: -1
+  #   volumes:
+  #     - ./data/elasticsearch:/usr/share/elasticsearch/data
+  #   ports:
+  #     - "${ELASTIC_PORT}:9200"
+  #   restart: unless-stopped
+  #   networks:
+  #     - monitor-net
+
+  # kibana:
+  #   image: docker.elastic.co/kibana/kibana:${KIBANA_VERSION}
+  #   container_name: ${KIBANA_CONTAINER}
+  #   environment:
+  #     - ELASTICSEARCH_HOSTS=http://${ELASTIC_CONTAINER}:${ELASTIC_PORT}
+  #   ports:
+  #     - "${KIBANA_PORT}:5601"
+  #   depends_on:
+  #     - ${ELASTIC_CONTAINER}
+  #   restart: unless-stopped
+  #   networks:
+  #     - monitor-net
 
   smarttastyservice:
     image: quanghau123/smarttasty-service:latest
@@ -119,6 +200,9 @@ services:
       - ./data/protection-keys/smarttasty:/root/.aspnet/DataProtection-Keys
     environment:
       - DOTNET_ENVIRONMENT=Development
+      - TZ=Asia/Ho_Chi_Minh
+    networks:
+      - monitor-net
 
   socketserver:
     image: quanghau123/socket-server:latest
@@ -134,6 +218,8 @@ services:
     environment:
       - DOTNET_ENVIRONMENT=Development
       - DOTNET_URLS=http://0.0.0.0:8000
+    networks:
+      - monitor-net
 
   notification-service:
     image: quanghau123/notification-service:latest
@@ -148,6 +234,8 @@ services:
       - ./data/protection-keys/notification:/root/.aspnet/DataProtection-Keys
     environment:
       - DOTNET_ENVIRONMENT=Development
+    networks:
+      - monitor-net
 
   watchtower:
     image: containrrr/watchtower
@@ -159,6 +247,80 @@ services:
       - DOCKER_HUB_USERNAME=${DOCKER_HUB_USERNAME}
       - DOCKER_HUB_PASSWORD=${DOCKER_HUB_ACCESS_TOKEN}
     command: --interval 300  # Checks for updates every 5 minutes
+    networks:
+      - monitor-net
+
+  cadvisor:
+    image: ${CADVISOR_IMAGE}
+    container_name: ${CADVISOR_CONTAINER}
+    restart: unless-stopped
+    ports:
+      - "${CADVISOR_PORT}:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    networks:
+      - monitor-net
+
+  prometheus:
+    image: ${PROMETHEUS_IMAGE}
+    container_name: ${PROMETHEUS_CONTAINER}
+    restart: unless-stopped
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "${PROMETHEUS_PORT}:9090"
+    networks:
+      - monitor-net
+
+  loki:
+    image: ${LOKI_IMAGE}
+    container_name: ${LOKI_CONTAINER}
+    restart: unless-stopped
+    ports:
+      - "${LOKI_PORT}:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - loki-data:/loki
+    networks:
+      - monitor-net
+
+  promtail:
+    image: ${PROMTAIL_IMAGE}
+    container_name: ${PROMTAIL_CONTAINER}
+    restart: unless-stopped
+    volumes:
+      - ./monitoring/promtail-config.yml:/etc/promtail/config.yml:ro
+      - /var/log:/var/log:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: -config.file=/etc/promtail/config.yml
+    networks:
+      - monitor-net
+
+  grafana:
+    image: ${GRAFANA_IMAGE}
+    container_name: ${GRAFANA_CONTAINER}
+    restart: unless-stopped
+    ports:
+      - "${GRAFANA_PORT}:3000"
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - grafana-data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    networks:
+      - monitor-net
 
 volumes:
   redisinsight-data:
+  prometheus-data:
+  grafana-data:
+  loki-data:
+
+networks:
+  monitor-net:
+    driver: bridge
