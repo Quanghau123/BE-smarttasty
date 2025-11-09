@@ -23,8 +23,9 @@ namespace backend.Application.Services
         private readonly IPhotoService _photoService;
         private readonly IImageHelper _imageHelper;
         private readonly IPaginationService _paginationService;
+        private readonly IFuzzySearchService _fuzzySearch;
 
-        public RestaurantService(ApplicationDbContext context, IUserContextService userContext, IMapper mapper, IPhotoService photoService, IImageHelper imageHelper, IPaginationService paginationService)
+        public RestaurantService(ApplicationDbContext context, IUserContextService userContext, IMapper mapper, IPhotoService photoService, IImageHelper imageHelper, IPaginationService paginationService, IFuzzySearchService fuzzySearch)
         {
             _context = context;
             _userContext = userContext;
@@ -32,6 +33,7 @@ namespace backend.Application.Services
             _photoService = photoService;
             _imageHelper = imageHelper;
             _paginationService = paginationService;
+            _fuzzySearch = fuzzySearch;
         }
 
         public async Task<ApiResponse<object>> GetAllRestaurantsAsync(PagedRequest filter)
@@ -219,55 +221,72 @@ namespace backend.Application.Services
             };
         }
 
+        // public async Task<ApiResponse<List<RestaurantDto>>> SearchRestaurantsAsync(string query)
+        // {
+        //     if (string.IsNullOrWhiteSpace(query))
+        //         return new ApiResponse<List<RestaurantDto>> { ErrCode = ErrorCode.ValidationError, ErrMessage = "Empty query" };
+
+        //     var queryNormalized = TextHelper.RemoveDiacritics(query.ToLower());
+        //     var keywords = queryNormalized.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+        //     var allRestaurants = await _context.Restaurants.Include(r => r.Owner).ToListAsync();
+
+        //     var matched = allRestaurants.Where(r =>
+        //     {
+        //         var name = TextHelper.RemoveDiacritics(r.Name.ToLower());
+        //         var address = TextHelper.RemoveDiacritics(r.Address.ToLower());
+
+        //         bool containsAny = keywords.Any(k => name.Contains(k) || address.Contains(k));
+
+        //         bool fuzzyMatch = keywords.Any(k =>
+        //             TextHelper.LevenshteinDistance(name, k) <= 2 ||
+        //             TextHelper.LevenshteinDistance(address, k) <= 2
+        //         );
+
+        //         return containsAny || fuzzyMatch;
+        //     }).ToList();
+
+        //     var dtos = _mapper.Map<List<RestaurantDto>>(matched);
+        //     return new ApiResponse<List<RestaurantDto>> { ErrCode = ErrorCode.Success, ErrMessage = "OK", Data = dtos };
+        // }
+
+        // public async Task<List<string>> GetSuggestionsAsync(string query)
+        // {
+        //     if (string.IsNullOrWhiteSpace(query))
+        //         return new List<string>();
+
+        //     var queryNormalized = TextHelper.RemoveDiacritics(query.ToLower());
+
+        //     var restaurantNames = await _context.Restaurants
+        //         .Select(r => r.Name)
+        //         .Distinct()
+        //         .ToListAsync();
+
+        //     var suggestions = restaurantNames
+        //         .Where(name => TextHelper.RemoveDiacritics(name.ToLower()).Contains(queryNormalized))
+        //         .Take(10)
+        //         .ToList();
+
+        //     return suggestions;
+        // }
+
         public async Task<ApiResponse<List<RestaurantDto>>> SearchRestaurantsAsync(string query)
         {
-            if (string.IsNullOrWhiteSpace(query))
-                return new ApiResponse<List<RestaurantDto>> { ErrCode = ErrorCode.ValidationError, ErrMessage = "Empty query" };
-
-            var queryNormalized = TextHelper.RemoveDiacritics(query.ToLower());
-            var keywords = queryNormalized.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-
-            var allRestaurants = await _context.Restaurants.Include(r => r.Owner).ToListAsync();
-
-            var matched = allRestaurants.Where(r =>
-            {
-                var name = TextHelper.RemoveDiacritics(r.Name.ToLower());
-                var address = TextHelper.RemoveDiacritics(r.Address.ToLower());
-
-                bool containsAny = keywords.Any(k => name.Contains(k) || address.Contains(k));
-
-                bool fuzzyMatch = keywords.Any(k =>
-                    TextHelper.LevenshteinDistance(name, k) <= 2 ||
-                    TextHelper.LevenshteinDistance(address, k) <= 2
-                );
-
-                return containsAny || fuzzyMatch;
-            }).ToList();
-
+            var matched = await _fuzzySearch.SearchAsync<Restaurant>("Restaurants", query, new[] { "Name", "Address" }, 30);
             var dtos = _mapper.Map<List<RestaurantDto>>(matched);
-            return new ApiResponse<List<RestaurantDto>> { ErrCode = ErrorCode.Success, ErrMessage = "OK", Data = dtos };
+
+            return new ApiResponse<List<RestaurantDto>>
+            {
+                ErrCode = ErrorCode.Success,
+                ErrMessage = "OK",
+                Data = dtos
+            };
         }
 
         public async Task<List<string>> GetSuggestionsAsync(string query)
         {
-            if (string.IsNullOrWhiteSpace(query))
-                return new List<string>();
-
-            var queryNormalized = TextHelper.RemoveDiacritics(query.ToLower());
-
-            var restaurantNames = await _context.Restaurants
-                .Select(r => r.Name)
-                .Distinct()
-                .ToListAsync();
-
-            var suggestions = restaurantNames
-                .Where(name => TextHelper.RemoveDiacritics(name.ToLower()).Contains(queryNormalized))
-                .Take(10)
-                .ToList();
-
-            return suggestions;
+            return await _fuzzySearch.GetSuggestionsAsync("Restaurants", "Name", query, 10);
         }
-
         public async Task<ApiResponse<object>> ChangeRestaurantStatusAsync(int restaurantId, RestaurantStatus status)
         {
             var restaurant = await _context.Restaurants.Include(r => r.Owner).FirstOrDefaultAsync(r => r.Id == restaurantId);

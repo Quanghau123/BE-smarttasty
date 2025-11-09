@@ -48,7 +48,7 @@ namespace backend.Infrastructure.Data.Migrations
 
                     b.HasIndex("ReservationId");
 
-                    b.ToTable("BookingCustomers");
+                    b.ToTable("BookingCustomers", (string)null);
                 });
 
             modelBuilder.Entity("backend.Domain.Models.CODPayment", b =>
@@ -73,7 +73,7 @@ namespace backend.Infrastructure.Data.Migrations
                     b.HasIndex("PaymentId")
                         .IsUnique();
 
-                    b.ToTable("CODPayments");
+                    b.ToTable("CODPayments", (string)null);
                 });
 
             modelBuilder.Entity("backend.Domain.Models.Dish", b =>
@@ -112,7 +112,7 @@ namespace backend.Infrastructure.Data.Migrations
 
                     b.HasIndex("RestaurantId");
 
-                    b.ToTable("Dishes");
+                    b.ToTable("Dishes", (string)null);
 
                     b.HasData(
                         new
@@ -269,7 +269,7 @@ namespace backend.Infrastructure.Data.Migrations
 
                     b.HasIndex("PromotionId");
 
-                    b.ToTable("DishPromotions");
+                    b.ToTable("DishPromotions", (string)null);
                 });
 
             modelBuilder.Entity("backend.Domain.Models.Favorite", b =>
@@ -295,7 +295,7 @@ namespace backend.Infrastructure.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Favorites");
+                    b.ToTable("Favorites", (string)null);
                 });
 
             modelBuilder.Entity("backend.Domain.Models.Notification", b =>
@@ -326,7 +326,7 @@ namespace backend.Infrastructure.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Notifications");
+                    b.ToTable("Notifications", (string)null);
                 });
 
             modelBuilder.Entity("backend.Domain.Models.Order", b =>
@@ -382,7 +382,7 @@ namespace backend.Infrastructure.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Orders");
+                    b.ToTable("Orders", (string)null);
                 });
 
             modelBuilder.Entity("backend.Domain.Models.OrderItem", b =>
@@ -414,7 +414,7 @@ namespace backend.Infrastructure.Data.Migrations
 
                     b.HasIndex("OrderId");
 
-                    b.ToTable("OrderItems");
+                    b.ToTable("OrderItems", (string)null);
                 });
 
             modelBuilder.Entity("backend.Domain.Models.OrderPromotion", b =>
@@ -435,7 +435,7 @@ namespace backend.Infrastructure.Data.Migrations
 
                     b.HasIndex("PromotionId");
 
-                    b.ToTable("OrderPromotions");
+                    b.ToTable("OrderPromotions", (string)null);
                 });
 
             modelBuilder.Entity("backend.Domain.Models.PasswordResetToken", b =>
@@ -463,7 +463,7 @@ namespace backend.Infrastructure.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("PasswordResetTokens");
+                    b.ToTable("PasswordResetTokens", (string)null);
                 });
 
             modelBuilder.Entity("backend.Domain.Models.Payment", b =>
@@ -506,7 +506,7 @@ namespace backend.Infrastructure.Data.Migrations
                     b.HasIndex("OrderId")
                         .IsUnique();
 
-                    b.ToTable("Payments");
+                    b.ToTable("Payments", (string)null);
                 });
 
             modelBuilder.Entity("backend.Domain.Models.PaymentTransactionLog", b =>
@@ -539,7 +539,7 @@ namespace backend.Infrastructure.Data.Migrations
 
                     b.HasIndex("PaymentId");
 
-                    b.ToTable("PaymentTransactionLogs");
+                    b.ToTable("PaymentTransactionLogs", (string)null);
                 });
 
             modelBuilder.Entity("backend.Domain.Models.Promotion", b =>
@@ -583,7 +583,7 @@ namespace backend.Infrastructure.Data.Migrations
 
                     b.HasIndex("RestaurantId");
 
-                    b.ToTable("Promotions");
+                    b.ToTable("Promotions", (string)null);
 
                     b.HasData(
                         new
@@ -677,7 +677,7 @@ namespace backend.Infrastructure.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Recipes");
+                    b.ToTable("Recipes", (string)null);
                 });
 
             modelBuilder.Entity("backend.Domain.Models.RecipeReview", b =>
@@ -710,7 +710,7 @@ namespace backend.Infrastructure.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("RecipeReviews");
+                    b.ToTable("RecipeReviews", (string)null);
                 });
 
             modelBuilder.Entity("backend.Domain.Models.RefreshToken", b =>
@@ -739,7 +739,7 @@ namespace backend.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("RefreshTokens");
+                    b.ToTable("RefreshTokens", (string)null);
                 });
 
             modelBuilder.Entity("backend.Domain.Models.Refund", b =>
@@ -775,7 +775,7 @@ namespace backend.Infrastructure.Data.Migrations
 
                     b.HasIndex("PaymentId");
 
-                    b.ToTable("Refunds");
+                    b.ToTable("Refunds", (string)null);
                 });
 
             modelBuilder.Entity("backend.Domain.Models.Reservation", b =>
@@ -819,7 +819,7 @@ namespace backend.Infrastructure.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Reservations");
+                    b.ToTable("Reservations", (string)null);
                 });
 
             modelBuilder.Entity("backend.Domain.Models.ReservationStatusHistory", b =>
@@ -849,7 +849,7 @@ namespace backend.Infrastructure.Data.Migrations
 
                     b.HasIndex("ReservationId");
 
-                    b.ToTable("ReservationStatusHistories");
+                    b.ToTable("ReservationStatusHistories", (string)null);
                 });
 
             modelBuilder.Entity("backend.Domain.Models.Restaurant", b =>
@@ -911,7 +911,7 @@ namespace backend.Infrastructure.Data.Migrations
 
                     b.HasIndex("OwnerId");
 
-                    b.ToTable("Restaurants");
+                    b.ToTable("Restaurants", (string)null);
 
                     b.HasData(
                         new
@@ -1048,7 +1048,7 @@ namespace backend.Infrastructure.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Reviews");
+                    b.ToTable("Reviews", (string)null);
 
                     b.HasData(
                         new
@@ -1205,7 +1205,7 @@ namespace backend.Infrastructure.Data.Migrations
 
                     b.HasIndex("BusinessOwnerId");
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
 
                     b.HasData(
                         new
@@ -1323,7 +1323,7 @@ namespace backend.Infrastructure.Data.Migrations
                     b.HasIndex("PaymentId")
                         .IsUnique();
 
-                    b.ToTable("VNPayPayments");
+                    b.ToTable("VNPayPayments", (string)null);
                 });
 
             modelBuilder.Entity("backend.Domain.Models.Voucher", b =>
@@ -1359,7 +1359,7 @@ namespace backend.Infrastructure.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Vouchers");
+                    b.ToTable("Vouchers", (string)null);
                 });
 
             modelBuilder.Entity("backend.Domain.Models.ZaloPayPayment", b =>
@@ -1388,7 +1388,7 @@ namespace backend.Infrastructure.Data.Migrations
                     b.HasIndex("PaymentId")
                         .IsUnique();
 
-                    b.ToTable("ZaloPayPayments");
+                    b.ToTable("ZaloPayPayments", (string)null);
                 });
 
             modelBuilder.Entity("backend.Domain.Models.BookingCustomer", b =>

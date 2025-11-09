@@ -134,13 +134,14 @@ namespace backend.Infrastructure.Data
             modelBuilder.SeedDishes();
             modelBuilder.SeedPromotions();
             modelBuilder.SeedReviews();
+
         }
 
     }
 }
 
 //add + update (add mà không update là lỗi nguyên db vì không so sánh với migrations cũ được)
-//dotnet ef migrations add AddStaffManagement
+//dotnet ef migrations add FuzzySearch
 //dotnet ef database update
 
 //delete migrations nếu update bị lỗi
