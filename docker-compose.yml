@@ -79,7 +79,8 @@ services:
     ports:
       - "${POSTGRES_PORT}:5432"
     volumes:
-      - /srv/postgres-data:/var/lib/postgresql/data
+      - ./data/postgres-data:/var/lib/postgresql/data
+    user: root
     networks:
       - monitor-net
 
