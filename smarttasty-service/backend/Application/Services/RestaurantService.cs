@@ -272,7 +272,7 @@ namespace backend.Application.Services
 
         public async Task<ApiResponse<List<RestaurantDto>>> SearchRestaurantsAsync(string query)
         {
-            var matched = await _fuzzySearch.SearchAsync<Restaurant>("Restaurants", query, new[] { "Name", "Address" }, 30);
+            var matched = await _fuzzySearch.SearchAsync<Restaurant>("Restaurants", query, new[] { "Name" }, 30);
             var dtos = _mapper.Map<List<RestaurantDto>>(matched);
 
             return new ApiResponse<List<RestaurantDto>>
@@ -287,6 +287,7 @@ namespace backend.Application.Services
         {
             return await _fuzzySearch.GetSuggestionsAsync("Restaurants", "Name", query, 10);
         }
+        
         public async Task<ApiResponse<object>> ChangeRestaurantStatusAsync(int restaurantId, RestaurantStatus status)
         {
             var restaurant = await _context.Restaurants.Include(r => r.Owner).FirstOrDefaultAsync(r => r.Id == restaurantId);
