@@ -79,8 +79,6 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
       TZ: ${GENERIC_TIMEZONE} 
-    ports:
-      - "${POSTGRES_PORT}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -137,6 +135,13 @@ services:
       - N8N_TEMPLATES_DIR=/home/node/.n8n/templates
       - TMPDIR=/home/node/.n8n/tmp
       - TZ=${GENERIC_TIMEZONE}
+       # PostgreSQL DB config
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres       # tên container của postgres
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=${POSTGRES_DB}
+      - DB_POSTGRESDB_USER=${POSTGRES_USER}
+      - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
     volumes:
       - ./data/n8n_data:/home/node/.n8n
       - ./data/n8n_tmp:/home/node/.n8n/tmp
