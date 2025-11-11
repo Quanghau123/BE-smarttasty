@@ -6,6 +6,7 @@ services:
     - ./data/zookeeper-data:/bitnami/zookeeper
     environment:
       - ALLOW_ANONYMOUS_LOGIN=${ALLOW_ANONYMOUS_LOGIN}
+      - TZ=${GENERIC_TIMEZONE}
     ports:
       - "${ZOOKEEPER_PORT}:2181"
     restart: unless-stopped 
@@ -25,6 +26,7 @@ services:
       - ALLOW_PLAINTEXT_LISTENER=${ALLOW_PLAINTEXT_LISTENER}
       - KAFKA_LOG_RETENTION_HOURS=${KAFKA_LOG_RETENTION_HOURS}
       - KAFKA_HEAP_OPTS=${KAFKA_HEAP_OPTS}
+      - TZ=${GENERIC_TIMEZONE}
     ports:
       - "${KAFKA_PORT}:${KAFKA_PORT}"
     depends_on:
@@ -42,6 +44,7 @@ services:
     environment:
       KAFKA_BROKERCONNECT: ${KAFKA_CONTAINER}:${KAFKA_PORT}
       JVM_OPTS: "${KAFDROP_JVM_OPTS}"
+      TZ: ${GENERIC_TIMEZONE}
     depends_on:
       - kafka
     restart: unless-stopped 
@@ -75,14 +78,11 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
-      GENERIC_TIMEZONE: ${GENERIC_TIMEZONE}
+      TZ: ${GENERIC_TIMEZONE} 
     ports:
-      - "${POSTGRES_PORT}:5432"
-    # volumes:
-    #   - ./data/postgres-data:/var/lib/postgresql/data
+      - "127.0.0.1:${POSTGRES_PORT}:5432" 
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    user: root
     networks:
       - monitor-net
 
@@ -93,6 +93,8 @@ services:
     ports:
       - "${REDIS_PORT}:6379"
     restart: unless-stopped
+    environment:
+      - TZ=${GENERIC_TIMEZONE}
     mem_limit: ${REDIS_MEMORY_LIMIT} 
     networks:
       - monitor-net
@@ -102,6 +104,8 @@ services:
     container_name: redisinsight
     ports:
       - "8001:8001"
+    environment:
+      - TZ=${GENERIC_TIMEZONE}
     depends_on:
       - redis
     volumes:
@@ -132,6 +136,7 @@ services:
       - N8N_USER_FOLDER=/home/node/.n8n
       - N8N_TEMPLATES_DIR=/home/node/.n8n/templates
       - TMPDIR=/home/node/.n8n/tmp
+      - TZ=${GENERIC_TIMEZONE}
     volumes:
       - ./data/n8n_data:/home/node/.n8n
       - ./data/n8n_tmp:/home/node/.n8n/tmp
@@ -149,6 +154,7 @@ services:
     environment:
       - DOTNET_ENVIRONMENT=Development
       - N8N_URL=${N8N_URL}
+      - TZ=${GENERIC_TIMEZONE}
     volumes:
       - ./chatbot-service/ChatbotService/appsettings.json:/app/appsettings.json:ro
       - ./data/protection-keys/chatbot:/root/.aspnet/DataProtection-Keys
@@ -221,6 +227,7 @@ services:
     environment:
       - DOTNET_ENVIRONMENT=Development
       - DOTNET_URLS=http://0.0.0.0:8000
+      - TZ=${GENERIC_TIMEZONE}
     networks:
       - monitor-net
 
@@ -237,6 +244,7 @@ services:
       - ./data/protection-keys/notification:/root/.aspnet/DataProtection-Keys
     environment:
       - DOTNET_ENVIRONMENT=Development
+      - TZ=${GENERIC_TIMEZONE}
     networks:
       - monitor-net
 
@@ -259,6 +267,8 @@ services:
     restart: unless-stopped
     ports:
       - "${CADVISOR_PORT}:8080"
+    environment:
+      - TZ=${GENERIC_TIMEZONE}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /var/lib/docker/:/var/lib/docker:ro
@@ -269,6 +279,8 @@ services:
     image: ${PROMETHEUS_IMAGE}
     container_name: ${PROMETHEUS_CONTAINER}
     restart: unless-stopped
+    environment:
+      - TZ=${GENERIC_TIMEZONE}
     volumes:
       - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus-data:/prometheus
@@ -281,6 +293,8 @@ services:
     image: ${LOKI_IMAGE}
     container_name: ${LOKI_CONTAINER}
     restart: unless-stopped
+    environment:
+      - TZ=${GENERIC_TIMEZONE}
     ports:
       - "${LOKI_PORT}:3100"
     command: -config.file=/etc/loki/local-config.yaml
@@ -293,6 +307,8 @@ services:
     image: ${PROMTAIL_IMAGE}
     container_name: ${PROMTAIL_CONTAINER}
     restart: unless-stopped
+    environment:
+      - TZ=${GENERIC_TIMEZONE}
     volumes:
       - ./monitoring/promtail-config.yml:/etc/promtail/config.yml:ro
       - /var/log:/var/log:ro
@@ -315,6 +331,7 @@ services:
       - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER}
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
       - GF_USERS_ALLOW_SIGN_UP=false
+      - TZ=${GENERIC_TIMEZONE}
     networks:
       - monitor-net
 
@@ -322,6 +339,8 @@ services:
     image: ${NODE_EXPORTER_IMAGE}
     container_name: node-exporter
     restart: unless-stopped
+    environment:
+      - TZ=${GENERIC_TIMEZONE}
     ports:
       - "9100:9100" 
     volumes:
