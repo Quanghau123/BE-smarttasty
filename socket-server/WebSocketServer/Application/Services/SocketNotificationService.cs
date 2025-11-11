@@ -22,12 +22,13 @@ namespace WebSocketServer.Application.Services
         // Push notification trực tiếp từ Kafka tới client
         public async Task PushRealtimeNotificationAsync(NotificationPayload payload)
         {
-            foreach (var userId in payload.TargetUserIds)
-            {
-                _logger.LogInformation("Pushing realtime notification to {UserId}: {Title}", userId, payload.Title);
-                await _hub.Clients.User(userId)
-                          .SendAsync("ReceiveNotification", payload.Title, payload.Message);
-            }
+            var tasks = payload.TargetUserIds.Select(userId =>
+    _hub.Clients.User(userId)
+        .SendAsync("ReceiveNotification", payload.Title, payload.Message)
+);
+
+            await Task.WhenAll(tasks);
+
         }
 
         // Push cập nhật rating của nhà hàng

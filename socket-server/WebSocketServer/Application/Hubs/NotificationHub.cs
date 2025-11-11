@@ -26,17 +26,20 @@ namespace WebSocketServer.Application.Hubs
             try
             {
                 var response = await _httpClient.GetFromJsonAsync<NotificationPayload[]>($"api/notifications/offline/pop/{userId}");
-                if (response != null)
+                if (response != null && !string.IsNullOrEmpty(userId))
                 {
-                    foreach (var notif in response)
-                    {
-                        if (!string.IsNullOrEmpty(userId))
+                    var tasks = response.Select(notif => Clients.User(userId)
+                        .SendAsync("ReceiveNotification", notif.Title, notif.Message)
+                        .ContinueWith(t =>
                         {
-                            await Clients.User(userId)
-                                .SendAsync("ReceiveNotification", notif.Title, notif.Message);
-                            _logger.LogInformation("Sent offline notification to {UserId}: {Title}", userId, notif.Title);
-                        }
-                    }
+                            if (t.IsFaulted)
+                                _logger.LogError(t.Exception, "Failed to send notification to {UserId}", userId);
+                            else
+                                _logger.LogInformation("Sent offline notification to {UserId}: {Title}", userId, notif.Title);
+                        })
+                    );
+
+                    await Task.WhenAll(tasks);
                 }
             }
             catch (System.Exception ex)

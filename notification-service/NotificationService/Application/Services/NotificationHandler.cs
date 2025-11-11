@@ -50,7 +50,7 @@ namespace NotificationService.Application.Services
 
                         if (isOnline)
                         {
-                            _logger.LogInformation("📩 Sent realtime notification to {UserId}: {Title} {Message}",
+                            _logger.LogInformation("Sent realtime notification to {UserId}: {Title} {Message}",
                                 receiverId, payload.Title, payload.Message);
 
                             var envelope = new KafkaEnvelope<NotificationPayload>
@@ -74,7 +74,7 @@ namespace NotificationService.Application.Services
                         }
                         else
                         {
-                            _logger.LogInformation("💤 User {UserId} offline, save to MongoDB queue: {Title} {Message}",
+                            _logger.LogInformation("User {UserId} offline, save to MongoDB queue: {Title} {Message}",
                                 receiverId, payload.Title, payload.Message);
                             try
                             {
@@ -180,7 +180,6 @@ namespace NotificationService.Application.Services
                 _logger.LogError(ex, "Error sending reservation status updated email for ReservationId={ReservationId} tx={TxId}", payload.ReservationId, txId);
             }
         }
-
         public async Task HandleReservationCanceledByUserAsync(ReservationCanceledByUserPayload payload, string txId)
         {
             _logger.LogInformation("Handling ReservationCanceledByUser for ReservationId={ReservationId} tx={TxId}", payload.ReservationId, txId);
@@ -210,7 +209,6 @@ namespace NotificationService.Application.Services
                 _logger.LogError(ex, "Error sending reservation canceled email for ReservationId={ReservationId} tx={TxId}", payload.ReservationId, txId);
             }
         }
-
         public async Task HandleReservationCanceledByBusinessAsync(ReservationCanceledByBusinessPayload payload, string txId)
         {
             _logger.LogInformation("Handling ReservationCanceledByBusiness for ReservationId={ReservationId} tx={TxId}", payload.ReservationId, txId);

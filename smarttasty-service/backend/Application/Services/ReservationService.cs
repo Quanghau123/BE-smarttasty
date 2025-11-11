@@ -89,14 +89,38 @@ namespace backend.Application.Services
                 ReservationTime = reservation.ReservationTime
             };
 
-            var envelope = new KafkaEnvelope<ReservationCreatedPayload>
+            var emailEnvelope = new KafkaEnvelope<ReservationCreatedPayload>
             {
                 Target = "notification-service",
                 Event = "reservation.created",
                 Payload = payload
             };
+            await _kafkaProducer.SendMessageAsync(emailEnvelope, "notification-reservation");
 
-            await _kafkaProducer.SendMessageAsync(envelope, "notification-reservation");
+            // notification realtime (SendNotification)
+            var notifPayload = new SendNotificationPayload
+            {
+                TargetUserIds = new List<string> { restaurant.Owner.UserId.ToString() },
+                Title = "Có đơn đặt bàn mới!",
+                Message = $"Khách {request.ContactName} vừa đặt bàn tại {restaurant.Name}.",
+                Type = NotificationType.Info,
+                Priority = NotificationPriority.High,
+                Metadata = new Dictionary<string, string>
+    {
+        { "ReservationId", reservation.Id.ToString() },
+        { "RestaurantId", restaurant.Id.ToString() }
+    },
+                RequestedByUserId = request.UserId.ToString(),
+                RequestedByRole = UserRole.user
+            };
+
+            var notifEnvelope = new KafkaEnvelope<SendNotificationPayload>
+            {
+                Target = "notification-service",
+                Event = "SendNotification",
+                Payload = notifPayload
+            };
+            await _kafkaProducer.SendMessageAsync(notifEnvelope, "notifications");
 
             return new ApiResponse<object>
             {

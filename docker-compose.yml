@@ -78,8 +78,10 @@ services:
       GENERIC_TIMEZONE: ${GENERIC_TIMEZONE}
     ports:
       - "${POSTGRES_PORT}:5432"
+    # volumes:
+    #   - ./data/postgres-data:/var/lib/postgresql/data
     volumes:
-      - ./data/postgres-data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
     user: root
     networks:
       - monitor-net
@@ -334,6 +336,7 @@ services:
       - monitor-net
 
 volumes:
+  postgres_data:
   redisinsight-data:
   prometheus-data:
   grafana-data:

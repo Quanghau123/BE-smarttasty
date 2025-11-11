@@ -49,7 +49,6 @@ namespace NotificationService.Infrastructure.Messaging.Kafka
                         _logger.LogError(ex, "Error handling UserLoggedIn event, TxId={TxId}", txId);
                     }
                     break;
-
                 case "SendNotification":
                     try
                     {
@@ -73,7 +72,6 @@ namespace NotificationService.Infrastructure.Messaging.Kafka
                         _logger.LogError(ex, "Error handling SendNotification event, TxId={TxId}", txId);
                     }
                     break;
-
                 case "PasswordResetRequested":
                     try
                     {
@@ -88,7 +86,6 @@ namespace NotificationService.Infrastructure.Messaging.Kafka
                         _logger.LogError(ex, "Error handling PasswordResetRequested event, TxId={TxId}", txId);
                     }
                     break;
-
                 case "reservation.created":
                     try
                     {
@@ -117,7 +114,6 @@ namespace NotificationService.Infrastructure.Messaging.Kafka
                         _logger.LogError(ex, "Error handling reservation.status_updated event, TxId={TxId}", txId);
                     }
                     break;
-
                 case "reservation.canceled_by_user":
                     try
                     {
@@ -132,7 +128,6 @@ namespace NotificationService.Infrastructure.Messaging.Kafka
                         _logger.LogError(ex, "Error handling reservation.canceled_by_user event, TxId={TxId}", txId);
                     }
                     break;
-
                 case "reservation.canceled_by_business":
                     try
                     {
