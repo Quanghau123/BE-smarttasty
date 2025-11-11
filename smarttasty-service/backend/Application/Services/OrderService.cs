@@ -16,12 +16,18 @@ namespace backend.Application.Services
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
         private readonly IImageHelper _imageHelper;
+        private readonly IApplyPromotionService _applyPromotionService;
 
-        public OrderService(ApplicationDbContext context, IMapper mapper, IImageHelper imageHelper)
+        public OrderService(
+           ApplicationDbContext context,
+           IMapper mapper,
+           IImageHelper imageHelper,
+           IApplyPromotionService applyPromotionService)
         {
             _context = context;
             _mapper = mapper;
             _imageHelper = imageHelper;
+            _applyPromotionService = applyPromotionService;
         }
 
         // ---------------- Order CRUD ----\------------
@@ -61,7 +67,22 @@ namespace backend.Application.Services
                     };
                 }
 
-                var item = OrderItem.Create(dish.Id, (decimal)dish.Price, itemReq.Quantity);
+                // Kiểm tra có khuyến mãi đang áp dụng
+                var now = DateTime.UtcNow;
+
+                var activePromo = await _context.DishPromotions
+                    .Include(dp => dp.Promotion)
+                    .Where(dp => dp.DishId == dish.Id
+                                 && dp.Promotion.StartDate <= now
+                                 && dp.Promotion.EndDate >= now)
+                    .OrderByDescending(dp => dp.Id)
+                    .FirstOrDefaultAsync();
+
+                decimal priceToUse = activePromo?.AppliedPrice != null
+                    ? (decimal)activePromo.AppliedPrice
+                    : (decimal)dish.Price;
+
+                var item = OrderItem.Create(dish.Id, priceToUse, itemReq.Quantity);
                 order.AddItem(item);
             }
 
@@ -74,7 +95,7 @@ namespace backend.Application.Services
                     Data = null
                 };
             }
-
+            await _applyPromotionService.ApplyPromotionAsync(order, order.UserId);
             _context.Orders.Add(order);
             await _context.SaveChangesAsync();
 
@@ -82,9 +103,10 @@ namespace backend.Application.Services
             {
                 ErrCode = ErrorCode.Success,
                 ErrMessage = "Order created successfully",
-                Data = new { order.Id }
+                Data = new { order.Id, order.FinalPrice }
             };
         }
+
         public async Task<ApiResponse<object>> AddItemOrderAsync(int orderId, int dishId, int quantity)
         {
             if (quantity <= 0)
@@ -99,7 +121,7 @@ namespace backend.Application.Services
 
             var order = await _context.Orders
                 .Include(o => o.OrderItems)
-                 .ThenInclude(i => i.Dish)
+                .ThenInclude(i => i.Dish)
                 .Include(o => o.Restaurant)
                 .FirstOrDefaultAsync(o => o.Id == orderId);
 
@@ -113,7 +135,6 @@ namespace backend.Application.Services
                 };
             }
 
-            // disallow modification if paid or cancelled
             if (order.Status == OrderStatus.Paid || order.Status == OrderStatus.Cancelled)
             {
                 return new ApiResponse<object>
@@ -135,7 +156,6 @@ namespace backend.Application.Services
                 };
             }
 
-            // ensure dish belongs to the same restaurant as the order
             if (dish.RestaurantId != order.RestaurantId)
             {
                 return new ApiResponse<object>
@@ -146,20 +166,40 @@ namespace backend.Application.Services
                 };
             }
 
+            // Kiểm tra khuyến mãi
+            var now = DateTime.UtcNow;
+
+            var activePromo = await _context.DishPromotions
+                .Include(dp => dp.Promotion)
+                .Where(dp => dp.DishId == dish.Id
+                             && dp.Promotion.StartDate <= now
+                             && dp.Promotion.EndDate >= now)
+                .OrderByDescending(dp => dp.Id)
+                .FirstOrDefaultAsync();
+
+            decimal priceToUse = activePromo?.AppliedPrice != null
+                ? (decimal)activePromo.AppliedPrice
+                : (decimal)dish.Price;
+
             var existingItem = order.OrderItems.FirstOrDefault(i => i.DishId == dishId);
             if (existingItem != null)
             {
-                // increment existing quantity
                 existingItem.Quantity += quantity;
                 order.UpdatedAt = DateTime.UtcNow;
             }
             else
             {
-                var item = OrderItem.Create(dish.Id, (decimal)dish.Price, quantity);
+                var item = OrderItem.Create(dish.Id, priceToUse, quantity);
                 order.AddItem(item);
             }
 
             order.UpdatedAt = DateTime.UtcNow;
+
+            if (order.AppliedPromotionId.HasValue || !string.IsNullOrEmpty(order.AppliedVoucherCode))
+                await _applyPromotionService.ApplyPromotionAsync(order, order.UserId, order.AppliedVoucherCode);
+            else
+                order.FinalPrice = order.TotalPrice;
+
             await _context.SaveChangesAsync();
 
             var orderDto = _mapper.Map<backend.Application.DTOs.Order.OrderDto>(order);
@@ -171,6 +211,7 @@ namespace backend.Application.Services
                 Data = orderDto
             };
         }
+
         public async Task<ApiResponse<object>> GetByIdAsync(int id)
         {
             var order = await _context.Orders
@@ -272,6 +313,12 @@ namespace backend.Application.Services
             }
 
             order.UpdatedAt = DateTime.UtcNow;
+
+            if (order.AppliedPromotionId.HasValue || !string.IsNullOrEmpty(order.AppliedVoucherCode))
+                await _applyPromotionService.ApplyPromotionAsync(order, order.UserId, order.AppliedVoucherCode);
+            else
+                order.FinalPrice = order.TotalPrice;
+
             await _context.SaveChangesAsync();
 
             // reload order with includes to ensure mapping có đầy đủ dữ liệu
@@ -302,7 +349,7 @@ namespace backend.Application.Services
                 };
             }
 
-            if (order.Status == OrderStatus.Paid || order.Status == OrderStatus.Paid)
+            if (order.Status == OrderStatus.Paid || order.Status == OrderStatus.Cancelled)
             {
                 return new ApiResponse<object>
                 {
@@ -353,6 +400,12 @@ namespace backend.Application.Services
 
             order.RemoveItem(orderItemId);
             order.UpdatedAt = DateTime.UtcNow;
+
+            if (order.AppliedPromotionId.HasValue || !string.IsNullOrEmpty(order.AppliedVoucherCode))
+                await _applyPromotionService.ApplyPromotionAsync(order, order.UserId, order.AppliedVoucherCode);
+            else
+                order.FinalPrice = order.TotalPrice;
+
             await _context.SaveChangesAsync();
 
             var orderDto = _mapper.Map<backend.Application.DTOs.Order.OrderDto>(order);

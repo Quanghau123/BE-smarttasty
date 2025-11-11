@@ -49,6 +49,5 @@ namespace backend.Domain.Models
         public ICollection<Recipe> Recipes { get; set; } = new List<Recipe>();
         public ICollection<RecipeReview> RecipeReviews { get; set; } = new List<RecipeReview>();
         public List<Review> Reviews { get; set; } = new();
-        public List<Voucher> Vouchers { get; set; } = new();
     }
 }

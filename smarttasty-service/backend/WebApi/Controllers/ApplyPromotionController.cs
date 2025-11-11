@@ -21,9 +21,6 @@ namespace backend.Api.Controllers
             _context = context;
         }
 
-        /// <summary>
-        /// Áp dụng DishPromotion, OrderPromotion và Voucher cho 1 đơn hàng
-        /// </summary>
         [HttpPost("{orderId}")]
         public async Task<IActionResult> ApplyPromotion(
             int orderId,
@@ -36,7 +33,11 @@ namespace backend.Api.Controllers
             if (order == null)
                 return NotFound(new { message = "Order not found" });
 
-            var finalPrice = await _applyPromotionService.ApplyPromotionAsync(order, voucherCode);
+            var finalPrice = await _applyPromotionService.ApplyPromotionAsync(
+                order,
+                order.UserId,
+                voucherCode
+            );
 
             return Ok(new
             {
@@ -44,6 +45,26 @@ namespace backend.Api.Controllers
                 OriginalTotal = order.OrderItems.Sum(i => i.TotalPrice),
                 FinalTotal = finalPrice,
                 VoucherCode = voucherCode
+            });
+        }
+        [HttpPost("{orderId}/remove")]
+        public async Task<IActionResult> RemovePromotion(int orderId)
+        {
+            var order = await _context.Orders
+                .Include(o => o.OrderItems)
+                .FirstOrDefaultAsync(o => o.Id == orderId);
+
+            if (order == null)
+                return NotFound(new { message = "Order not found" });
+
+            var finalPrice = await _applyPromotionService.RemovePromotionAsync(order);
+
+            return Ok(new
+            {
+                OrderId = order.Id,
+                OriginalTotal = order.OrderItems.Sum(i => i.TotalPrice),
+                FinalTotal = finalPrice,
+                VoucherCode = (string?)null
             });
         }
     }

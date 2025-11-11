@@ -21,9 +21,11 @@ namespace backend.Domain.Models
         public string Description { get; set; } = string.Empty;
 
         [Required]
+        [Column(TypeName = "timestamp with time zone")]
         public DateTime StartDate { get; set; }
 
         [Required]
+        [Column(TypeName = "timestamp with time zone")]
         public DateTime EndDate { get; set; }
 
         [Required]
@@ -35,13 +37,9 @@ namespace backend.Domain.Models
         [Required]
         public PromotionTarget TargetType { get; set; }
 
-        // store photo public id/key (nullable)
+        public string? VoucherCode { get; set; }
         public string? Image { get; set; }
-
         public List<DishPromotion> DishPromotions { get; set; } = new();
-
         public List<OrderPromotion> OrderPromotions { get; set; } = new();
-
-        public List<Voucher> Vouchers { get; set; } = new();
     }
 }

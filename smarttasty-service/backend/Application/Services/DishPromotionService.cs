@@ -6,6 +6,7 @@ using backend.Application.DTOs.DishPromotion;
 using backend.Domain.Models.Requests.DishPromotion;
 using backend.Domain.Enums.Commons.Response;
 using backend.Infrastructure.Helpers.Commons.Response;
+using backend.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace backend.Application.Services
@@ -28,11 +29,13 @@ namespace backend.Application.Services
                 .Include(dp => dp.Promotion)
                 .ToListAsync();
 
+            var dtos = _mapper.Map<List<DishPromotionDto>>(list);
+
             return new ApiResponse<List<DishPromotionDto>>
             {
                 ErrCode = ErrorCode.Success,
                 ErrMessage = "OK",
-                Data = _mapper.Map<List<DishPromotionDto>>(list)
+                Data = dtos
             };
         }
 
@@ -59,7 +62,7 @@ namespace backend.Application.Services
             };
         }
 
-        public async Task<ApiResponse<DishPromotionDto?>> CreateAsync(CreateDishPromotionRequest request)
+        public async Task<ApiResponse<DishPromotionDto?>> ApplyDishPromotionsAsync(CreateDishPromotionRequest request)
         {
             var promo = await _context.Promotions.FindAsync(request.PromotionId);
             if (promo == null)
@@ -80,10 +83,14 @@ namespace backend.Application.Services
                 };
 
             var dp = _mapper.Map<DishPromotion>(request);
+
+            // Tính giá áp dụng
+            dp.OriginalPrice = (float)dish.Price;
+            dp.AppliedPrice = CalculateDiscountedPrice(dish.Price, promo);
+
             _context.DishPromotions.Add(dp);
             await _context.SaveChangesAsync();
 
-            // include để mapping ra discount từ Promotion
             var dpWithRelations = await _context.DishPromotions
                 .Include(x => x.Dish)
                 .Include(x => x.Promotion)
@@ -93,13 +100,17 @@ namespace backend.Application.Services
             {
                 ErrCode = ErrorCode.Success,
                 ErrMessage = "Created successfully",
-                Data = _mapper.Map<DishPromotionDto>(dpWithRelations)
+                Data = _mapper.Map<DishPromotionDto>(dpWithRelations!)
             };
         }
 
         public async Task<ApiResponse<DishPromotionDto?>> UpdateAsync(int id, CreateDishPromotionRequest request)
         {
-            var dp = await _context.DishPromotions.FindAsync(id);
+            var dp = await _context.DishPromotions
+                .Include(x => x.Dish)
+                .Include(x => x.Promotion)
+                .FirstOrDefaultAsync(x => x.Id == id);
+
             if (dp == null)
                 return new ApiResponse<DishPromotionDto?>
                 {
@@ -108,21 +119,31 @@ namespace backend.Application.Services
                     Data = null
                 };
 
+            var promo = await _context.Promotions.FindAsync(request.PromotionId);
+            var dish = await _context.Dishes.FindAsync(request.DishId);
+
+            if (promo == null || dish == null)
+                return new ApiResponse<DishPromotionDto?>
+                {
+                    ErrCode = ErrorCode.NotFound,
+                    ErrMessage = "Dish or Promotion not found",
+                    Data = null
+                };
+
             dp.DishId = request.DishId;
             dp.PromotionId = request.PromotionId;
 
-            await _context.SaveChangesAsync();
+            // Cập nhật giá
+            dp.OriginalPrice = (float)dish.Price;
+            dp.AppliedPrice = CalculateDiscountedPrice(dish.Price, promo);
 
-            var dpWithRelations = await _context.DishPromotions
-                .Include(x => x.Dish)
-                .Include(x => x.Promotion)
-                .FirstOrDefaultAsync(x => x.Id == dp.Id);
+            await _context.SaveChangesAsync();
 
             return new ApiResponse<DishPromotionDto?>
             {
                 ErrCode = ErrorCode.Success,
                 ErrMessage = "Updated successfully",
-                Data = _mapper.Map<DishPromotionDto>(dpWithRelations)
+                Data = _mapper.Map<DishPromotionDto>(dp)
             };
         }
 
@@ -146,6 +167,18 @@ namespace backend.Application.Services
                 ErrMessage = "Deleted successfully",
                 Data = null
             };
+        }
+
+        private float CalculateDiscountedPrice(float originalPrice, Promotion promo)
+        {
+            float discounted = originalPrice;
+
+            if (promo.DiscountType == DiscountType.percent)
+                discounted -= discounted * promo.DiscountValue / 100f;
+            else
+                discounted -= promo.DiscountValue;
+
+            return Math.Max(0, discounted);
         }
     }
 }

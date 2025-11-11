@@ -20,6 +20,8 @@ namespace backend.Domain.Models
 
         [ForeignKey("PromotionId")]
         public Promotion Promotion { get; set; } = null!;
+        public float? OriginalPrice { get; set; }
+        public float? AppliedPrice { get; set; }
     }
 
 }

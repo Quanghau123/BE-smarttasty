@@ -37,11 +37,18 @@ namespace backend.Application.Services
             var op = new OrderPromotion
             {
                 PromotionId = dto.PromotionId,
-                MinOrderValue = dto.MinOrderValue
+                MinOrderValue = dto.MinOrderValue,
+                RestaurantId = dto.RestaurantId,
+                TargetUserId = dto.TargetUserId,
+                IsGlobal = dto.IsGlobal
             };
 
             _context.OrderPromotions.Add(op);
             await _context.SaveChangesAsync();
+
+            await _context.Entry(op).Reference(o => o.Promotion).LoadAsync();
+            if (op.RestaurantId != null)
+                await _context.Entry(op).Reference(o => o.Restaurant).LoadAsync();
 
             return new ApiResponse<OrderPromotionDto?>
             {
@@ -49,12 +56,14 @@ namespace backend.Application.Services
                 ErrMessage = "Created successfully",
                 Data = _mapper.Map<OrderPromotionDto>(op)
             };
+
         }
 
         public async Task<ApiResponse<OrderPromotionDto?>> GetByPromotionIdAsync(int promotionId)
         {
             var op = await _context.OrderPromotions
                 .Include(o => o.Promotion)
+                .Include(o => o.Restaurant)
                 .FirstOrDefaultAsync(o => o.PromotionId == promotionId);
 
             if (op == null)
@@ -72,6 +81,25 @@ namespace backend.Application.Services
                 ErrCode = ErrorCode.Success,
                 ErrMessage = "OK",
                 Data = _mapper.Map<OrderPromotionDto>(op)
+            };
+        }
+
+        public async Task<ApiResponse<List<OrderPromotionDto>>> GetOrderPromotionsForUserAsync(int? userId = null, int? restaurantId = null)
+        {
+            var promotions = await _context.OrderPromotions
+                .Include(op => op.Promotion)
+                .Include(op => op.Restaurant)
+                .Where(op =>
+                    op.IsGlobal || (userId != null && op.TargetUserId == userId))
+                .Where(op =>
+                    restaurantId == null || op.RestaurantId == restaurantId)
+                .ToListAsync();
+
+            return new ApiResponse<List<OrderPromotionDto>>
+            {
+                ErrCode = ErrorCode.Success,
+                ErrMessage = "OK",
+                Data = _mapper.Map<List<OrderPromotionDto>>(promotions)
             };
         }
 

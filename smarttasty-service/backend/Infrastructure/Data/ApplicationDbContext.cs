@@ -21,7 +21,6 @@ namespace backend.Infrastructure.Data
         public DbSet<OrderPromotion> OrderPromotions { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderItem> OrderItems { get; set; }
-        public DbSet<Voucher> Vouchers { get; set; }
         public DbSet<Review> Reviews { get; set; }
         public DbSet<Favorite> Favorites { get; set; }
         public DbSet<Recipe> Recipes { get; set; }
@@ -85,18 +84,6 @@ namespace backend.Infrastructure.Data
                 .HasForeignKey(op => op.PromotionId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<Voucher>()
-                .HasOne(v => v.Promotion)
-                .WithMany(p => p.Vouchers)
-                .HasForeignKey(v => v.PromotionId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<Voucher>()
-                .HasOne(v => v.User)
-                .WithMany(u => u.Vouchers)
-                .HasForeignKey(v => v.UserId)
-                .OnDelete(DeleteBehavior.SetNull);
-
             modelBuilder.Entity<Recipe>()
                 .HasOne(r => r.User)
                 .WithMany(u => u.Recipes)
@@ -141,7 +128,7 @@ namespace backend.Infrastructure.Data
 }
 
 //add + update (add mà không update là lỗi nguyên db vì không so sánh với migrations cũ được)
-//dotnet ef migrations add FuzzySearch
+//dotnet ef migrations add update_order-v_1
 //dotnet ef database update
 
 //delete migrations nếu update bị lỗi

@@ -46,10 +46,10 @@ namespace backend.WebApi.Controllers
             return CreateResult(res);
         }
 
-        [HttpPost]
+        [HttpPost("apply")]
         public async Task<IActionResult> Create([FromBody] CreateDishPromotionRequest request)
         {
-            var res = await _service.CreateAsync(request);
+            var res = await _service.ApplyDishPromotionsAsync(request);
             return CreateResult(res);
         }
 

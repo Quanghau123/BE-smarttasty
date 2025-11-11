@@ -25,6 +25,9 @@ namespace backend.Domain.Models
         [Required]
         public decimal TotalPrice { get; set; }
 
+        public int? AppliedPromotionId { get; set; }
+        public string? AppliedVoucherCode { get; set; }
+
         [Required]
         public decimal FinalPrice { get; set; }
 

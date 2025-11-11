@@ -13,5 +13,7 @@ namespace backend.Application.DTOs.DishPromotion
 
         public DiscountType DiscountType { get; set; }
         public float DiscountValue { get; set; }
+        public float DiscountedPrice { get; set; }
+        public float OriginalPrice { get; set; }
     }
 }

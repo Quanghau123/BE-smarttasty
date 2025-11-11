@@ -8,7 +8,7 @@ namespace backend.Application.Interfaces
     {
         Task<ApiResponse<List<DishPromotionDto>>> GetAllAsync();
         Task<ApiResponse<DishPromotionDto?>> GetByIdAsync(int id);
-        Task<ApiResponse<DishPromotionDto?>> CreateAsync(CreateDishPromotionRequest request);
+        Task<ApiResponse<DishPromotionDto?>> ApplyDishPromotionsAsync(CreateDishPromotionRequest request);
         Task<ApiResponse<DishPromotionDto?>> UpdateAsync(int id, CreateDishPromotionRequest request);
         Task<ApiResponse<object>> DeleteAsync(int id);
     }

@@ -9,6 +9,7 @@ namespace backend.Application.Interfaces
     {
         Task<ApiResponse<OrderPromotionDto?>> CreateOrderPromotionAsync(CreateOrderPromotionRequest dto);
         Task<ApiResponse<OrderPromotionDto?>> GetByPromotionIdAsync(int promotionId);
+        Task<ApiResponse<List<OrderPromotionDto>>> GetOrderPromotionsForUserAsync(int? userId = null, int? restaurantId = null);
         Task<ApiResponse<object>> DeleteOrderPromotionAsync(int id);
     }
 }

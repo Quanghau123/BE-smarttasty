@@ -7,7 +7,6 @@ using backend.Application.DTOs.KafkaPayload;
 using backend.Application.DTOs.Dish;
 using backend.Application.DTOs.DishPromotion;
 using backend.Application.DTOs.OrderPromotion;
-using backend.Application.DTOs.Voucher;
 using backend.Application.DTOs.Payment;
 using backend.Application.DTOs.Order;
 using backend.Domain.Enums;
@@ -15,7 +14,6 @@ using backend.Domain.Models.Requests.Restaurant;
 using backend.Domain.Models.Requests.Promotion;
 using backend.Domain.Models.Requests.Notifications;
 using backend.Domain.Models.Requests.DishPromotion;
-using backend.Domain.Models.Requests.Voucher;
 
 namespace backend.Infrastructure.Mappings
 {
@@ -68,25 +66,16 @@ namespace backend.Infrastructure.Mappings
                 .ForMember(dest => dest.DishName, opt => opt.MapFrom(src => src.Dish.Name))
                 .ForMember(dest => dest.PromotionTitle, opt => opt.MapFrom(src => src.Promotion.Title))
                 .ForMember(dest => dest.DiscountType, opt => opt.MapFrom(src => src.Promotion.DiscountType))
-                .ForMember(dest => dest.DiscountValue, opt => opt.MapFrom(src => src.Promotion.DiscountValue));
+                .ForMember(dest => dest.DiscountValue, opt => opt.MapFrom(src => src.Promotion.DiscountValue))
+                .ForMember(dest => dest.OriginalPrice, opt => opt.MapFrom(src => src.OriginalPrice ?? 0))
+                .ForMember(dest => dest.DiscountedPrice, opt => opt.MapFrom(src => src.AppliedPrice ?? 0));
 
             // ====== OrderPromotion Mapping ======
             CreateMap<OrderPromotion, OrderPromotionDto>()
-                .ForMember(dest => dest.PromotionTitle, opt => opt.MapFrom(src => src.Promotion.Title))
-                .ForMember(dest => dest.DiscountType, opt => opt.MapFrom(src => src.Promotion.DiscountType))
-                .ForMember(dest => dest.DiscountValue, opt => opt.MapFrom(src => src.Promotion.DiscountValue));
-
-            // ====== Voucher Mapping ======
-            CreateMap<CreateVoucherRequest, Voucher>()
-                .ForMember(dest => dest.Id, opt => opt.Ignore())
-                .ForMember(dest => dest.IsUsed, opt => opt.MapFrom(src => false))
-                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow));
-
-            CreateMap<Voucher, VoucherDto>()
-                .ForMember(dest => dest.DiscountType, opt => opt.MapFrom(src => src.Promotion.DiscountType))
-                .ForMember(dest => dest.DiscountValue, opt => opt.MapFrom(src => src.Promotion.DiscountValue))
-                .ForMember(dest => dest.StartDate, opt => opt.MapFrom(src => src.Promotion.StartDate))
-                .ForMember(dest => dest.EndDate, opt => opt.MapFrom(src => src.Promotion.EndDate));
+           .ForMember(dest => dest.PromotionTitle, opt => opt.MapFrom(src => src.Promotion.Title))
+           .ForMember(dest => dest.DiscountType, opt => opt.MapFrom(src => src.Promotion.DiscountType))
+           .ForMember(dest => dest.DiscountValue, opt => opt.MapFrom(src => src.Promotion.DiscountValue))
+           .ForMember(dest => dest.RestaurantName, opt => opt.MapFrom(src => src.Restaurant != null ? src.Restaurant.Name : null));
 
             CreateMap<Payment, PaymentDto>();
             CreateMap<CODPayment, CODPaymentDto>();

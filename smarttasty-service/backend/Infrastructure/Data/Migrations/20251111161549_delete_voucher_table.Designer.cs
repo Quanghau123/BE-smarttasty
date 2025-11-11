@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using backend.Infrastructure.Data;
@@ -11,9 +12,11 @@ using backend.Infrastructure.Data;
 namespace backend.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251111161549_delete_voucher_table")]
+    partial class delete_voucher_table
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -343,12 +346,6 @@ namespace backend.Infrastructure.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("AppliedPromotionId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("AppliedVoucherCode")
-                        .HasColumnType("text");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -437,26 +434,15 @@ namespace backend.Infrastructure.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<bool>("IsGlobal")
-                        .HasColumnType("boolean");
-
                     b.Property<float>("MinOrderValue")
                         .HasColumnType("real");
 
                     b.Property<int>("PromotionId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("RestaurantId")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("TargetUserId")
-                        .HasColumnType("integer");
-
                     b.HasKey("Id");
 
                     b.HasIndex("PromotionId");
-
-                    b.HasIndex("RestaurantId");
 
                     b.ToTable("OrderPromotions");
                 });
@@ -602,9 +588,6 @@ namespace backend.Infrastructure.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("VoucherCode")
-                        .HasColumnType("text");
-
                     b.HasKey("Id");
 
                     b.HasIndex("RestaurantId");
@@ -618,9 +601,9 @@ namespace backend.Infrastructure.Data.Migrations
                             Description = "Khuyến mãi 20% cho tất cả món hải sản trong menu.",
                             DiscountType = 0,
                             DiscountValue = 20f,
-                            EndDate = new DateTime(2025, 12, 11, 19, 35, 21, 285, DateTimeKind.Utc).AddTicks(4929),
+                            EndDate = new DateTime(2025, 12, 11, 16, 15, 48, 136, DateTimeKind.Utc).AddTicks(602),
                             RestaurantId = 1,
-                            StartDate = new DateTime(2025, 11, 11, 19, 35, 21, 285, DateTimeKind.Utc).AddTicks(4929),
+                            StartDate = new DateTime(2025, 11, 11, 16, 15, 48, 136, DateTimeKind.Utc).AddTicks(601),
                             TargetType = 2,
                             Title = "Giảm 20% Hải Sản"
                         },
@@ -630,9 +613,9 @@ namespace backend.Infrastructure.Data.Migrations
                             Description = "Giảm 15k cho đơn hàng từ 50k trở lên.",
                             DiscountType = 1,
                             DiscountValue = 15000f,
-                            EndDate = new DateTime(2026, 1, 11, 19, 35, 21, 285, DateTimeKind.Utc).AddTicks(4945),
+                            EndDate = new DateTime(2026, 1, 11, 16, 15, 48, 136, DateTimeKind.Utc).AddTicks(621),
                             RestaurantId = 2,
-                            StartDate = new DateTime(2025, 11, 11, 19, 35, 21, 285, DateTimeKind.Utc).AddTicks(4940),
+                            StartDate = new DateTime(2025, 11, 11, 16, 15, 48, 136, DateTimeKind.Utc).AddTicks(619),
                             TargetType = 1,
                             Title = "Combo Sinh Viên"
                         },
@@ -642,9 +625,9 @@ namespace backend.Infrastructure.Data.Migrations
                             Description = "Áp dụng cho tất cả đồ uống trong menu.",
                             DiscountType = 0,
                             DiscountValue = 33.3f,
-                            EndDate = new DateTime(2025, 12, 11, 19, 35, 21, 285, DateTimeKind.Utc).AddTicks(4948),
+                            EndDate = new DateTime(2025, 12, 11, 16, 15, 48, 136, DateTimeKind.Utc).AddTicks(627),
                             RestaurantId = 3,
-                            StartDate = new DateTime(2025, 11, 11, 19, 35, 21, 285, DateTimeKind.Utc).AddTicks(4947),
+                            StartDate = new DateTime(2025, 11, 11, 16, 15, 48, 136, DateTimeKind.Utc).AddTicks(626),
                             TargetType = 0,
                             Title = "Mua 2 Tặng 1"
                         },
@@ -654,9 +637,9 @@ namespace backend.Infrastructure.Data.Migrations
                             Description = "Giảm 10% cho tất cả món chay vào ngày Rằm.",
                             DiscountType = 0,
                             DiscountValue = 10f,
-                            EndDate = new DateTime(2026, 2, 11, 19, 35, 21, 285, DateTimeKind.Utc).AddTicks(4951),
+                            EndDate = new DateTime(2026, 2, 11, 16, 15, 48, 136, DateTimeKind.Utc).AddTicks(633),
                             RestaurantId = 5,
-                            StartDate = new DateTime(2025, 11, 11, 19, 35, 21, 285, DateTimeKind.Utc).AddTicks(4950),
+                            StartDate = new DateTime(2025, 11, 11, 16, 15, 48, 136, DateTimeKind.Utc).AddTicks(632),
                             TargetType = 2,
                             Title = "Khuyến Mãi Ăn Chay"
                         });
@@ -947,7 +930,7 @@ namespace backend.Infrastructure.Data.Migrations
                             AverageRating = 0.0,
                             Category = 1,
                             CloseTime = "22:00",
-                            CreatedAt = new DateTime(2025, 11, 11, 19, 35, 21, 285, DateTimeKind.Utc).AddTicks(4736),
+                            CreatedAt = new DateTime(2025, 11, 11, 16, 15, 48, 136, DateTimeKind.Utc).AddTicks(363),
                             Description = "Chuyên các món hải sản tươi sống, không gian sang trọng.",
                             IsHidden = false,
                             Latitude = 10.776899999999999,
@@ -964,7 +947,7 @@ namespace backend.Infrastructure.Data.Migrations
                             AverageRating = 0.0,
                             Category = 2,
                             CloseTime = "23:00",
-                            CreatedAt = new DateTime(2025, 11, 11, 19, 35, 21, 285, DateTimeKind.Utc).AddTicks(4741),
+                            CreatedAt = new DateTime(2025, 11, 11, 16, 15, 48, 136, DateTimeKind.Utc).AddTicks(372),
                             Description = "Quán ăn vặt bình dân, giá rẻ, hợp túi tiền sinh viên.",
                             IsHidden = false,
                             Latitude = 21.028500000000001,
@@ -981,7 +964,7 @@ namespace backend.Infrastructure.Data.Migrations
                             AverageRating = 0.0,
                             Category = 4,
                             CloseTime = "21:00",
-                            CreatedAt = new DateTime(2025, 11, 11, 19, 35, 21, 285, DateTimeKind.Utc).AddTicks(4745),
+                            CreatedAt = new DateTime(2025, 11, 11, 16, 15, 48, 136, DateTimeKind.Utc).AddTicks(379),
                             Description = "Quán cafe view đẹp, thích hợp để học tập và làm việc.",
                             IsHidden = false,
                             Latitude = 16.054400000000001,
@@ -998,7 +981,7 @@ namespace backend.Infrastructure.Data.Migrations
                             AverageRating = 0.0,
                             Category = 7,
                             CloseTime = "00:00",
-                            CreatedAt = new DateTime(2025, 11, 11, 19, 35, 21, 285, DateTimeKind.Utc).AddTicks(4749),
+                            CreatedAt = new DateTime(2025, 11, 11, 16, 15, 48, 136, DateTimeKind.Utc).AddTicks(386),
                             Description = "Chuyên các món nhậu dân dã, không gian thoải mái.",
                             IsHidden = false,
                             Latitude = 10.045199999999999,
@@ -1015,7 +998,7 @@ namespace backend.Infrastructure.Data.Migrations
                             AverageRating = 0.0,
                             Category = 3,
                             CloseTime = "21:00",
-                            CreatedAt = new DateTime(2025, 11, 11, 19, 35, 21, 285, DateTimeKind.Utc).AddTicks(4752),
+                            CreatedAt = new DateTime(2025, 11, 11, 16, 15, 48, 136, DateTimeKind.Utc).AddTicks(392),
                             Description = "Nhà hàng chay thanh tịnh, chuyên phục vụ các món ăn tốt cho sức khỏe.",
                             IsHidden = false,
                             Latitude = 16.463699999999999,
@@ -1032,7 +1015,7 @@ namespace backend.Infrastructure.Data.Migrations
                             AverageRating = 0.0,
                             Category = 6,
                             CloseTime = "03:00",
-                            CreatedAt = new DateTime(2025, 11, 11, 19, 35, 21, 285, DateTimeKind.Utc).AddTicks(4755),
+                            CreatedAt = new DateTime(2025, 11, 11, 16, 15, 48, 136, DateTimeKind.Utc).AddTicks(398),
                             Description = "Bar sôi động với DJ và nhạc EDM cực chất.",
                             IsHidden = false,
                             Latitude = 21.033799999999999,
@@ -1081,7 +1064,7 @@ namespace backend.Infrastructure.Data.Migrations
                         {
                             Id = 1,
                             Comment = "Hải sản rất tươi, nhân viên phục vụ nhiệt tình.",
-                            CreatedAt = new DateTime(2025, 11, 11, 19, 35, 21, 285, DateTimeKind.Utc).AddTicks(4992),
+                            CreatedAt = new DateTime(2025, 11, 11, 16, 15, 48, 136, DateTimeKind.Utc).AddTicks(770),
                             Rating = 5,
                             RestaurantId = 1,
                             UserId = 1
@@ -1090,7 +1073,7 @@ namespace backend.Infrastructure.Data.Migrations
                         {
                             Id = 2,
                             Comment = "Không gian đẹp, giá hơi cao nhưng xứng đáng.",
-                            CreatedAt = new DateTime(2025, 11, 11, 19, 35, 21, 285, DateTimeKind.Utc).AddTicks(4995),
+                            CreatedAt = new DateTime(2025, 11, 11, 16, 15, 48, 136, DateTimeKind.Utc).AddTicks(775),
                             Rating = 4,
                             RestaurantId = 1,
                             UserId = 3
@@ -1099,7 +1082,7 @@ namespace backend.Infrastructure.Data.Migrations
                         {
                             Id = 3,
                             Comment = "Quán ăn vặt ngon, hợp túi tiền.",
-                            CreatedAt = new DateTime(2025, 11, 11, 19, 35, 21, 285, DateTimeKind.Utc).AddTicks(4996),
+                            CreatedAt = new DateTime(2025, 11, 11, 16, 15, 48, 136, DateTimeKind.Utc).AddTicks(778),
                             Rating = 4,
                             RestaurantId = 2,
                             UserId = 1
@@ -1108,7 +1091,7 @@ namespace backend.Infrastructure.Data.Migrations
                         {
                             Id = 4,
                             Comment = "Đông khách, phục vụ hơi chậm.",
-                            CreatedAt = new DateTime(2025, 11, 11, 19, 35, 21, 285, DateTimeKind.Utc).AddTicks(4998),
+                            CreatedAt = new DateTime(2025, 11, 11, 16, 15, 48, 136, DateTimeKind.Utc).AddTicks(782),
                             Rating = 3,
                             RestaurantId = 2,
                             UserId = 5
@@ -1117,7 +1100,7 @@ namespace backend.Infrastructure.Data.Migrations
                         {
                             Id = 5,
                             Comment = "Cafe ngon, view đẹp, yên tĩnh học bài.",
-                            CreatedAt = new DateTime(2025, 11, 11, 19, 35, 21, 285, DateTimeKind.Utc).AddTicks(5000),
+                            CreatedAt = new DateTime(2025, 11, 11, 16, 15, 48, 136, DateTimeKind.Utc).AddTicks(785),
                             Rating = 5,
                             RestaurantId = 3,
                             UserId = 1
@@ -1126,7 +1109,7 @@ namespace backend.Infrastructure.Data.Migrations
                         {
                             Id = 6,
                             Comment = "Không gian ổn, giá hơi cao.",
-                            CreatedAt = new DateTime(2025, 11, 11, 19, 35, 21, 285, DateTimeKind.Utc).AddTicks(5001),
+                            CreatedAt = new DateTime(2025, 11, 11, 16, 15, 48, 136, DateTimeKind.Utc).AddTicks(789),
                             Rating = 4,
                             RestaurantId = 3,
                             UserId = 5
@@ -1135,7 +1118,7 @@ namespace backend.Infrastructure.Data.Migrations
                         {
                             Id = 7,
                             Comment = "Đồ nhậu ngon, giá rẻ.",
-                            CreatedAt = new DateTime(2025, 11, 11, 19, 35, 21, 285, DateTimeKind.Utc).AddTicks(5003),
+                            CreatedAt = new DateTime(2025, 11, 11, 16, 15, 48, 136, DateTimeKind.Utc).AddTicks(793),
                             Rating = 4,
                             RestaurantId = 4,
                             UserId = 1
@@ -1144,7 +1127,7 @@ namespace backend.Infrastructure.Data.Migrations
                         {
                             Id = 8,
                             Comment = "Không gian thoải mái, thích hợp tụ tập bạn bè.",
-                            CreatedAt = new DateTime(2025, 11, 11, 19, 35, 21, 285, DateTimeKind.Utc).AddTicks(5005),
+                            CreatedAt = new DateTime(2025, 11, 11, 16, 15, 48, 136, DateTimeKind.Utc).AddTicks(796),
                             Rating = 5,
                             RestaurantId = 4,
                             UserId = 7
@@ -1153,7 +1136,7 @@ namespace backend.Infrastructure.Data.Migrations
                         {
                             Id = 9,
                             Comment = "Đồ ăn chay ngon, cảm giác nhẹ nhàng.",
-                            CreatedAt = new DateTime(2025, 11, 11, 19, 35, 21, 285, DateTimeKind.Utc).AddTicks(5006),
+                            CreatedAt = new DateTime(2025, 11, 11, 16, 15, 48, 136, DateTimeKind.Utc).AddTicks(803),
                             Rating = 5,
                             RestaurantId = 5,
                             UserId = 1
@@ -1162,7 +1145,7 @@ namespace backend.Infrastructure.Data.Migrations
                         {
                             Id = 10,
                             Comment = "Món ăn đa dạng, nhân viên thân thiện.",
-                            CreatedAt = new DateTime(2025, 11, 11, 19, 35, 21, 285, DateTimeKind.Utc).AddTicks(5008),
+                            CreatedAt = new DateTime(2025, 11, 11, 16, 15, 48, 136, DateTimeKind.Utc).AddTicks(807),
                             Rating = 4,
                             RestaurantId = 5,
                             UserId = 3
@@ -1171,7 +1154,7 @@ namespace backend.Infrastructure.Data.Migrations
                         {
                             Id = 11,
                             Comment = "Bar sôi động nhưng hơi ồn.",
-                            CreatedAt = new DateTime(2025, 11, 11, 19, 35, 21, 285, DateTimeKind.Utc).AddTicks(5009),
+                            CreatedAt = new DateTime(2025, 11, 11, 16, 15, 48, 136, DateTimeKind.Utc).AddTicks(810),
                             Rating = 3,
                             RestaurantId = 6,
                             UserId = 1
@@ -1180,7 +1163,7 @@ namespace backend.Infrastructure.Data.Migrations
                         {
                             Id = 12,
                             Comment = "Nhạc DJ cực chất, không gian sôi động.",
-                            CreatedAt = new DateTime(2025, 11, 11, 19, 35, 21, 285, DateTimeKind.Utc).AddTicks(5011),
+                            CreatedAt = new DateTime(2025, 11, 11, 16, 15, 48, 136, DateTimeKind.Utc).AddTicks(813),
                             Rating = 5,
                             RestaurantId = 6,
                             UserId = 5
@@ -1238,7 +1221,7 @@ namespace backend.Infrastructure.Data.Migrations
                         {
                             UserId = 1,
                             Address = "123 Admin Street",
-                            CreatedAt = new DateTime(2025, 11, 11, 19, 35, 21, 285, DateTimeKind.Utc).AddTicks(4307),
+                            CreatedAt = new DateTime(2025, 11, 11, 16, 15, 48, 135, DateTimeKind.Utc).AddTicks(9789),
                             Email = "l3acasha@gmail.com",
                             IsActive = true,
                             Phone = "0386001106",
@@ -1250,7 +1233,7 @@ namespace backend.Infrastructure.Data.Migrations
                         {
                             UserId = 2,
                             Address = "456 Business Street",
-                            CreatedAt = new DateTime(2025, 11, 11, 19, 35, 21, 285, DateTimeKind.Utc).AddTicks(4313),
+                            CreatedAt = new DateTime(2025, 11, 11, 16, 15, 48, 135, DateTimeKind.Utc).AddTicks(9797),
                             Email = "nhocsieuquay131023@gmail.com",
                             IsActive = true,
                             Phone = "0827749293",
@@ -1262,7 +1245,7 @@ namespace backend.Infrastructure.Data.Migrations
                         {
                             UserId = 3,
                             Address = "789 User Street",
-                            CreatedAt = new DateTime(2025, 11, 11, 19, 35, 21, 285, DateTimeKind.Utc).AddTicks(4337),
+                            CreatedAt = new DateTime(2025, 11, 11, 16, 15, 48, 135, DateTimeKind.Utc).AddTicks(9803),
                             Email = "phatqq0@gmail.com",
                             IsActive = true,
                             Phone = "0395042018",
@@ -1274,7 +1257,7 @@ namespace backend.Infrastructure.Data.Migrations
                         {
                             UserId = 4,
                             Address = "987 Business Street",
-                            CreatedAt = new DateTime(2025, 11, 11, 19, 35, 21, 285, DateTimeKind.Utc).AddTicks(4341),
+                            CreatedAt = new DateTime(2025, 11, 11, 16, 15, 48, 135, DateTimeKind.Utc).AddTicks(9810),
                             Email = "test1@gmail.com",
                             IsActive = true,
                             Phone = "0829949293",
@@ -1286,7 +1269,7 @@ namespace backend.Infrastructure.Data.Migrations
                         {
                             UserId = 5,
                             Address = "654 User Street",
-                            CreatedAt = new DateTime(2025, 11, 11, 19, 35, 21, 285, DateTimeKind.Utc).AddTicks(4344),
+                            CreatedAt = new DateTime(2025, 11, 11, 16, 15, 48, 135, DateTimeKind.Utc).AddTicks(9816),
                             Email = "test2@gmail.com",
                             IsActive = true,
                             Phone = "0395992018",
@@ -1298,7 +1281,7 @@ namespace backend.Infrastructure.Data.Migrations
                         {
                             UserId = 6,
                             Address = "321 Business Street",
-                            CreatedAt = new DateTime(2025, 11, 11, 19, 35, 21, 285, DateTimeKind.Utc).AddTicks(4348),
+                            CreatedAt = new DateTime(2025, 11, 11, 16, 15, 48, 135, DateTimeKind.Utc).AddTicks(9822),
                             Email = "test3@gmail.com",
                             IsActive = true,
                             Phone = "0826649293",
@@ -1310,7 +1293,7 @@ namespace backend.Infrastructure.Data.Migrations
                         {
                             UserId = 7,
                             Address = "136 User Street",
-                            CreatedAt = new DateTime(2025, 11, 11, 19, 35, 21, 285, DateTimeKind.Utc).AddTicks(4351),
+                            CreatedAt = new DateTime(2025, 11, 11, 16, 15, 48, 135, DateTimeKind.Utc).AddTicks(9829),
                             Email = "test4@gmail.com",
                             IsActive = true,
                             Phone = "0395042018",
@@ -1509,13 +1492,7 @@ namespace backend.Infrastructure.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("backend.Domain.Models.Restaurant", "Restaurant")
-                        .WithMany()
-                        .HasForeignKey("RestaurantId");
-
                     b.Navigation("Promotion");
-
-                    b.Navigation("Restaurant");
                 });
 
             modelBuilder.Entity("backend.Domain.Models.PasswordResetToken", b =>

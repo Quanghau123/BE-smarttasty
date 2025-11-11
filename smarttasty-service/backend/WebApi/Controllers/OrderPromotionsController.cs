@@ -50,5 +50,14 @@ namespace backend.WebApi.Controllers
             var res = await _service.DeleteOrderPromotionAsync(id);
             return CreateResult(res);
         }
+
+        [HttpGet("user")]
+        public async Task<IActionResult> GetOrderPromotionsForUser(
+     [FromQuery] int? userId = null,
+     [FromQuery] int? restaurantId = null)
+        {
+            var res = await _service.GetOrderPromotionsForUserAsync(userId, restaurantId);
+            return CreateResult(res);
+        }
     }
 }

@@ -119,7 +119,6 @@ builder.Services.AddScoped<IPaginationService, PaginationService>();
 builder.Services.AddScoped<IReservationService, ReservationService>();
 builder.Services.AddScoped<IApplyPromotionService, ApplyPromotionService>();
 builder.Services.AddScoped<IOrderPromotionService, OrderPromotionService>();
-builder.Services.AddScoped<IVoucherService, VoucherService>();
 builder.Services.AddScoped<IVNPayService, VNPayService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
@@ -231,11 +230,6 @@ RecurringJob.AddOrUpdate<PromotionJob>(
     "cleanup-expired-promotions",
     job => job.CleanupExpiredPromotions(),
     Cron.Hourly
-);
-RecurringJob.AddOrUpdate<VoucherJob>(
-    "cleanup-expired-vouchers",
-    job => job.CleanupExpiredVouchers(),
-    Cron.Daily
 );
 
 app.Run();

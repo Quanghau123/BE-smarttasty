@@ -9,81 +9,78 @@ namespace backend.Application.Services
     public class ApplyPromotionService : IApplyPromotionService
     {
         private readonly ApplicationDbContext _context;
-        private readonly IVoucherService _voucherService;
 
-        public ApplyPromotionService(ApplicationDbContext context, IVoucherService voucherService)
+        public ApplyPromotionService(ApplicationDbContext context)
         {
             _context = context;
-            _voucherService = voucherService;
         }
 
-        public async Task<float> ApplyPromotionAsync(Order order, string? voucherCode = null)
+        // Áp dụng promotion
+        public async Task<float> ApplyPromotionAsync(Order order, int currentUserId, string? voucherCode = null)
         {
-            float finalTotal = 0;
+            float finalTotal = order.OrderItems.Sum(i => (float)i.TotalPrice);
 
-            // ----- DishPromotion -----
-            foreach (var item in order.OrderItems)
-            {
-                var dish = await _context.Dishes
-                    .Include(d => d.DishPromotions)
-                    .ThenInclude(dp => dp.Promotion)
-                    .FirstOrDefaultAsync(d => d.Id == item.DishId);
+            Console.WriteLine($"[ApplyPromotion] Order total: {finalTotal}");
+            Console.WriteLine($"[ApplyPromotion] UserId: {currentUserId}");
+            Console.WriteLine($"[ApplyPromotion] Voucher: {(voucherCode ?? "(none)")}");
+            Console.WriteLine($"[ApplyPromotion] RestaurantId: {order.RestaurantId}");
 
-                if (dish == null) continue;
+            // dùng DateTime.Now thay vì UtcNow để tránh lệch múi giờ VN
+            var nowUtc = DateTime.UtcNow;
 
-                float price = (float)(item.UnitPrice * item.Quantity);
-
-                var validDishPromotions = dish.DishPromotions
-                    .Where(dp => dp.Promotion.StartDate <= DateTime.UtcNow &&
-                                 dp.Promotion.EndDate >= DateTime.UtcNow)
-                    .ToList();
-
-                foreach (var dp in validDishPromotions)
-                {
-                    if (dp.Promotion.DiscountType == DiscountType.percent)
-                        price -= price * dp.Promotion.DiscountValue / 100f;
-                    else
-                        price -= dp.Promotion.DiscountValue;
-                }
-
-                finalTotal += price;
-            }
-
-            // ----- OrderPromotion -----
-            var validOrderPromotions = await _context.OrderPromotions
+            var validPromotions = await _context.OrderPromotions
                 .Include(op => op.Promotion)
-                .Where(op => op.Promotion!.StartDate <= DateTime.UtcNow &&
-                             op.Promotion!.EndDate >= DateTime.UtcNow &&
-                             finalTotal >= op.MinOrderValue)
+                .Where(op =>
+                    // op.Promotion!.StartDate <= nowUtc &&
+                    // op.Promotion!.EndDate >= nowUtc &&
+                    finalTotal >= op.MinOrderValue &&
+                // (op.IsGlobal || op.TargetUserId == currentUserId) &&
+                (op.RestaurantId == null || op.RestaurantId == order.RestaurantId)
+                // (voucherCode == null || op.Promotion!.VoucherCode == voucherCode)
+                )
                 .ToListAsync();
 
-            foreach (var op in validOrderPromotions)
+            Console.WriteLine($"[ApplyPromotion] Found {validPromotions.Count} valid promotions");
+
+            if (!validPromotions.Any())
             {
-                if (op.Promotion!.DiscountType == DiscountType.percent)
-                    finalTotal -= finalTotal * op.Promotion.DiscountValue / 100f;
-                else
-                    finalTotal -= op.Promotion.DiscountValue;
+                order.AppliedPromotionId = null;
+                order.AppliedVoucherCode = null;
+                order.FinalPrice = (decimal)finalTotal;
+                await _context.SaveChangesAsync();
+                Console.WriteLine("[ApplyPromotion] No valid promotions found — skipping discount");
+                return finalTotal;
             }
 
-            // ----- Voucher -----
-            if (!string.IsNullOrEmpty(voucherCode))
-            {
-                var response = await _voucherService.GetByCodeAsync(voucherCode);
-                var voucher = response.Data;
-                if (voucher != null && !voucher.IsUsed &&
-                    voucher.StartDate <= DateTime.UtcNow &&
-                    voucher.EndDate >= DateTime.UtcNow)
-                {
-                    if (voucher.DiscountType == DiscountType.percent)
-                        finalTotal -= finalTotal * voucher.DiscountValue / 100f;
-                    else
-                        finalTotal -= voucher.DiscountValue;
+            var promo = validPromotions.First().Promotion!;
+            Console.WriteLine($"[ApplyPromotion] Applying promo ID={promo.Id}, Type={promo.DiscountType}, Value={promo.DiscountValue}");
 
-                    await _voucherService.MarkAsUsedAsync(voucher.Id);
-                }
-            }
+            if (promo.DiscountType == DiscountType.percent)
+                finalTotal -= finalTotal * promo.DiscountValue / 100f;
+            else
+                finalTotal -= promo.DiscountValue;
 
-            return finalTotal < 0 ? 0 : finalTotal;
+            finalTotal = Math.Max(finalTotal, 0);
+
+            order.AppliedPromotionId = promo.Id;
+            order.AppliedVoucherCode = voucherCode;
+            order.FinalPrice = (decimal)Math.Round(finalTotal, 2);
+
+            await _context.SaveChangesAsync();
+
+            Console.WriteLine($"[ApplyPromotion] Final price after discount: {order.FinalPrice}");
+            return finalTotal;
+        }
+
+        // Hủy promotion
+        public async Task<float> RemovePromotionAsync(Order order)
+        {
+            order.AppliedPromotionId = null;
+            order.AppliedVoucherCode = null;
+            order.FinalPrice = order.OrderItems.Sum(i => i.TotalPrice);
+            await _context.SaveChangesAsync();
+            Console.WriteLine("[ApplyPromotion] Promotion removed, reset to original total");
+            return (float)order.FinalPrice;
         }
     }
 }

@@ -17,5 +17,10 @@ namespace backend.Domain.Models
 
         [Required]
         public float MinOrderValue { get; set; }
+
+        public int? RestaurantId { get; set; }
+        public int? TargetUserId { get; set; }
+        public bool IsGlobal { get; set; } = true;
+        public Restaurant? Restaurant { get; set; }
     }
 }
