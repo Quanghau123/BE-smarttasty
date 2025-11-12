@@ -4,6 +4,7 @@ using backend.Domain.Models.Requests.Favorite;
 using backend.Infrastructure.Data;
 using backend.Infrastructure.Helpers.Commons.Response;
 using backend.Domain.Enums.Commons.Response;
+using Microsoft.EntityFrameworkCore;
 
 namespace backend.Application.Services;
 
@@ -68,6 +69,27 @@ public class FavoriteService : IFavoriteService
             ErrCode = ErrorCode.Success,
             ErrMessage = "Deleted successfully",
             Data = null
+        };
+    }
+
+    public async Task<ApiResponse<object>> GetFavoritesByRestaurantAsync(int restaurantId)
+    {
+        var favorites = await _context.Favorites
+            .Where(f => f.RestaurantId == restaurantId)
+            .Select(f => new
+            {
+                f.Id,
+                f.UserId,
+                f.RestaurantId,
+                f.CreatedAt
+            })
+            .ToListAsync();
+
+        return new ApiResponse<object>
+        {
+            ErrCode = ErrorCode.Success,
+            ErrMessage = "OK",
+            Data = favorites
         };
     }
 }

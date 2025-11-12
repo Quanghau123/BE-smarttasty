@@ -8,5 +8,7 @@ namespace backend.Application.Interfaces
     {
         Task<ApiResponse<object>> CreateFavoriteAsync(CreateFavoriteRequest request);
         Task<ApiResponse<object>> DeleteAsync(int id);
+        Task<ApiResponse<object>> GetFavoritesByRestaurantAsync(int restaurantId);
+
     }
 }

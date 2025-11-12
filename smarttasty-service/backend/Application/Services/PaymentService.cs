@@ -60,7 +60,6 @@ namespace backend.Application.Services
                 .Include(p => p.TransactionLogs)
                 .FirstOrDefaultAsync(p => p.OrderId == orderId);
         }
-
         public async Task<ApiResponse<object>> UpdatePaymentSuccess(Payment payment, string transactionNo)
         {
             if (payment.Method == PaymentMethod.COD)

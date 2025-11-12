@@ -4,6 +4,8 @@ using backend.Application.Interfaces;
 using backend.Domain.Models.Requests.Favorite;
 using backend.Domain.Enums.Commons.Response;
 using backend.Infrastructure.Helpers.Commons.Response;
+using Microsoft.AspNetCore.Authorization;
+using CloudinaryDotNet.Actions;
 
 namespace backend.WebApi.Controllers
 {
@@ -34,6 +36,7 @@ namespace backend.WebApi.Controllers
             _ => 500
         };
 
+        [Authorize(Roles = "user,admin,business,staff")]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateFavoriteRequest request)
         {
@@ -41,11 +44,21 @@ namespace backend.WebApi.Controllers
             return CreateResult(res);
         }
 
+        [Authorize(Roles = "user,admin,business,staff")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
             var res = await _favoriteService.DeleteAsync(id);
             return CreateResult(res);
         }
+
+        [Authorize(Roles = "user,admin,business,staff")]
+        [HttpGet("restaurant/{restaurantId}")]
+        public async Task<IActionResult> GetByRestaurant(int restaurantId)
+        {
+            var res = await _favoriteService.GetFavoritesByRestaurantAsync(restaurantId);
+            return CreateResult(res);
+        }
+
     }
 }
