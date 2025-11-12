@@ -9,6 +9,7 @@ using backend.Application.DTOs.DishPromotion;
 using backend.Application.DTOs.OrderPromotion;
 using backend.Application.DTOs.Payment;
 using backend.Application.DTOs.Order;
+using backend.Application.DTOs.User;
 using backend.Domain.Enums;
 using backend.Domain.Models.Requests.Restaurant;
 using backend.Domain.Models.Requests.Promotion;
@@ -21,6 +22,12 @@ namespace backend.Infrastructure.Mappings
     {
         public MappingProfile()
         {
+            CreateMap<Restaurant, RestaurantSimpleDto>();
+            CreateMap<User, StaffDto>()
+                .ForMember(dest => dest.BusinessOwnerName,
+                opt => opt.MapFrom(src => src.BusinessOwner != null ? src.BusinessOwner.UserName : null))
+                .ForMember(dest => dest.Restaurants,
+                opt => opt.MapFrom(src => src.Restaurants));
             CreateMap<CreateRestaurantRequest, Restaurant>()
                 .ForMember(dest => dest.ImagePublicId, opt => opt.Ignore())
                 .ForMember(dest => dest.OwnerId, opt => opt.Ignore());

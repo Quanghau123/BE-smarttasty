@@ -1,4 +1,6 @@
-﻿using backend.Infrastructure.Configurations;
+﻿using AutoMapper;
+using AutoMapper.QueryableExtensions;
+using backend.Infrastructure.Configurations;
 using backend.Infrastructure.Data;
 using backend.Infrastructure.Helpers;
 using backend.Application.Interfaces;
@@ -11,6 +13,7 @@ using backend.Application.DTOs.KafkaPayload;
 using backend.Application.DTOs.Kafka;
 using backend.Application.DTOs.Auth;
 using backend.Domain.Enums;
+using backend.Application.DTOs.User;
 using BCrypt.Net;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -33,8 +36,10 @@ namespace backend.Application.Services
         private readonly JwtSettings _jwtSettings;
         private readonly IConfiguration _config;
         private readonly KafkaProducerService _kafkaProducer;
-        public UserService(ApplicationDbContext context, IOptions<JwtSettings> jwtOptions, IConfiguration config, KafkaProducerService kafkaProducer)
+        private readonly IMapper _mapper;
+        public UserService(ApplicationDbContext context, IOptions<JwtSettings> jwtOptions, IConfiguration config, KafkaProducerService kafkaProducer, IMapper mapper)
         {
+            _mapper = mapper;
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _jwtSettings = jwtOptions.Value ?? throw new ArgumentNullException(nameof(jwtOptions));
             _config = config;
@@ -526,9 +531,7 @@ namespace backend.Application.Services
             if (string.IsNullOrWhiteSpace(request.UserName) ||
                 string.IsNullOrWhiteSpace(request.Email) ||
                 string.IsNullOrWhiteSpace(request.Phone))
-            {
                 return new ApiResponse<object>(ErrorCode.ValidationError, "UserName, Email and Phone are required");
-            }
 
             if (!ValidationHelper.IsValidEmail(request.Email))
                 return new ApiResponse<object>(ErrorCode.ValidationError, "Invalid email");
@@ -556,12 +559,7 @@ namespace backend.Application.Services
             await _context.Users.AddAsync(staff);
             await _context.SaveChangesAsync();
 
-            return new ApiResponse<object>
-            {
-                ErrCode = ErrorCode.Success,
-                ErrMessage = "Staff created",
-                Data = new { staff.UserId, staff.UserName, staff.Email, TempPassword = password }
-            };
+            return new ApiResponse<object>(ErrorCode.Success, "Staff created", _mapper.Map<StaffDto>(staff));
         }
 
         public async Task<ApiResponse<object>> GetStaffsByBusinessAsync(int businessOwnerId)
@@ -572,24 +570,29 @@ namespace backend.Application.Services
 
             var staffs = await _context.Users
                 .Where(u => u.BusinessOwnerId == businessOwnerId && u.Role == UserRole.staff)
-                .Select(u => new
+                .Select(u => new StaffDto
                 {
-                    u.UserId,
-                    u.UserName,
-                    u.Email,
-                    u.Phone,
-                    u.Address,
-                    u.IsActive,
-                    u.CreatedAt
+                    UserId = u.UserId,
+                    UserName = u.UserName,
+                    Email = u.Email,
+                    Phone = u.Phone,
+                    Address = u.Address,
+                    IsActive = u.IsActive,
+                    CreatedAt = u.CreatedAt,
+                    BusinessOwnerId = u.BusinessOwnerId,
+                    BusinessOwnerName = u.BusinessOwner != null ? u.BusinessOwner.UserName : null,
+                    Restaurants = _context.Restaurants
+                        .Where(r => r.OwnerId == businessOwnerId)
+                        .Select(r => new RestaurantSimpleDto
+                        {
+                            Id = r.Id,
+                            Name = r.Name
+                        })
+                        .ToList()
                 })
                 .ToListAsync();
 
-            return new ApiResponse<object>
-            {
-                ErrCode = ErrorCode.Success,
-                ErrMessage = "OK",
-                Data = staffs
-            };
+            return new ApiResponse<object>(ErrorCode.Success, "OK", staffs);
         }
 
         public async Task<ApiResponse<object>> UpdateStaffAsync(UpdateStaffRequest request, int businessOwnerId)
@@ -609,6 +612,7 @@ namespace backend.Application.Services
 
                 if (await _context.Users.AnyAsync(u => u.Email.ToLower() == request.Email.ToLower() && u.UserId != staff.UserId))
                     return new ApiResponse<object>(ErrorCode.ValidationError, "Email already used");
+
                 staff.Email = request.Email;
             }
 
@@ -620,12 +624,7 @@ namespace backend.Application.Services
             _context.Users.Update(staff);
             await _context.SaveChangesAsync();
 
-            return new ApiResponse<object>
-            {
-                ErrCode = ErrorCode.Success,
-                ErrMessage = "Staff updated",
-                Data = new { staff.UserId, staff.UserName, staff.Email }
-            };
+            return new ApiResponse<object>(ErrorCode.Success, "Staff updated", _mapper.Map<StaffDto>(staff));
         }
 
         public async Task<ApiResponse<object>> DeleteStaffAsync(int staffId, int businessOwnerId)
@@ -641,11 +640,7 @@ namespace backend.Application.Services
             _context.Users.Remove(staff);
             await _context.SaveChangesAsync();
 
-            return new ApiResponse<object>
-            {
-                ErrCode = ErrorCode.Success,
-                ErrMessage = "Staff deleted"
-            };
+            return new ApiResponse<object>(ErrorCode.Success, "Staff deleted");
         }
     }
 }
