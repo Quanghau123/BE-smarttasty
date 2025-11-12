@@ -59,6 +59,7 @@ namespace backend.Application.Services
 
             var promotion = new Promotion
             {
+                VoucherCode = dto.VoucherCode,
                 RestaurantId = dto.RestaurantId,
                 Title = dto.Title,
                 Description = dto.Description,
@@ -216,6 +217,7 @@ namespace backend.Application.Services
             promo.DiscountType = updated.DiscountType;
             promo.DiscountValue = updated.DiscountValue;
             promo.TargetType = updated.TargetType;
+            promo.VoucherCode = updated.VoucherCode;
 
             if (file != null)
             {

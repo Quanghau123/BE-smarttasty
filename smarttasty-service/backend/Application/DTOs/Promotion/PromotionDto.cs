@@ -6,6 +6,7 @@ namespace backend.Application.DTOs.Promotion
     public class PromotionDto
     {
         public int Id { get; set; }
+        public string? VoucherCode { get; set; }
         public int RestaurantId { get; set; }
         public string Title { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;

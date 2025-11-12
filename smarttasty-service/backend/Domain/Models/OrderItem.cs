@@ -30,13 +30,16 @@ namespace backend.Domain.Models
         [Required]
         public decimal TotalPrice { get; set; }
 
+        public decimal OriginalPrice { get; private set; }
+
         // Domain logic: khởi tạo từ món ăn
-        public static OrderItem Create(int dishId, decimal unitPrice, int quantity)
+        public static OrderItem Create(int dishId, decimal unitPrice, int quantity, decimal originalPrice)
         {
             return new OrderItem
             {
                 DishId = dishId,
                 UnitPrice = unitPrice,
+                OriginalPrice = originalPrice,
                 Quantity = quantity,
                 TotalPrice = unitPrice * quantity
             };

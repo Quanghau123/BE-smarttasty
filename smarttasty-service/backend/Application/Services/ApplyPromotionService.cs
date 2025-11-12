@@ -15,45 +15,43 @@ namespace backend.Application.Services
             _context = context;
         }
 
-        // Áp dụng promotion
-        public async Task<float> ApplyPromotionAsync(Order order, int currentUserId, string? voucherCode = null)
+        public async Task<float> ApplyPromotionAsync(int orderId, string voucherCode)
         {
-            float finalTotal = order.OrderItems.Sum(i => (float)i.TotalPrice);
+            if (string.IsNullOrWhiteSpace(voucherCode))
+                throw new ArgumentException("Voucher code is required", nameof(voucherCode));
 
-            Console.WriteLine($"[ApplyPromotion] Order total: {finalTotal}");
-            Console.WriteLine($"[ApplyPromotion] UserId: {currentUserId}");
-            Console.WriteLine($"[ApplyPromotion] Voucher: {(voucherCode ?? "(none)")}");
-            Console.WriteLine($"[ApplyPromotion] RestaurantId: {order.RestaurantId}");
+            var order = await _context.Orders
+                .Include(o => o.OrderItems)
+                .FirstOrDefaultAsync(o => o.Id == orderId);
 
-            // dùng DateTime.Now thay vì UtcNow để tránh lệch múi giờ VN
-            var nowUtc = DateTime.UtcNow;
+            if (order == null)
+                throw new Exception("Order not found");
 
-            var validPromotions = await _context.OrderPromotions
+            float orderTotal = order.OrderItems.Sum(i => (float)i.TotalPrice);
+            string vc = voucherCode.Trim();
+
+            var orderPromotion = await _context.OrderPromotions
                 .Include(op => op.Promotion)
                 .Where(op =>
-                    // op.Promotion!.StartDate <= nowUtc &&
-                    // op.Promotion!.EndDate >= nowUtc &&
-                    finalTotal >= op.MinOrderValue &&
-                // (op.IsGlobal || op.TargetUserId == currentUserId) &&
-                (op.RestaurantId == null || op.RestaurantId == order.RestaurantId)
-                // (voucherCode == null || op.Promotion!.VoucherCode == voucherCode)
+                    !string.IsNullOrEmpty(op.Promotion.VoucherCode) &&
+                    op.Promotion.VoucherCode.Trim() == vc &&
+                    (op.RestaurantId == null || op.RestaurantId == order.RestaurantId) &&
+                    (op.IsGlobal || op.TargetUserId == order.UserId) &&
+                    orderTotal >= op.MinOrderValue
                 )
-                .ToListAsync();
+                .FirstOrDefaultAsync();
 
-            Console.WriteLine($"[ApplyPromotion] Found {validPromotions.Count} valid promotions");
-
-            if (!validPromotions.Any())
+            if (orderPromotion == null)
             {
                 order.AppliedPromotionId = null;
                 order.AppliedVoucherCode = null;
-                order.FinalPrice = (decimal)finalTotal;
+                order.FinalPrice = (decimal)orderTotal;
                 await _context.SaveChangesAsync();
-                Console.WriteLine("[ApplyPromotion] No valid promotions found — skipping discount");
-                return finalTotal;
+                return orderTotal;
             }
 
-            var promo = validPromotions.First().Promotion!;
-            Console.WriteLine($"[ApplyPromotion] Applying promo ID={promo.Id}, Type={promo.DiscountType}, Value={promo.DiscountValue}");
+            var promo = orderPromotion.Promotion!;
+            float finalTotal = orderTotal;
 
             if (promo.DiscountType == DiscountType.percent)
                 finalTotal -= finalTotal * promo.DiscountValue / 100f;
@@ -67,19 +65,23 @@ namespace backend.Application.Services
             order.FinalPrice = (decimal)Math.Round(finalTotal, 2);
 
             await _context.SaveChangesAsync();
-
-            Console.WriteLine($"[ApplyPromotion] Final price after discount: {order.FinalPrice}");
             return finalTotal;
         }
 
-        // Hủy promotion
-        public async Task<float> RemovePromotionAsync(Order order)
+        public async Task<float> RemovePromotionAsync(int orderId)
         {
+            var order = await _context.Orders
+                .Include(o => o.OrderItems)
+                .FirstOrDefaultAsync(o => o.Id == orderId);
+
+            if (order == null)
+                throw new Exception("Order not found");
+
             order.AppliedPromotionId = null;
             order.AppliedVoucherCode = null;
             order.FinalPrice = order.OrderItems.Sum(i => i.TotalPrice);
+
             await _context.SaveChangesAsync();
-            Console.WriteLine("[ApplyPromotion] Promotion removed, reset to original total");
             return (float)order.FinalPrice;
         }
     }

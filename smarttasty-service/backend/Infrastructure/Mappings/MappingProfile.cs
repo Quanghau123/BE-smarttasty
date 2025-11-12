@@ -89,6 +89,8 @@ namespace backend.Infrastructure.Mappings
                 .ForMember(dest => dest.Restaurant,
                         opt => opt.MapFrom(src => src.Restaurant));
             CreateMap<OrderItem, OrderItemDto>()
+                .ForMember(dest => dest.OriginalPrice,
+                        opt => opt.MapFrom(src => src.OriginalPrice))
                 .ForMember(dest => dest.DishName,
                         opt => opt.MapFrom(src => src.Dish != null ? src.Dish.Name : null))
                 .ForMember(dest => dest.Image,

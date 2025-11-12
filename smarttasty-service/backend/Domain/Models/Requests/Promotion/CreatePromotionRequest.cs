@@ -4,6 +4,7 @@ namespace backend.Domain.Models.Requests.Promotion
 {
     public class CreatePromotionRequest
     {
+        public string? VoucherCode { get; set; }
         public int RestaurantId { get; set; }
         public string Title { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;

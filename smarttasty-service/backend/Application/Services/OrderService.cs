@@ -82,8 +82,9 @@ namespace backend.Application.Services
                     ? (decimal)activePromo.AppliedPrice
                     : (decimal)dish.Price;
 
-                var item = OrderItem.Create(dish.Id, priceToUse, itemReq.Quantity);
+                var item = OrderItem.Create(dish.Id, priceToUse, itemReq.Quantity, (decimal)dish.Price);
                 order.AddItem(item);
+
             }
 
             if (!order.OrderItems.Any())
@@ -95,7 +96,7 @@ namespace backend.Application.Services
                     Data = null
                 };
             }
-            await _applyPromotionService.ApplyPromotionAsync(order, order.UserId);
+
             _context.Orders.Add(order);
             await _context.SaveChangesAsync();
 
@@ -189,14 +190,14 @@ namespace backend.Application.Services
             }
             else
             {
-                var item = OrderItem.Create(dish.Id, priceToUse, quantity);
+                var item = OrderItem.Create(dish.Id, priceToUse, quantity, (decimal)dish.Price);
                 order.AddItem(item);
             }
 
             order.UpdatedAt = DateTime.UtcNow;
 
             if (order.AppliedPromotionId.HasValue || !string.IsNullOrEmpty(order.AppliedVoucherCode))
-                await _applyPromotionService.ApplyPromotionAsync(order, order.UserId, order.AppliedVoucherCode);
+                await _applyPromotionService.ApplyPromotionAsync(order.Id, order.AppliedVoucherCode!);
             else
                 order.FinalPrice = order.TotalPrice;
 
@@ -315,7 +316,7 @@ namespace backend.Application.Services
             order.UpdatedAt = DateTime.UtcNow;
 
             if (order.AppliedPromotionId.HasValue || !string.IsNullOrEmpty(order.AppliedVoucherCode))
-                await _applyPromotionService.ApplyPromotionAsync(order, order.UserId, order.AppliedVoucherCode);
+                await _applyPromotionService.ApplyPromotionAsync(order.Id, order.AppliedVoucherCode!);
             else
                 order.FinalPrice = order.TotalPrice;
 
@@ -402,9 +403,10 @@ namespace backend.Application.Services
             order.UpdatedAt = DateTime.UtcNow;
 
             if (order.AppliedPromotionId.HasValue || !string.IsNullOrEmpty(order.AppliedVoucherCode))
-                await _applyPromotionService.ApplyPromotionAsync(order, order.UserId, order.AppliedVoucherCode);
+                await _applyPromotionService.ApplyPromotionAsync(order.Id, order.AppliedVoucherCode!);
             else
                 order.FinalPrice = order.TotalPrice;
+
 
             await _context.SaveChangesAsync();
 
