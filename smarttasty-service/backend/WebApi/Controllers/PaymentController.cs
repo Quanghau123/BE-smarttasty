@@ -8,7 +8,9 @@ using backend.Application.DTOs.Payment;
 using backend.Domain.Models.Requests.Payment;
 using backend.Domain.Enums;
 using AutoMapper;
-using Microsoft.EntityFrameworkCore; // Add for AnyAsync
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
+using CloudinaryDotNet.Actions; // Add for AnyAsync
 
 namespace backend.WebApi.Controllers
 {
@@ -49,6 +51,7 @@ namespace backend.WebApi.Controllers
             _ => 500
         };
 
+        [Authorize(Roles = "user")]
         [HttpPost("vnpay/create")]
         public async Task<IActionResult> CreateVNPayPayment([FromBody] CreatePaymentRequest dto)
         {
@@ -99,6 +102,7 @@ namespace backend.WebApi.Controllers
             });
         }
 
+        [Authorize(Roles = "user, business")]
         [HttpGet("vnpay-return")]
         public async Task<IActionResult> VNPayReturn()
         {
@@ -124,6 +128,7 @@ namespace backend.WebApi.Controllers
             });
         }
 
+        [Authorize(Roles = "user, business")]
         [HttpGet("vnpay-ipn")]
         public async Task<IActionResult> VNPayIpn()
         {
@@ -134,6 +139,7 @@ namespace backend.WebApi.Controllers
             );
         }
 
+        [Authorize(Roles = "user, business")]
         [HttpGet("pending")]
         public async Task<IActionResult> GetPendingPayments()
         {
@@ -147,6 +153,7 @@ namespace backend.WebApi.Controllers
             });
         }
 
+        [Authorize(Roles = "user")]
         [HttpPost("cod/create")]
         public async Task<IActionResult> CreateCodPayment([FromBody] CreateCodPaymentRequest dto)
         {
@@ -186,6 +193,7 @@ namespace backend.WebApi.Controllers
             });
         }
 
+        [Authorize(Roles = "business")]
         [HttpPost("cod/confirm")]
         public async Task<IActionResult> ConfirmCodPayment([FromQuery] int codPaymentId)
         {
@@ -205,6 +213,7 @@ namespace backend.WebApi.Controllers
             });
         }
 
+        [Authorize(Roles = "user, business")]
         [HttpGet("history/{userId}")]
         public async Task<IActionResult> GetPaymentHistoryByUser(int userId)
         {
@@ -229,6 +238,7 @@ namespace backend.WebApi.Controllers
             });
         }
 
+        [Authorize(Roles = "user, business")]
         [HttpDelete("cancel/{orderId}")]
         public async Task<IActionResult> CancelOrder(int orderId)
         {
@@ -244,6 +254,7 @@ namespace backend.WebApi.Controllers
             };
         }
 
+        [Authorize(Roles = "user, business")]
         [HttpGet("restaurant/{restaurantId}")]
         public async Task<IActionResult> GetPaymentsByRestaurant(int restaurantId)
         {
@@ -267,6 +278,7 @@ namespace backend.WebApi.Controllers
             });
         }
 
+        [Authorize(Roles = "user, business")]
         [HttpGet("restaurant/pending/{restaurantId}")]
         public async Task<IActionResult> GetPendingPaymentsByRestaurant(int restaurantId)
         {
