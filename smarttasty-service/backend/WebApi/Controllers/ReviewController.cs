@@ -5,6 +5,7 @@ using backend.Application.Interfaces;
 using backend.Domain.Models.Requests.Review;
 using backend.Infrastructure.Helpers.Commons.Response;
 using backend.Domain.Enums.Commons.Response;
+using backend.Domain.Models.Requests.Filters;
 
 namespace backend.WebApi.Controllers
 {
@@ -43,9 +44,9 @@ namespace backend.WebApi.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll([FromQuery] PagedRequest filter)
         {
-            var res = await _reviewService.GetAllAsync();
+            var res = await _reviewService.GetAllAsync(filter);
             return CreateResult(res);
         }
 
@@ -57,9 +58,9 @@ namespace backend.WebApi.Controllers
         }
 
         [HttpGet("restaurant/{id}")]
-        public async Task<IActionResult> GetByRestaurantId(int id)
+        public async Task<IActionResult> GetByRestaurantId(int id, [FromQuery] PagedRequest filter)
         {
-            var res = await _reviewService.GetByRestaurantIdAsync(id);
+            var res = await _reviewService.GetByRestaurantIdAsync(id, filter);
             return CreateResult(res);
         }
 

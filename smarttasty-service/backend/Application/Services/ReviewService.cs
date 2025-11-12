@@ -13,6 +13,9 @@ using backend.Domain.Enums.Commons.Response;
 using backend.Infrastructure.Messaging.Kafka;
 using backend.Application.DTOs.Kafka;
 using backend.Application.DTOs.KafkaPayload;
+using backend.Application.DTOs.Commons;
+using backend.Application.Interfaces.Commons;
+using backend.Domain.Models.Requests.Filters;
 
 namespace backend.Application.Services
 {
@@ -20,11 +23,13 @@ namespace backend.Application.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly KafkaProducerService _kafkaProducer;
+        private readonly IPaginationService _paginationService;
 
-        public ReviewService(ApplicationDbContext context, KafkaProducerService kafkaProducer)
+        public ReviewService(ApplicationDbContext context, KafkaProducerService kafkaProducer, IPaginationService paginationService)
         {
             _context = context;
             _kafkaProducer = kafkaProducer;
+            _paginationService = paginationService;
         }
 
         public async Task<ApiResponse<ReviewDTO>> CreateReviewAsync(CreateReviewRequest request)
@@ -81,19 +86,23 @@ namespace backend.Application.Services
             };
         }
 
-        public async Task<ApiResponse<List<ReviewDTO>>> GetAllAsync()
+        public async Task<ApiResponse<PagedDto<ReviewDTO>>> GetAllAsync(PagedRequest filter)
         {
-            var reviews = await _context.Reviews
+            var query = _context.Reviews
                 .Include(r => r.User)
                 .Include(r => r.Restaurant)
                 .OrderByDescending(r => r.CreatedAt)
-                .ToListAsync();
+                .AsQueryable();
 
-            return new ApiResponse<List<ReviewDTO>>
+            var paged = await _paginationService.GetPagedResultAsync(query, filter);
+
+            var dtoList = paged.Data.Select(MapToDTO).ToList();
+
+            return new ApiResponse<PagedDto<ReviewDTO>>
             {
                 ErrCode = ErrorCode.Success,
-                ErrMessage = "Fetched all reviews",
-                Data = reviews.Select(r => MapToDTO(r)).ToList()
+                ErrMessage = "Fetched paginated reviews",
+                Data = new PagedDto<ReviewDTO>(dtoList, paged.TotalRecords, paged.PageNumber, paged.PageSize)
             };
         }
 
@@ -122,29 +131,24 @@ namespace backend.Application.Services
             };
         }
 
-        public async Task<ApiResponse<List<ReviewDTO>>> GetByRestaurantIdAsync(int id)
+        public async Task<ApiResponse<PagedDto<ReviewDTO>>> GetByRestaurantIdAsync(int id, PagedRequest filter)
         {
-            var reviews = await _context.Reviews
+            var query = _context.Reviews
                 .Include(r => r.User)
                 .Include(r => r.Restaurant)
                 .Where(r => r.RestaurantId == id)
-                .ToListAsync();
+                .OrderByDescending(r => r.CreatedAt)
+                .AsQueryable();
 
-            if (reviews == null || !reviews.Any())
-            {
-                return new ApiResponse<List<ReviewDTO>>
-                {
-                    ErrCode = ErrorCode.NotFound,
-                    ErrMessage = "No reviews found",
-                    Data = new List<ReviewDTO>()
-                };
-            }
+            var paged = await _paginationService.GetPagedResultAsync(query, filter);
 
-            return new ApiResponse<List<ReviewDTO>>
+            var dtoList = paged.Data.Select(MapToDTO).ToList();
+
+            return new ApiResponse<PagedDto<ReviewDTO>>
             {
                 ErrCode = ErrorCode.Success,
-                ErrMessage = "Reviews found",
-                Data = reviews.Select(MapToDTO).ToList()
+                ErrMessage = "Fetched paginated reviews for restaurant",
+                Data = new PagedDto<ReviewDTO>(dtoList, paged.TotalRecords, paged.PageNumber, paged.PageSize)
             };
         }
 

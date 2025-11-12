@@ -275,6 +275,11 @@ namespace backend.Application.Services
             var matched = await _fuzzySearch.SearchAsync<Restaurant>("Restaurants", query, new[] { "Name" }, 30);
             var dtos = _mapper.Map<List<RestaurantDto>>(matched);
 
+            foreach (var dto in dtos)
+            {
+                dto.ImageUrl = _imageHelper.GetImageUrl(dto.ImagePublicId);
+            }
+
             return new ApiResponse<List<RestaurantDto>>
             {
                 ErrCode = ErrorCode.Success,
@@ -287,7 +292,7 @@ namespace backend.Application.Services
         {
             return await _fuzzySearch.GetSuggestionsAsync("Restaurants", "Name", query, 10);
         }
-        
+
         public async Task<ApiResponse<object>> ChangeRestaurantStatusAsync(int restaurantId, RestaurantStatus status)
         {
             var restaurant = await _context.Restaurants.Include(r => r.Owner).FirstOrDefaultAsync(r => r.Id == restaurantId);
