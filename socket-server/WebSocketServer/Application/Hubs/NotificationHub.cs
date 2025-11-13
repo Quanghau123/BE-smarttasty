@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
@@ -23,10 +24,23 @@ namespace WebSocketServer.Application.Hubs
             var userId = Context.UserIdentifier;
             _logger.LogInformation("User connected: {ConnectionId}, UserId={UserId}", Context.ConnectionId, userId);
 
+            if (!string.IsNullOrEmpty(userId))
+            {
+                try
+                {
+                    await _httpClient.PostAsJsonAsync($"api/userstatus/online/{userId}", new { timestamp = System.DateTime.UtcNow });
+                }
+                catch (System.Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to mark user online: {UserId}", userId);
+                }
+            }
+
+            // fetch offline notifications
             try
             {
                 var response = await _httpClient.GetFromJsonAsync<NotificationPayload[]>($"api/notifications/offline/pop/{userId}");
-                if (response != null && !string.IsNullOrEmpty(userId))
+                if (response != null)
                 {
                     var tasks = response.Select(notif => Clients.User(userId)
                         .SendAsync("ReceiveNotification", notif.Title, notif.Message)
@@ -38,7 +52,6 @@ namespace WebSocketServer.Application.Hubs
                                 _logger.LogInformation("Sent offline notification to {UserId}: {Title}", userId, notif.Title);
                         })
                     );
-
                     await Task.WhenAll(tasks);
                 }
             }
@@ -50,13 +63,35 @@ namespace WebSocketServer.Application.Hubs
             await base.OnConnectedAsync();
         }
 
-        public override Task OnDisconnectedAsync(System.Exception? exception)
+        public override async Task OnDisconnectedAsync(System.Exception? exception)
         {
+            var userId = Context.UserIdentifier;
+            if (!string.IsNullOrEmpty(userId))
+            {
+                try
+                {
+                    await _httpClient.DeleteAsync($"api/userstatus/offline/{userId}");
+                }
+                catch (System.Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to mark user offline: {UserId}", userId);
+                }
+            }
+
             _logger.LogInformation("User disconnected: {ConnectionId}", Context.ConnectionId);
-            return base.OnDisconnectedAsync(exception);
+            await base.OnDisconnectedAsync(exception);
         }
 
-        //Thêm endpoint để FE join room
+        public async Task PingHeartbeat()
+        {
+            var userId = Context.UserIdentifier;
+            if (!string.IsNullOrEmpty(userId))
+            {
+                await _httpClient.PostAsJsonAsync($"api/userstatus/online/{userId}", new { timestamp = System.DateTime.UtcNow });
+                _logger.LogDebug("Heartbeat received for {UserId}", userId);
+            }
+        }
+
         public async Task JoinRestaurantRoom(string restaurantId)
         {
             await Groups.AddToGroupAsync(Context.ConnectionId, restaurantId);

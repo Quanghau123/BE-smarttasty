@@ -19,7 +19,7 @@ namespace NotificationService.Application.Services
 
         public async Task MarkOnlineAsync(string userId, DateTime timestamp)
         {
-            await _redis.SetAsync($"user:{userId}:online", timestamp, TimeSpan.FromHours(2));
+            await _redis.SetAsync($"user:{userId}:online", timestamp, TimeSpan.FromMinutes(2));
             _logger.LogInformation("User {UserId} marked online", userId);
         }
 

@@ -219,7 +219,6 @@ namespace backend.WebApi.Controllers
         {
             var result = await _paymentService.GetPaymentsByUserIdAsync(userId);
 
-            // Nếu trả về entity, bạn nên map sang DTO trước khi trả về FE
             List<InfoPaymentDto> dtos = new();
             if (result.Data is List<Payment> payments)
             {

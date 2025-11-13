@@ -43,5 +43,7 @@ namespace backend.Domain.Models
         public CODPayment? CODPayment { get; set; }
         public List<Refund> Refunds { get; set; } = new();
 
+        [Required]
+        public string OrderSnapshotJson { get; set; } = null!;
     }
 }

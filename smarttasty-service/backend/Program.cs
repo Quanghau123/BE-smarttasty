@@ -126,6 +126,7 @@ builder.Services.AddScoped<IRefundService, RefundService>();
 builder.Services.AddScoped<ISearchService, SearchService>();
 builder.Services.AddScoped<ICODService, CODService>();
 builder.Services.AddScoped<IFuzzySearchService, FuzzySearchService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<PaymentJob>();
 
 // Optional: Custom app services extension (nếu có)

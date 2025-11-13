@@ -128,7 +128,7 @@ namespace backend.Infrastructure.Data
 }
 
 //add + update (add mà không update là lỗi nguyên db vì không so sánh với migrations cũ được)
-//dotnet ef migrations add update_order-v_1
+//dotnet ef migrations add update_payment_order_snapshot
 //dotnet ef database update
 
 //delete migrations nếu update bị lỗi

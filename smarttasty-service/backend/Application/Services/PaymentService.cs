@@ -5,6 +5,9 @@ using backend.Application.DTOs.Payment;
 using backend.Infrastructure.Data;
 using backend.Infrastructure.Helpers.Commons.Response;
 using backend.Domain.Enums.Commons.Response;
+using backend.Application.DTOs.Order;
+using backend.Application.DTOs.Restaurant;
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http;
 using System.Threading.Tasks;
@@ -26,8 +29,54 @@ namespace backend.Application.Services
 
         public async Task<ApiResponse<object>> AddPaymentAsync(Payment payment)
         {
+            // Lấy order kèm items
+            var order = await _db.Orders
+                .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.Dish)
+                .Include(o => o.Restaurant)
+                .FirstOrDefaultAsync(o => o.Id == payment.OrderId);
+
+            if (order == null)
+                return new ApiResponse<object> { ErrCode = ErrorCode.NotFound, ErrMessage = "Order not found", Data = null };
+
+            // Map Order -> OrderDto (để lưu snapshot)
+            var orderDto = new OrderDto
+            {
+                Id = order.Id,
+                UserId = order.UserId,
+                RestaurantId = order.RestaurantId,
+                Status = order.Status,
+                DeliveryAddress = order.DeliveryAddress,
+                RecipientName = order.RecipientName,
+                RecipientPhone = order.RecipientPhone,
+                DeliveryStatus = order.DeliveryStatus,
+                CreatedAt = order.CreatedAt,
+                UpdatedAt = order.UpdatedAt ?? DateTime.UtcNow,
+                Restaurant = new RestaurantDto
+                {
+                    Id = order.Restaurant.Id,
+                    Name = order.Restaurant.Name,
+                    Address = order.Restaurant.Address
+                },
+                Items = order.OrderItems.Select(oi => new OrderItemDto
+                {
+                    Id = oi.Id,
+                    DishId = oi.DishId,
+                    DishName = oi.Dish.Name,
+                    UnitPrice = oi.UnitPrice,
+                    TotalPrice = oi.TotalPrice,
+                    OriginalPrice = oi.OriginalPrice,
+                    Quantity = oi.Quantity
+                }).ToList()
+            };
+
+            // Serialize OrderDto thành JSON để lưu snapshot
+            payment.OrderSnapshotJson = JsonSerializer.Serialize(orderDto);
+
+            // Thêm Payment
             _db.Payments.Add(payment);
             await _db.SaveChangesAsync();
+
             return new ApiResponse<object>
             {
                 ErrCode = ErrorCode.Success,
@@ -60,6 +109,7 @@ namespace backend.Application.Services
                 .Include(p => p.TransactionLogs)
                 .FirstOrDefaultAsync(p => p.OrderId == orderId);
         }
+
         public async Task<ApiResponse<object>> UpdatePaymentSuccess(Payment payment, string transactionNo)
         {
             if (payment.Method == PaymentMethod.COD)
@@ -327,43 +377,120 @@ namespace backend.Application.Services
             using var tx = await _db.Database.BeginTransactionAsync();
             try
             {
+                // Lấy order kèm items
+                var order = await _db.Orders
+                    .Include(o => o.OrderItems)
+                        .ThenInclude(oi => oi.Dish)
+                    .Include(o => o.Restaurant)
+                    .FirstOrDefaultAsync(o => o.Id == payment.OrderId);
+
+                if (order == null)
+                    return new ApiResponse<object> { ErrCode = ErrorCode.NotFound, ErrMessage = "Order not found", Data = null };
+
+                // Map order -> OrderDto để lưu snapshot
+                var orderDto = new OrderDto
+                {
+                    Id = order.Id,
+                    UserId = order.UserId,
+                    RestaurantId = order.RestaurantId,
+                    Status = order.Status,
+                    DeliveryAddress = order.DeliveryAddress,
+                    RecipientName = order.RecipientName,
+                    RecipientPhone = order.RecipientPhone,
+                    DeliveryStatus = order.DeliveryStatus,
+                    CreatedAt = order.CreatedAt,
+                    UpdatedAt = order.UpdatedAt ?? DateTime.UtcNow,
+                    Restaurant = new RestaurantDto
+                    {
+                        Id = order.Restaurant.Id,
+                        Name = order.Restaurant.Name,
+                        Address = order.Restaurant.Address
+                    },
+                    Items = order.OrderItems.Select(oi => new OrderItemDto
+                    {
+                        Id = oi.Id,
+                        DishId = oi.DishId,
+                        DishName = oi.Dish.Name,
+                        UnitPrice = oi.UnitPrice,
+                        TotalPrice = oi.TotalPrice,
+                        OriginalPrice = oi.OriginalPrice,
+                        Quantity = oi.Quantity
+                    }).ToList()
+                };
+
+                // Lưu snapshot vào Payment
+                payment.OrderSnapshotJson = JsonSerializer.Serialize(orderDto);
                 payment.Method = PaymentMethod.COD;
                 payment.Status = PaymentStatus.Pending;
+
                 _db.Payments.Add(payment);
                 await _db.SaveChangesAsync();
 
-                var codPayment = new CODPayment { PaymentId = payment.Id, IsCollected = false };
+                // Tạo CODPayment liên quan
+                var codPayment = new CODPayment
+                {
+                    PaymentId = payment.Id,
+                    IsCollected = false
+                };
                 _db.CODPayments.Add(codPayment);
                 await _db.SaveChangesAsync();
 
                 await tx.CommitAsync();
-                return new ApiResponse<object> { ErrCode = ErrorCode.Success, ErrMessage = "COD Payment created", Data = codPayment };
+                return new ApiResponse<object>
+                {
+                    ErrCode = ErrorCode.Success,
+                    ErrMessage = "COD Payment created",
+                    Data = codPayment
+                };
             }
             catch (Exception ex)
             {
                 await tx.RollbackAsync();
-                return new ApiResponse<object> { ErrCode = ErrorCode.ServerError, ErrMessage = ex.Message, Data = null };
+                return new ApiResponse<object>
+                {
+                    ErrCode = ErrorCode.ServerError,
+                    ErrMessage = ex.Message,
+                    Data = null
+                };
             }
         }
+
         public async Task<ApiResponse<object>> GetPaymentsByUserIdAsync(int userId)
         {
+            // Lấy các payment của user
             var payments = await _db.Payments
-               .Include(p => p.Order)
-                    .ThenInclude(o => o.OrderItems)
-                        .ThenInclude(oi => oi.Dish)
-                .Include(p => p.Order)
-                    .ThenInclude(o => o.Restaurant)
                 .Where(p => p.Order.UserId == userId)
                 .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
+
+            // Map thành InfoPaymentDto, deserialize OrderSnapshotJson thành OrderDto
+            var dtos = payments.Select(p =>
+            {
+                var orderSnapshot = JsonSerializer.Deserialize<OrderDto>(p.OrderSnapshotJson)!;
+
+                return new InfoPaymentDto
+                {
+                    Id = p.Id,
+                    Amount = p.Amount,
+                    Status = p.Status,
+                    Order = orderSnapshot,
+                    CODPayment = p.CODPayment != null ? new CODPaymentDto
+                    {
+                        Id = p.CODPayment.Id,
+                        IsCollected = p.CODPayment.IsCollected,
+                        CollectedAt = p.CODPayment.CollectedAt
+                    } : null
+                };
+            }).ToList();
 
             return new ApiResponse<object>
             {
                 ErrCode = ErrorCode.Success,
                 ErrMessage = "OK",
-                Data = payments
+                Data = dtos
             };
         }
+
         public async Task<ApiResponse<object>> ConfirmCodPaymentAsync(int codPaymentId)
         {
             return await _codService.ConfirmCodPaymentAsync(codPaymentId);
