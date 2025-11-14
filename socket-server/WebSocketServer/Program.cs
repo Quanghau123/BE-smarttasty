@@ -8,12 +8,13 @@ using WebSocketServer.Infrastructure.Messaging.Kafka;
 
 var builder = WebApplication.CreateBuilder(args);
 Console.WriteLine("Builder created");
+var notificationUrl = builder.Configuration["Services:NotificationService"];
 
 // ===== Register HttpClientFactory =====
 // resolve IHttpClientFactory trong NotificationHub
 builder.Services.AddHttpClient("NotificationService", client =>
 {
-    client.BaseAddress = new Uri("http://localhost:5088/");
+    client.BaseAddress = new Uri(notificationUrl);
 });
 
 // ==========================

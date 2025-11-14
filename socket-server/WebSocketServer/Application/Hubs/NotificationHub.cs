@@ -82,14 +82,10 @@ namespace WebSocketServer.Application.Hubs
             await base.OnDisconnectedAsync(exception);
         }
 
-        public async Task PingHeartbeat()
+        public Task PingHeartbeat()
         {
-            var userId = Context.UserIdentifier;
-            if (!string.IsNullOrEmpty(userId))
-            {
-                await _httpClient.PostAsJsonAsync($"api/userstatus/online/{userId}", new { timestamp = System.DateTime.UtcNow });
-                _logger.LogDebug("Heartbeat received for {UserId}", userId);
-            }
+            _logger.LogDebug("Heartbeat received for {UserId}", Context.UserIdentifier);
+            return Task.CompletedTask;
         }
 
         public async Task JoinRestaurantRoom(string restaurantId)
