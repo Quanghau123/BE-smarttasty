@@ -193,7 +193,7 @@ namespace backend.WebApi.Controllers
             });
         }
 
-        [Authorize(Roles = "business")]
+        [Authorize(Roles = "business, staff")]
         [HttpPost("cod/confirm")]
         public async Task<IActionResult> ConfirmCodPayment([FromQuery] int codPaymentId)
         {
