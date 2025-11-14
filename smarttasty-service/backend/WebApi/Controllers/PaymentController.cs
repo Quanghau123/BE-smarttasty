@@ -139,7 +139,7 @@ namespace backend.WebApi.Controllers
             );
         }
 
-        [Authorize(Roles = "user, business")]
+        [Authorize(Roles = "user, business, staff")]
         [HttpGet("pending")]
         public async Task<IActionResult> GetPendingPayments()
         {
@@ -213,7 +213,7 @@ namespace backend.WebApi.Controllers
             });
         }
 
-        [Authorize(Roles = "user, business")]
+        [Authorize(Roles = "user, business, staff")]
         [HttpGet("history/{userId}")]
         public async Task<IActionResult> GetPaymentHistoryByUser(int userId)
         {
@@ -253,7 +253,7 @@ namespace backend.WebApi.Controllers
             };
         }
 
-        [Authorize(Roles = "user, business")]
+        [Authorize(Roles = "user, business, staff")]
         [HttpGet("restaurant/{restaurantId}")]
         public async Task<IActionResult> GetPaymentsByRestaurant(int restaurantId)
         {
@@ -277,7 +277,7 @@ namespace backend.WebApi.Controllers
             });
         }
 
-        [Authorize(Roles = "user, business")]
+        [Authorize(Roles = "user, business, staff")]
         [HttpGet("restaurant/pending/{restaurantId}")]
         public async Task<IActionResult> GetPendingPaymentsByRestaurant(int restaurantId)
         {
