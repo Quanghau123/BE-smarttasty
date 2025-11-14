@@ -595,6 +595,45 @@ namespace backend.Application.Services
             return new ApiResponse<object>(ErrorCode.Success, "OK", staffs);
         }
 
+        public async Task<ApiResponse<object>> GetUserInfoAsync(int userId)
+        {
+            var user = await _context.Users
+                .Include(u => u.BusinessOwner)
+                .FirstOrDefaultAsync(u => u.UserId == userId);
+
+            if (user == null)
+                return new ApiResponse<object>(ErrorCode.NotFound, "User not found");
+
+            List<RestaurantSimpleDto> restaurants = new List<RestaurantSimpleDto>();
+            if (user.BusinessOwnerId != null)
+            {
+                restaurants = await _context.Restaurants
+                    .Where(r => r.OwnerId == user.BusinessOwnerId.Value)
+                    .Select(r => new RestaurantSimpleDto
+                    {
+                        Id = r.Id,
+                        Name = r.Name
+                    })
+                    .ToListAsync();
+            }
+
+            var result = new
+            {
+                UserId = user.UserId,
+                UserName = user.UserName,
+                Email = user.Email,
+                Phone = user.Phone,
+                Address = user.Address,
+                IsActive = user.IsActive,
+                CreatedAt = user.CreatedAt,
+                BusinessOwnerId = user.BusinessOwnerId,
+                BusinessOwnerName = user.BusinessOwner != null ? user.BusinessOwner.UserName : null,
+                Restaurants = restaurants
+            };
+
+            return new ApiResponse<object>(ErrorCode.Success, "OK", result);
+        }
+
         public async Task<ApiResponse<object>> UpdateStaffAsync(UpdateStaffRequest request, int businessOwnerId)
         {
             var owner = await _context.Users.FindAsync(businessOwnerId);

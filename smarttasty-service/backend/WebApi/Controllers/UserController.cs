@@ -1,4 +1,5 @@
 using backend.Application.Interfaces;
+using System.IdentityModel.Tokens.Jwt;
 using backend.Domain.Models;
 using backend.Domain.Models.Requests.User;
 using backend.Domain.Models.Requests.Auth;
@@ -220,6 +221,22 @@ namespace backend.WebApi.Controllers
 
             var res = await _userService.GetStaffsByBusinessAsync(businessId);
             return StatusCode(res.ErrCode == ErrorCode.Success ? 200 : 400, res);
+        }
+
+        [HttpGet("staff")]
+        [Authorize(Roles = "staff")]
+        public async Task<IActionResult> GetMyInfo()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                              ?? User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+
+            if (string.IsNullOrEmpty(userIdClaim))
+                return Unauthorized(new ApiResponse<object>(ErrorCode.Unauthorized, "Invalid token"));
+
+            int userId = int.Parse(userIdClaim);
+
+            var response = await _userService.GetUserInfoAsync(userId);
+            return Ok(response);
         }
 
         [Authorize(Roles = "business")]

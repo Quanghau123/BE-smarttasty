@@ -221,55 +221,6 @@ namespace backend.Application.Services
             };
         }
 
-        // public async Task<ApiResponse<List<RestaurantDto>>> SearchRestaurantsAsync(string query)
-        // {
-        //     if (string.IsNullOrWhiteSpace(query))
-        //         return new ApiResponse<List<RestaurantDto>> { ErrCode = ErrorCode.ValidationError, ErrMessage = "Empty query" };
-
-        //     var queryNormalized = TextHelper.RemoveDiacritics(query.ToLower());
-        //     var keywords = queryNormalized.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-
-        //     var allRestaurants = await _context.Restaurants.Include(r => r.Owner).ToListAsync();
-
-        //     var matched = allRestaurants.Where(r =>
-        //     {
-        //         var name = TextHelper.RemoveDiacritics(r.Name.ToLower());
-        //         var address = TextHelper.RemoveDiacritics(r.Address.ToLower());
-
-        //         bool containsAny = keywords.Any(k => name.Contains(k) || address.Contains(k));
-
-        //         bool fuzzyMatch = keywords.Any(k =>
-        //             TextHelper.LevenshteinDistance(name, k) <= 2 ||
-        //             TextHelper.LevenshteinDistance(address, k) <= 2
-        //         );
-
-        //         return containsAny || fuzzyMatch;
-        //     }).ToList();
-
-        //     var dtos = _mapper.Map<List<RestaurantDto>>(matched);
-        //     return new ApiResponse<List<RestaurantDto>> { ErrCode = ErrorCode.Success, ErrMessage = "OK", Data = dtos };
-        // }
-
-        // public async Task<List<string>> GetSuggestionsAsync(string query)
-        // {
-        //     if (string.IsNullOrWhiteSpace(query))
-        //         return new List<string>();
-
-        //     var queryNormalized = TextHelper.RemoveDiacritics(query.ToLower());
-
-        //     var restaurantNames = await _context.Restaurants
-        //         .Select(r => r.Name)
-        //         .Distinct()
-        //         .ToListAsync();
-
-        //     var suggestions = restaurantNames
-        //         .Where(name => TextHelper.RemoveDiacritics(name.ToLower()).Contains(queryNormalized))
-        //         .Take(10)
-        //         .ToList();
-
-        //     return suggestions;
-        // }
-
         public async Task<ApiResponse<List<RestaurantDto>>> SearchRestaurantsAsync(string query)
         {
             var matched = await _fuzzySearch.SearchAsync<Restaurant>("Restaurants", query, new[] { "Name" }, 30);
