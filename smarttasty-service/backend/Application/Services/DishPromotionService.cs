@@ -6,6 +6,7 @@ using backend.Application.DTOs.DishPromotion;
 using backend.Domain.Models.Requests.DishPromotion;
 using backend.Domain.Enums.Commons.Response;
 using backend.Infrastructure.Helpers.Commons.Response;
+using backend.Infrastructure.Helpers;
 using backend.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,11 +16,13 @@ namespace backend.Application.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
+        private readonly IImageHelper _imageHelper;
 
-        public DishPromotionService(ApplicationDbContext context, IMapper mapper)
+        public DishPromotionService(ApplicationDbContext context, IMapper mapper, IImageHelper imageHelper)
         {
             _context = context;
             _mapper = mapper;
+            _imageHelper = imageHelper;
         }
 
         public async Task<ApiResponse<List<DishPromotionDto>>> GetAllAsync()
@@ -30,6 +33,10 @@ namespace backend.Application.Services
                 .ToListAsync();
 
             var dtos = _mapper.Map<List<DishPromotionDto>>(list);
+            foreach (var dto in dtos)
+            {
+                dto.Image = _imageHelper.GetImageUrl(dto.Image);
+            }
 
             return new ApiResponse<List<DishPromotionDto>>
             {
@@ -53,6 +60,8 @@ namespace backend.Application.Services
                     ErrMessage = "DishPromotion not found",
                     Data = null
                 };
+            var dto = _mapper.Map<DishPromotionDto>(dp);
+            dto.Image = _imageHelper.GetImageUrl(dto.Image);
 
             return new ApiResponse<DishPromotionDto?>
             {

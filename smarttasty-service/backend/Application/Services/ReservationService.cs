@@ -174,18 +174,18 @@ namespace backend.Application.Services
                     };
                     await _kafkaProducer.SendMessageAsync(envelope, "notification-reservation");
 
-                    if (reservationWithDetails.Restaurant?.Owner != null && customer != null)
+                    if (reservationWithDetails.Restaurant != null && customer != null)
                     {
                         await _notificationService.SendRealtimeNotificationAsync(
-                            reservationWithDetails.Restaurant.Owner.UserId,
+                            reservationWithDetails.UserId,
                             "Trạng thái đặt bàn đã thay đổi",
-                            $"Đơn đặt bàn của {customer.ContactName} tại {reservationWithDetails.Restaurant.Name} đã chuyển sang trạng thái {newStatus}.",
+                            $"Đơn đặt bàn của bạn tại {reservationWithDetails.Restaurant.Name} đã chuyển sang: {newStatus}.",
                             changedBy,
-                            UserRole.business.ToString(),
+                            UserRole.user.ToString(),
                             new Dictionary<string, string>
                             {
-            { "ReservationId", reservationWithDetails.Id.ToString() },
-            { "RestaurantId", reservationWithDetails.RestaurantId.ToString() }
+                                { "ReservationId", reservationWithDetails.Id.ToString() },
+                                { "RestaurantId", reservationWithDetails.RestaurantId.ToString() }
                             }
                         );
                     }

@@ -121,6 +121,8 @@ namespace backend.Infrastructure.Data
             modelBuilder.SeedDishes();
             modelBuilder.SeedPromotions();
             modelBuilder.SeedReviews();
+            modelBuilder.SeedRecipes();
+            modelBuilder.SeedRecipeReviews();
 
         }
 
@@ -128,7 +130,7 @@ namespace backend.Infrastructure.Data
 }
 
 //add + update (add mà không update là lỗi nguyên db vì không so sánh với migrations cũ được)
-//dotnet ef migrations add update_payment_order_snapshot
+//dotnet ef migrations add update_seeder
 //dotnet ef database update
 
 //delete migrations nếu update bị lỗi

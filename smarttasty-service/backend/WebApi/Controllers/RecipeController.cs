@@ -2,6 +2,7 @@ using backend.Application.Interfaces;
 using backend.Domain.Models;
 using backend.Domain.Enums.Commons.Response;
 using backend.Infrastructure.Helpers.Commons.Response;
+using backend.Domain.Models.Requests.Filters;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
@@ -44,16 +45,16 @@ namespace backend.WebApi.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll([FromQuery] PagedRequest filter)
         {
-            var result = await _recipeService.GetAllRecipesAsync();
+            var result = await _recipeService.GetAllRecipesAsync(filter);
             return StatusCode(result.ErrCode == ErrorCode.Success ? 200 : 400, result);
         }
 
         [HttpGet("user/{userId}")]
-        public async Task<IActionResult> GetRecipesByUser(int userId)
+        public async Task<IActionResult> GetRecipesByUser(int userId, [FromQuery] PagedRequest filter)
         {
-            var res = await _recipeService.GetRecipeByUserIdAsync(userId);
+            var res = await _recipeService.GetRecipeByUserIdAsync(userId, filter);
             return CreateResult(res);
         }
 

@@ -39,7 +39,6 @@ namespace backend.Domain.Models
         public List<PaymentTransactionLog> TransactionLogs { get; set; } = new();
 
         public VNPayPayment? VNPayPayment { get; set; }
-        public ZaloPayPayment? ZaloPayPayment { get; set; }
         public CODPayment? CODPayment { get; set; }
         public List<Refund> Refunds { get; set; } = new();
 

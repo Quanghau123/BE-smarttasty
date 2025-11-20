@@ -186,7 +186,7 @@ namespace backend.Application.Services
             if (existingItem != null)
             {
                 existingItem.Quantity += quantity;
-                order.UpdatedAt = DateTime.UtcNow;
+                existingItem.TotalPrice = existingItem.UnitPrice * existingItem.Quantity;
             }
             else
             {
@@ -194,12 +194,14 @@ namespace backend.Application.Services
                 order.AddItem(item);
             }
 
-            order.UpdatedAt = DateTime.UtcNow;
+            // Tính lại tổng order
+            order.RecalculateTotal();
 
+            // Áp dụng voucher / promotion nếu có
             if (order.AppliedPromotionId.HasValue || !string.IsNullOrEmpty(order.AppliedVoucherCode))
                 await _applyPromotionService.ApplyPromotionAsync(order.Id, order.AppliedVoucherCode!);
-            else
-                order.FinalPrice = order.TotalPrice;
+
+            order.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
 
@@ -491,9 +493,9 @@ namespace backend.Application.Services
             {
                 order.DeliveredAt = DateTime.UtcNow;
 
-                // Nếu là thanh toán online (VNPAY, ZaloPay)
+                // Nếu là thanh toán online (VNPAY)
                 if (payment != null &&
-                    (payment.Method == PaymentMethod.VNPay || payment.Method == PaymentMethod.ZaloPay))
+                    (payment.Method == PaymentMethod.VNPay))
                 {
                     // Đã thanh toán xong trước đó
                     if (payment.Status == PaymentStatus.Success)

@@ -8,6 +8,8 @@ using backend.Infrastructure.Helpers;
 using backend.Domain.Enums.Commons.Response;
 using backend.Infrastructure.Helpers.Commons.Response;
 using backend.Application.DTOs.Dish;
+using backend.Application.DTOs.Commons;
+using backend.Domain.Models.Requests.Filters;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
@@ -22,19 +24,22 @@ namespace backend.Application.Services
         private readonly IMapper _mapper;
         private readonly IUserContextService _userContext;
         private readonly IImageHelper _imageHelper;
+        private readonly IPaginationService _paginationService;
 
         public DishService(
             ApplicationDbContext context,
             IPhotoService photoService,
             IMapper mapper,
             IUserContextService userContext,
-            IImageHelper imageHelper)
+            IImageHelper imageHelper,
+            IPaginationService paginationService)
         {
             _context = context;
             _photoService = photoService;
             _mapper = mapper;
             _userContext = userContext;
             _imageHelper = imageHelper;
+            _paginationService = paginationService;
         }
 
         public async Task<ApiResponse<DishDto?>> CreateDishAsync(Dish dish, IFormFile? file)
@@ -95,25 +100,38 @@ namespace backend.Application.Services
             };
         }
 
-        public async Task<ApiResponse<List<DishDto>>> GetDishByRestaurantIdAsync(int restaurantId)
+        public async Task<ApiResponse<PagedDto<DishDto>>> GetDishByRestaurantIdAsync(
+          int restaurantId,
+          PagedRequest filter
+      )
         {
-            var dishes = await _context.Dishes
+            var query = _context.Dishes
                 .Include(d => d.Restaurant)
                 .Where(d => d.RestaurantId == restaurantId)
-                .ToListAsync();
+                .AsQueryable();
 
-            var dishDtos = _mapper.Map<List<DishDto>>(dishes);
+            var pagedResult = await _paginationService.GetPagedResultAsync(query, filter);
+
+            var dishDtos = _mapper.Map<List<DishDto>>(pagedResult.Data);
 
             foreach (var dto in dishDtos)
             {
                 dto.ImageUrl = _imageHelper.GetImageUrl(dto.Image);
             }
 
-            return new ApiResponse<List<DishDto>>
+            // Trả về PagedDto chứa DTO list
+            var finalPaged = new PagedDto<DishDto>(
+                dishDtos,
+                pagedResult.TotalRecords,
+                pagedResult.PageNumber,
+                pagedResult.PageSize
+            );
+
+            return new ApiResponse<PagedDto<DishDto>>
             {
                 ErrCode = ErrorCode.Success,
                 ErrMessage = "OK",
-                Data = dishDtos
+                Data = finalPaged
             };
         }
 

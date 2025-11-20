@@ -10,6 +10,7 @@ namespace backend.Application.DTOs.DishPromotion
 
         public string DishName { get; set; } = string.Empty;
         public string PromotionTitle { get; set; } = string.Empty;
+        public string Image { get; set; } = string.Empty;
 
         public DiscountType DiscountType { get; set; }
         public float DiscountValue { get; set; }

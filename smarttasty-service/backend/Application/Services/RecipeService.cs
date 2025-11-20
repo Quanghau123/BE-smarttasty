@@ -7,6 +7,8 @@ using backend.Application.Interfaces.Commons;
 using backend.Infrastructure.Helpers;
 using backend.Domain.Enums.Commons.Response;
 using backend.Infrastructure.Helpers.Commons.Response;
+using backend.Application.DTOs.Commons;
+using backend.Domain.Models.Requests.Filters;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
@@ -21,19 +23,22 @@ namespace backend.Application.Services
         private readonly IMapper _mapper;
         private readonly IUserContextService _userContext;
         private readonly IImageHelper _imageHelper;
+        private readonly IPaginationService _paginationService;
 
         public RecipeService(
             ApplicationDbContext context,
             IPhotoService photoService,
             IMapper mapper,
             IUserContextService userContext,
-            IImageHelper imageHelper)
+            IImageHelper imageHelper,
+            IPaginationService paginationService)
         {
             _context = context;
             _photoService = photoService;
             _mapper = mapper;
             _userContext = userContext;
             _imageHelper = imageHelper;
+            _paginationService = paginationService;
         }
 
         public async Task<ApiResponse<RecipeDto?>> CreateRecipeAsync(Recipe recipe, IFormFile? file)
@@ -82,47 +87,64 @@ namespace backend.Application.Services
             };
         }
 
-        public async Task<ApiResponse<List<RecipeDto>>> GetAllRecipesAsync()
+        public async Task<ApiResponse<PagedDto<RecipeDto>>> GetAllRecipesAsync(PagedRequest filter)
         {
-            var recipes = await _context.Recipes
+            var query = _context.Recipes
                 .Include(d => d.User)
                 .OrderByDescending(r => r.CreatedAt)
-                .ToListAsync();
+                .AsQueryable();
 
-            var recipeDtos = _mapper.Map<List<RecipeDto>>(recipes);
+            // Phân trang + filter + sort
+            var pagedResult = await _paginationService.GetPagedResultAsync(query, filter);
 
+            // Map sang DTO
+            var recipeDtos = _mapper.Map<List<RecipeDto>>(pagedResult.Data);
+
+            // Gắn URL ảnh
             foreach (var dto in recipeDtos)
             {
                 dto.ImageUrl = _imageHelper.GetImageUrl(dto.Image);
             }
 
-            return new ApiResponse<List<RecipeDto>>
+            // Tạo PagedDto mới với DTO đã map
+            var result = new PagedDto<RecipeDto>(recipeDtos, pagedResult.TotalRecords, pagedResult.PageNumber, pagedResult.PageSize);
+
+            return new ApiResponse<PagedDto<RecipeDto>>
             {
                 ErrCode = ErrorCode.Success,
                 ErrMessage = "OK",
-                Data = recipeDtos
+                Data = result
             };
         }
 
-        public async Task<ApiResponse<List<RecipeDto>>> GetRecipeByUserIdAsync(int userId)
+        public async Task<ApiResponse<PagedDto<RecipeDto>>> GetRecipeByUserIdAsync(int userId, PagedRequest filter)
         {
-            var recipes = await _context.Recipes
+            var query = _context.Recipes
                 .Include(d => d.User)
                 .Where(d => d.UserId == userId)
-                .ToListAsync();
+                .OrderByDescending(r => r.CreatedAt)
+                .AsQueryable();
 
-            var recipeDtos = _mapper.Map<List<RecipeDto>>(recipes);
+            // Phân trang + filter + sort
+            var pagedResult = await _paginationService.GetPagedResultAsync(query, filter);
 
+            // Map sang DTO
+            var recipeDtos = _mapper.Map<List<RecipeDto>>(pagedResult.Data);
+
+            // Gắn URL ảnh
             foreach (var dto in recipeDtos)
             {
                 dto.ImageUrl = _imageHelper.GetImageUrl(dto.Image);
             }
 
-            return new ApiResponse<List<RecipeDto>>
+            // Tạo PagedDto mới với DTO đã map
+            var result = new PagedDto<RecipeDto>(recipeDtos, pagedResult.TotalRecords, pagedResult.PageNumber, pagedResult.PageSize);
+
+            return new ApiResponse<PagedDto<RecipeDto>>
             {
                 ErrCode = ErrorCode.Success,
                 ErrMessage = "OK",
-                Data = recipeDtos
+                Data = result
             };
         }
 

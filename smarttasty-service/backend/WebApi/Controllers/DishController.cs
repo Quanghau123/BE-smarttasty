@@ -2,6 +2,7 @@
 using backend.Domain.Models;
 using backend.Domain.Enums.Commons.Response;
 using backend.Infrastructure.Helpers.Commons.Response;
+using backend.Domain.Models.Requests.Filters;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
@@ -45,9 +46,9 @@ namespace backend.WebApi.Controllers
         }
 
         [HttpGet("restaurant/{restaurantId}")]
-        public async Task<IActionResult> GetDishesByRestaurant(int restaurantId)
+        public async Task<IActionResult> GetDishesByRestaurant(int restaurantId, [FromQuery] PagedRequest filter)
         {
-            var res = await _dishService.GetDishByRestaurantIdAsync(restaurantId);
+            var res = await _dishService.GetDishByRestaurantIdAsync(restaurantId, filter);
             return CreateResult(res);
         }
 
