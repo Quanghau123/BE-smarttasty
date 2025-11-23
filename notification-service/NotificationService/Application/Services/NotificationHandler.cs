@@ -38,63 +38,55 @@ namespace NotificationService.Application.Services
                 return;
             }
 
-            var tasks = new List<Task>();
-
-            foreach (var receiverId in payload.TargetUserIds)
+            // Tạo các Task cho từng user nhưng không dùng Task.Run
+            var tasks = payload.TargetUserIds.Select(async receiverId =>
             {
-                tasks.Add(Task.Run(async () =>
+                try
                 {
-                    try
+                    var isOnline = await _userStatus.IsOnlineAsync(receiverId);
+
+                    if (isOnline)
                     {
-                        var isOnline = await _userStatus.IsOnlineAsync(receiverId);
+                        _logger.LogInformation("Sent realtime notification to {UserId}: {Title} {Message}",
+                            receiverId, payload.Title, payload.Message);
 
-                        if (isOnline)
+                        var envelope = new KafkaEnvelope<NotificationPayload>
                         {
-                            _logger.LogInformation("Sent realtime notification to {UserId}: {Title} {Message}",
-                                receiverId, payload.Title, payload.Message);
+                            TxId = txId,
+                            Target = receiverId,
+                            Event = "RealtimeNotification",
+                            Payload = payload
+                        };
 
-                            var envelope = new KafkaEnvelope<NotificationPayload>
-                            {
-                                TxId = txId,
-                                Target = receiverId,
-                                Event = "RealtimeNotification",
-                                Payload = payload
-                            };
-
-                            try
-                            {
-                                await _kafkaProducer.SendMessageAsync(envelope, "realtime-notification");
-                            }
-                            catch (Exception ex)
-                            {
-                                _logger.LogError(ex, "Failed to produce realtime notification for {UserId} TxId={TxId}", receiverId, txId);
-                                // optionally fallback to offline store
-                                await _offlineRepo.SaveAsync(receiverId, payload);
-                            }
+                        try
+                        {
+                            await _kafkaProducer.SendMessageAsync(envelope, "realtime-notification");
                         }
-                        else
+                        catch (Exception ex)
                         {
-                            _logger.LogInformation("User {UserId} offline, save to MongoDB queue: {Title} {Message}",
-                                receiverId, payload.Title, payload.Message);
-                            try
-                            {
-                                await _offlineRepo.SaveAsync(receiverId, payload);
-                            }
-                            catch (Exception ex)
-                            {
-                                _logger.LogError(ex, "Failed to save offline notification for {UserId} TxId={TxId}", receiverId, txId);
-                            }
+                            _logger.LogError(ex, "Failed to produce realtime notification for {UserId} TxId={TxId}", receiverId, txId);
+                            // fallback offline store
+                            await _offlineRepo.SaveAsync(receiverId, payload);
                         }
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        _logger.LogError(ex, "Error handling notification for receiver {Receiver} TxId={TxId}", receiverId, txId);
-                    }
-                }));
-            }
+                        _logger.LogInformation("User {UserId} offline, save to MongoDB queue: {Title} {Message}",
+                            receiverId, payload.Title, payload.Message);
 
+                        await _offlineRepo.SaveAsync(receiverId, payload);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error handling notification for receiver {Receiver} TxId={TxId}", receiverId, txId);
+                }
+            });
+
+            // Chờ tất cả task hoàn tất
             await Task.WhenAll(tasks);
         }
+
         public async Task HandlePasswordResetAsync(PasswordResetRequestedPayload payload, string txId)
         {
             _logger.LogInformation("Handling PasswordResetRequested for UserId={UserId} tx={TxId}", payload.UserId, txId);
