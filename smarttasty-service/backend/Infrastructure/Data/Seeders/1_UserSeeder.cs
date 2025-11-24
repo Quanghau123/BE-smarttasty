@@ -248,6 +248,126 @@ namespace backend.Infrastructure.Data.Seeders
                         Role = UserRole.business,
                         IsActive = true,
                         CreatedAt = DateTime.UtcNow
+                    },
+                    new User
+                    {
+                        UserId = 21,
+                        UserName = "business21",
+                        UserPassword = "$2a$11$S3CqbavZCGuTIVa7/gxhq.uhpOZzGZtyAv0xSnXnUJ6pNzENH0T86",
+                        Email = "business21@gmail.com",
+                        Phone = "0826100021",
+                        Address = "21 Business Street",
+                        Role = UserRole.business,
+                        IsActive = true,
+                        CreatedAt = DateTime.UtcNow
+                    },
+                    new User
+                    {
+                        UserId = 22,
+                        UserName = "business22",
+                        UserPassword = "$2a$11$S3CqbavZCGuTIVa7/gxhq.uhpOZzGZtyAv0xSnXnUJ6pNzENH0T86",
+                        Email = "business22@gmail.com",
+                        Phone = "0826100022",
+                        Address = "22 Business Street",
+                        Role = UserRole.business,
+                        IsActive = true,
+                        CreatedAt = DateTime.UtcNow
+                    },
+                    new User
+                    {
+                        UserId = 23,
+                        UserName = "business23",
+                        UserPassword = "$2a$11$S3CqbavZCGuTIVa7/gxhq.uhpOZzGZtyAv0xSnXnUJ6pNzENH0T86",
+                        Email = "business23@gmail.com",
+                        Phone = "0826100023",
+                        Address = "23 Business Street",
+                        Role = UserRole.business,
+                        IsActive = true,
+                        CreatedAt = DateTime.UtcNow
+                    },
+                    new User
+                    {
+                        UserId = 24,
+                        UserName = "business24",
+                        UserPassword = "$2a$11$S3CqbavZCGuTIVa7/gxhq.uhpOZzGZtyAv0xSnXnUJ6pNzENH0T86",
+                        Email = "business24@gmail.com",
+                        Phone = "0826100024",
+                        Address = "24 Business Street",
+                        Role = UserRole.business,
+                        IsActive = true,
+                        CreatedAt = DateTime.UtcNow
+                    },
+                    new User
+                    {
+                        UserId = 25,
+                        UserName = "business25",
+                        UserPassword = "$2a$11$S3CqbavZCGuTIVa7/gxhq.uhpOZzGZtyAv0xSnXnUJ6pNzENH0T86",
+                        Email = "business25@gmail.com",
+                        Phone = "0826100025",
+                        Address = "25 Business Street",
+                        Role = UserRole.business,
+                        IsActive = true,
+                        CreatedAt = DateTime.UtcNow
+                    },
+                    new User
+                    {
+                        UserId = 26,
+                        UserName = "business26",
+                        UserPassword = "$2a$11$S3CqbavZCGuTIVa7/gxhq.uhpOZzGZtyAv0xSnXnUJ6pNzENH0T86",
+                        Email = "business26@gmail.com",
+                        Phone = "0826100026",
+                        Address = "26 Business Street",
+                        Role = UserRole.business,
+                        IsActive = true,
+                        CreatedAt = DateTime.UtcNow
+                    },
+                    new User
+                    {
+                        UserId = 27,
+                        UserName = "business27",
+                        UserPassword = "$2a$11$S3CqbavZCGuTIVa7/gxhq.uhpOZzGZtyAv0xSnXnUJ6pNzENH0T86",
+                        Email = "business27@gmail.com",
+                        Phone = "0826100027",
+                        Address = "27 Business Street",
+                        Role = UserRole.business,
+                        IsActive = true,
+                        CreatedAt = DateTime.UtcNow
+                    },
+                    new User
+                    {
+                        UserId = 28,
+                        UserName = "business28",
+                        UserPassword = "$2a$11$S3CqbavZCGuTIVa7/gxhq.uhpOZzGZtyAv0xSnXnUJ6pNzENH0T86",
+                        Email = "business28@gmail.com",
+                        Phone = "0826100028",
+                        Address = "28 Business Street",
+                        Role = UserRole.business,
+                        IsActive = true,
+                        CreatedAt = DateTime.UtcNow
+                    },
+                    new User
+                    {
+                        UserId = 29,
+                        UserName = "business29",
+                        UserPassword = "$2a$11$S3CqbavZCGuTIVa7/gxhq.uhpOZzGZtyAv0xSnXnUJ6pNzENH0T86",
+                        Email = "business29@gmail.com",
+                        Phone = "0826100029",
+                        Address = "29 Business Street",
+                        Role = UserRole.business,
+                        IsActive = true,
+                        CreatedAt = DateTime.UtcNow
+                    },
+                    new User
+                    {
+                        UserId = 30,
+                        UserName = "business30",
+                        UserPassword = "$2a$11$S3CqbavZCGuTIVa7/gxhq.uhpOZzGZtyAv0xSnXnUJ6pNzENH0T86",
+                        Email = "business30@gmail.com",
+                        Phone = "0826100030",
+                        Address = "30 Business Street",
+                        Role = UserRole.business,
+                        IsActive = true,
+                        CreatedAt = DateTime.UtcNow
                     }
             );
         }

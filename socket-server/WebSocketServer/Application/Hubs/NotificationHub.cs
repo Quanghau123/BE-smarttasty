@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 using WebSocketServer.Application.DTOs.KafkaPayload;
+using System.Collections.Concurrent;
 
 namespace WebSocketServer.Application.Hubs
 {
@@ -12,6 +13,8 @@ namespace WebSocketServer.Application.Hubs
     {
         private readonly ILogger<NotificationHub> _logger;
         private readonly HttpClient _httpClient;
+        private static readonly ConcurrentDictionary<string, DateTime> _lastPing = new();
+        private static readonly ConcurrentDictionary<string, ConcurrentBag<string>> _userConnections = new();
 
         public NotificationHub(ILogger<NotificationHub> logger, IHttpClientFactory httpFactory)
         {
@@ -22,18 +25,17 @@ namespace WebSocketServer.Application.Hubs
         public override async Task OnConnectedAsync()
         {
             var userId = Context.UserIdentifier;
-            _logger.LogInformation("User connected: {ConnectionId}, UserId={UserId}", Context.ConnectionId, userId);
+            _logger.LogInformation("User {UserId} connected, ConnectionId={ConnectionId}", userId, Context.ConnectionId);
 
             if (!string.IsNullOrEmpty(userId))
             {
+                _userConnections.GetOrAdd(userId, _ => new ConcurrentBag<string>()).Add(Context.ConnectionId);
+
                 try
                 {
                     await _httpClient.PostAsJsonAsync($"api/userstatus/online/{userId}", new { timestamp = System.DateTime.UtcNow });
                 }
-                catch (System.Exception ex)
-                {
-                    _logger.LogError(ex, "Failed to mark user online: {UserId}", userId);
-                }
+                catch { }
             }
 
             // fetch offline notifications
@@ -42,22 +44,23 @@ namespace WebSocketServer.Application.Hubs
                 var response = await _httpClient.GetFromJsonAsync<NotificationPayload[]>($"api/notifications/offline/pop/{userId}");
                 if (response != null)
                 {
-                    var tasks = response.Select(notif => Clients.User(userId)
-                        .SendAsync("ReceiveNotification", notif.Title, notif.Message)
-                        .ContinueWith(t =>
-                        {
-                            if (t.IsFaulted)
-                                _logger.LogError(t.Exception, "Failed to send notification to {UserId}", userId);
-                            else
-                                _logger.LogInformation("Sent offline notification to {UserId}: {Title}", userId, notif.Title);
-                        })
-                    );
-                    await Task.WhenAll(tasks);
+                    foreach (var notif in response)
+                    {
+                        _logger.LogInformation("[OfflineNotification] Sending to UserId={UserId}, Title={Title}", userId, notif.Title);
+                        await Clients.User(userId).SendAsync("ReceiveNotification", notif.Title, notif.Message)
+                            .ContinueWith(t =>
+                            {
+                                if (t.IsFaulted)
+                                    _logger.LogError(t.Exception, "[OfflineNotification] Failed to send to UserId={UserId}", userId);
+                                else
+                                    _logger.LogInformation("[OfflineNotification] Sent to UserId={UserId}, Title={Title}", userId, notif.Title);
+                            });
+                    }
                 }
             }
             catch (System.Exception ex)
             {
-                _logger.LogError(ex, "Error fetching offline notifications for {UserId}", userId);
+                _logger.LogError(ex, "[OfflineNotification] Error fetching for UserId={UserId}", userId);
             }
 
             await base.OnConnectedAsync();
@@ -66,32 +69,44 @@ namespace WebSocketServer.Application.Hubs
         public override async Task OnDisconnectedAsync(System.Exception? exception)
         {
             var userId = Context.UserIdentifier;
-            if (!string.IsNullOrEmpty(userId))
+            if (!string.IsNullOrEmpty(userId) && _userConnections.TryGetValue(userId, out var bag))
             {
-                try
+                bag.TryTake(out var _);
+                if (bag.IsEmpty)
                 {
-                    await _httpClient.DeleteAsync($"api/userstatus/offline/{userId}");
-                }
-                catch (System.Exception ex)
-                {
-                    _logger.LogError(ex, "Failed to mark user offline: {UserId}", userId);
+                    try
+                    {
+                        await _httpClient.DeleteAsync($"api/userstatus/offline/{userId}");
+                    }
+                    catch { }
                 }
             }
 
-            _logger.LogInformation("User disconnected: {ConnectionId}", Context.ConnectionId);
             await base.OnDisconnectedAsync(exception);
         }
 
-        public Task PingHeartbeat()
+        public async Task PingHeartbeat()
         {
-            _logger.LogDebug("Heartbeat received for {UserId}", Context.UserIdentifier);
-            return Task.CompletedTask;
+            var userId = Context.UserIdentifier;
+            if (string.IsNullOrEmpty(userId)) return;
+
+            var now = DateTime.UtcNow;
+            lock (_lastPing)
+            {
+                if (_lastPing.TryGetValue(userId, out var last) && (now - last).TotalSeconds < 5) return;
+                _lastPing[userId] = now;
+            }
+
+            try
+            {
+                await _httpClient.PostAsJsonAsync($"api/userstatus/online/{userId}", new { timestamp = now });
+            }
+            catch { }
         }
 
         public async Task JoinRestaurantRoom(string restaurantId)
         {
             await Groups.AddToGroupAsync(Context.ConnectionId, restaurantId);
-            _logger.LogInformation("User {ConnectionId} joined restaurant room {RestaurantId}", Context.ConnectionId, restaurantId);
         }
     }
 }
