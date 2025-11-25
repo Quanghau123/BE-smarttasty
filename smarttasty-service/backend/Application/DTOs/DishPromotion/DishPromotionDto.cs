@@ -7,6 +7,7 @@ namespace backend.Application.DTOs.DishPromotion
         public int Id { get; set; }
         public int DishId { get; set; }
         public int PromotionId { get; set; }
+        public int RestaurantId { get; set; }
 
         public string DishName { get; set; } = string.Empty;
         public string PromotionTitle { get; set; } = string.Empty;

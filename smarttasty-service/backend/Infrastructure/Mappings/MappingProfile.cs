@@ -70,7 +70,9 @@ namespace backend.Infrastructure.Mappings
                 .ForMember(dest => dest.Id, opt => opt.Ignore());
 
             CreateMap<DishPromotion, DishPromotionDto>()
+                .ForMember(dest => dest.RestaurantId, opt => opt.MapFrom(src => src.Dish.RestaurantId))
                 .ForMember(dest => dest.DishName, opt => opt.MapFrom(src => src.Dish.Name))
+                .ForMember(dest => dest.Image, opt => opt.MapFrom(src => src.Dish.Image))
                 .ForMember(dest => dest.PromotionTitle, opt => opt.MapFrom(src => src.Promotion.Title))
                 .ForMember(dest => dest.DiscountType, opt => opt.MapFrom(src => src.Promotion.DiscountType))
                 .ForMember(dest => dest.DiscountValue, opt => opt.MapFrom(src => src.Promotion.DiscountValue))

@@ -9,7 +9,6 @@ namespace backend.Application.DTOs.Dish
         public float Price { get; set; }
         public string Image { get; set; } = "";
         public bool IsActive { get; set; }
-
         public string ImageUrl { get; set; } = "";
 
         public RestaurantForDishDto Restaurant { get; set; } = null!;
