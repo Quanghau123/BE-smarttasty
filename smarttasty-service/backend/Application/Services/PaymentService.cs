@@ -1,3 +1,4 @@
+using AutoMapper;
 using backend.Application.Interfaces;
 using backend.Domain.Enums;
 using backend.Domain.Models;
@@ -7,6 +8,7 @@ using backend.Infrastructure.Helpers.Commons.Response;
 using backend.Domain.Enums.Commons.Response;
 using backend.Application.DTOs.Order;
 using backend.Application.DTOs.Restaurant;
+using backend.Infrastructure.Helpers;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http;
@@ -20,11 +22,15 @@ namespace backend.Application.Services
         private readonly ApplicationDbContext _db;
         private readonly IVNPayService _vnPayService;
         private readonly ICODService _codService;
-        public PaymentService(ApplicationDbContext db, IVNPayService vnPayService, ICODService codService)
+        private readonly IImageHelper _imageHelper;
+        private readonly IMapper _mapper;
+        public PaymentService(ApplicationDbContext db, IVNPayService vnPayService, ICODService codService, IImageHelper imageHelper, IMapper mapper)
         {
             _db = db;
             _vnPayService = vnPayService;
             _codService = codService;
+            _imageHelper = imageHelper;
+            _mapper = mapper;
         }
 
         public async Task<ApiResponse<object>> AddPaymentAsync(Payment payment)
@@ -139,10 +145,10 @@ namespace backend.Application.Services
             };
         }
 
-        public async Task<ApiResponse<object>> GetPaymentsByRestaurantIdAsync(int restaurantId)
+        public async Task<ApiResponse<List<PaymentDto>>> GetPaymentsByRestaurantIdAsync(int restaurantId)
         {
             var payments = await _db.Payments
-               .Include(p => p.Order)
+                .Include(p => p.Order)
                     .ThenInclude(o => o.OrderItems)
                         .ThenInclude(oi => oi.Dish)
                 .Include(p => p.Order.Restaurant)
@@ -151,11 +157,31 @@ namespace backend.Application.Services
                 .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
 
-            return new ApiResponse<object>
+            // Map sang DTO
+            var paymentDtos = _mapper.Map<List<PaymentDto>>(payments);
+
+            // Map ImageUrl riêng nếu muốn dùng helper
+            foreach (var p in paymentDtos)
+            {
+                if (p.Order?.Items != null)
+                {
+                    foreach (var item in p.Order.Items)
+                    {
+                        item.Image = _imageHelper.GetImageUrl(item.Image ?? "");
+                    }
+                }
+
+                if (p.Order?.Restaurant != null)
+                {
+                    p.Order.Restaurant.ImageUrl = _imageHelper.GetImageUrl(p.Order.Restaurant.ImagePublicId ?? "");
+                }
+            }
+
+            return new ApiResponse<List<PaymentDto>>
             {
                 ErrCode = ErrorCode.Success,
                 ErrMessage = "OK",
-                Data = payments
+                Data = paymentDtos
             };
         }
 

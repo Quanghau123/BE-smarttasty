@@ -113,6 +113,13 @@ namespace backend.WebApi.Controllers
         }
 
         // ---------------- Queries ----------------
+        [HttpGet("user/paid/{userId}")]
+        public async Task<IActionResult> GetUserPaidOrders(int userId)
+        {
+            var res = await _orderService.GetUserPaidOrdersAsync(userId);
+            return CreateResult(res);
+        }
+
         [HttpGet("user/{userId}")]
         public async Task<IActionResult> GetByUser(int userId)
         {

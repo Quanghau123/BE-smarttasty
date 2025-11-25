@@ -16,6 +16,7 @@ namespace backend.Application.Interfaces
         Task<ApiResponse<object>> UpdateOrderStatusAsync(int orderId, OrderStatus newStatus);
         Task<ApiResponse<object>> UpdateDeliveryStatusAsync(int orderId, DeliveryStatus newStatus);
         Task<ApiResponse<object>> GetOrdersByUserAsync(int userId);
+        Task<ApiResponse<object>> GetUserPaidOrdersAsync(int userId);
         Task<ApiResponse<object>> GetOrdersByStatusAsync(OrderStatus status);
         Task<ApiResponse<object>> GetRevenueDashboardAsync(int restaurantId, int year, int month);
     }

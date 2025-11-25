@@ -91,8 +91,16 @@ namespace backend.Infrastructure.Mappings
             CreateMap<Payment, InfoPaymentDto>()
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
                 .ForMember(dest => dest.Order, opt => opt.MapFrom(src => src.Order));
+            CreateMap<PaymentDto, InfoPaymentDto>()
+                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status))
+                .ForMember(dest => dest.Order, opt => opt.MapFrom(src => src.Order));
 
             CreateMap<Order, OrderDto>()
+                .ForMember(dest => dest.Items,
+                            opt => opt.MapFrom(src => src.OrderItems))
+                .ForMember(dest => dest.Restaurant,
+                        opt => opt.MapFrom(src => src.Restaurant));
+            CreateMap<Order, OrderPaidDto>()
                 .ForMember(dest => dest.Items,
                             opt => opt.MapFrom(src => src.OrderItems))
                 .ForMember(dest => dest.Restaurant,

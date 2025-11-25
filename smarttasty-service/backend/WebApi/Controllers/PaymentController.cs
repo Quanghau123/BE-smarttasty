@@ -259,15 +259,8 @@ namespace backend.WebApi.Controllers
         {
             var result = await _paymentService.GetPaymentsByRestaurantIdAsync(restaurantId);
 
-            List<InfoPaymentDto> dtos = new();
-            if (result.Data is List<Payment> payments)
-            {
-                dtos = payments.Select(p => _mapper.Map<InfoPaymentDto>(p)).ToList();
-            }
-            else if (result.Data is List<InfoPaymentDto> infoPaymentDtos)
-            {
-                dtos = infoPaymentDtos;
-            }
+            // Nếu muốn map sang InfoPaymentDto thì map trực tiếp
+            var dtos = result.Data?.Select(p => _mapper.Map<InfoPaymentDto>(p)).ToList() ?? new List<InfoPaymentDto>();
 
             return CreateResult(new ApiResponse<List<InfoPaymentDto>>
             {

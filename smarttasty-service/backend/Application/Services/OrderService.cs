@@ -576,6 +576,37 @@ namespace backend.Application.Services
                 Data = orderDtos
             };
         }
+
+        public async Task<ApiResponse<object>> GetUserPaidOrdersAsync(int userId)
+        {
+            var orders = await _context.Orders
+                .Include(o => o.OrderItems).ThenInclude(i => i.Dish)
+                .Include(o => o.Restaurant)
+                .Where(o => o.UserId == userId)
+                .ToListAsync();
+
+            var orderPaidDtos = _mapper.Map<List<backend.Application.DTOs.Order.OrderPaidDto>>(orders);
+
+            // Cập nhật lại Image thành URL đầy đủ
+            foreach (var order in orderPaidDtos)
+            {
+                if (order.Items != null)
+                {
+                    foreach (var item in order.Items)
+                    {
+                        item.Image = _imageHelper.GetImageUrl(item.Image);
+                    }
+                }
+            }
+
+            return new ApiResponse<object>
+            {
+                ErrCode = ErrorCode.Success,
+                ErrMessage = "OK",
+                Data = orderPaidDtos
+            };
+        }
+
         public async Task<ApiResponse<object>> GetOrdersByStatusAsync(OrderStatus status)
         {
             var orders = await _context.Orders
