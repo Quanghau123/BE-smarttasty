@@ -258,16 +258,7 @@ namespace backend.WebApi.Controllers
         public async Task<IActionResult> GetPaymentsByRestaurant(int restaurantId)
         {
             var result = await _paymentService.GetPaymentsByRestaurantIdAsync(restaurantId);
-
-            // Nếu muốn map sang InfoPaymentDto thì map trực tiếp
-            var dtos = result.Data?.Select(p => _mapper.Map<InfoPaymentDto>(p)).ToList() ?? new List<InfoPaymentDto>();
-
-            return CreateResult(new ApiResponse<List<InfoPaymentDto>>
-            {
-                ErrCode = result.ErrCode,
-                ErrMessage = result.ErrMessage,
-                Data = dtos
-            });
+            return CreateResult(result);
         }
 
         [Authorize(Roles = "user, business, staff")]

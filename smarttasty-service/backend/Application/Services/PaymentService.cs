@@ -145,7 +145,7 @@ namespace backend.Application.Services
             };
         }
 
-        public async Task<ApiResponse<List<PaymentDto>>> GetPaymentsByRestaurantIdAsync(int restaurantId)
+        public async Task<ApiResponse<List<InfoPaymentDto>>> GetPaymentsByRestaurantIdAsync(int restaurantId)
         {
             var payments = await _db.Payments
                 .Include(p => p.Order)
@@ -157,11 +157,9 @@ namespace backend.Application.Services
                 .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
 
-            // Map sang DTO
-            var paymentDtos = _mapper.Map<List<PaymentDto>>(payments);
+            var infos = _mapper.Map<List<InfoPaymentDto>>(payments);
 
-            // Map ImageUrl riêng nếu muốn dùng helper
-            foreach (var p in paymentDtos)
+            foreach (var p in infos)
             {
                 if (p.Order?.Items != null)
                 {
@@ -173,15 +171,16 @@ namespace backend.Application.Services
 
                 if (p.Order?.Restaurant != null)
                 {
-                    p.Order.Restaurant.ImageUrl = _imageHelper.GetImageUrl(p.Order.Restaurant.ImagePublicId ?? "");
+                    p.Order.Restaurant.ImageUrl =
+                        _imageHelper.GetImageUrl(p.Order.Restaurant.ImagePublicId ?? "");
                 }
             }
 
-            return new ApiResponse<List<PaymentDto>>
+            return new ApiResponse<List<InfoPaymentDto>>
             {
                 ErrCode = ErrorCode.Success,
                 ErrMessage = "OK",
-                Data = paymentDtos
+                Data = infos
             };
         }
 
