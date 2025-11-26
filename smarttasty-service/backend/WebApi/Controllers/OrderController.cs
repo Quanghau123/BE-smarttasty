@@ -4,6 +4,8 @@ using backend.Domain.Models.Requests.Order;
 using backend.Domain.Enums.Commons.Response;
 using backend.Infrastructure.Helpers.Commons.Response;
 using backend.Domain.Enums;
+using System.Net;
+using Microsoft.AspNetCore.Authorization;
 
 namespace backend.WebApi.Controllers
 {
@@ -98,6 +100,7 @@ namespace backend.WebApi.Controllers
         }
 
         // ---------------- Update Status ----------------
+        [Authorize(Roles = "business, staff")]
         [HttpPatch("{id}/status")]
         public async Task<IActionResult> UpdateOrderStatus(int id, [FromQuery] OrderStatus newStatus)
         {
@@ -105,10 +108,13 @@ namespace backend.WebApi.Controllers
             return CreateResult(res);
         }
 
+        [Authorize(Roles = "business, staff")]
         [HttpPatch("{id}/delivery-status")]
         public async Task<IActionResult> UpdateDeliveryStatus(int id, [FromQuery] DeliveryStatus newStatus)
         {
-            var res = await _orderService.UpdateDeliveryStatusAsync(id, newStatus);
+            var userId = int.Parse(User.FindFirst("userId")?.Value ?? "0");
+
+            var res = await _orderService.UpdateDeliveryStatusAsync(id, newStatus, userId);
             return CreateResult(res);
         }
 

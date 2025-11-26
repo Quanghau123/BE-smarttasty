@@ -230,6 +230,33 @@ namespace NotificationService.Application.Services
                 _logger.LogError(ex, "Error sending reservation canceled email for ReservationId={ReservationId} tx={TxId}", payload.ReservationId, txId);
             }
         }
+        public async Task HandleOrderDeliveryStatusUpdatedAsync(OrderDeliveryStatusUpdatedPayload payload, string txId)
+        {
+            _logger.LogInformation("Handling OrderDeliveryStatusUpdated for OrderId={OrderId} tx={TxId}", payload.OrderId, txId);
 
+            var emailReq = new EmailReq
+            {
+                Email = payload.ContactEmail,
+                Subject = "Trạng thái đơn hàng của bạn đã được cập nhật - SmartTasty",
+                EmailTemplate = "UIMailOrderDeliveryStatusUpdated.html",
+                Params = new Dictionary<string, object>
+        {
+            { "contactName", payload.ContactName },
+            { "restaurantName", payload.RestaurantName },
+            { "newStatus", payload.NewStatus },
+            { "orderId", payload.OrderId }
+        }
+            };
+
+            try
+            {
+                await _emailService.SendEmailAsync(emailReq, txId);
+                _logger.LogInformation("Order delivery status updated email sent for OrderId={OrderId} tx={TxId}", payload.OrderId, txId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending order delivery status updated email for OrderId={OrderId} tx={TxId}", payload.OrderId, txId);
+            }
+        }
     }
 }

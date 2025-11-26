@@ -11,6 +11,7 @@ namespace NotificationService.Application.Interfaces.Services
         Task HandleReservationStatusUpdatedAsync(ReservationStatusUpdatedPayload payload, string txId);
         Task HandleReservationCanceledByUserAsync(ReservationCanceledByUserPayload payload, string txId);
         Task HandleReservationCanceledByBusinessAsync(ReservationCanceledByBusinessPayload payload, string txId);
+        Task HandleOrderDeliveryStatusUpdatedAsync(OrderDeliveryStatusUpdatedPayload payload, string txId);
 
     }
 }

@@ -1,4 +1,5 @@
 using backend.Application.Interfaces;
+using backend.Application.Interfaces.Commons;
 using backend.Domain.Enums;
 using backend.Domain.Enums.Commons.Response;
 using backend.Domain.Models;
@@ -6,6 +7,9 @@ using backend.Domain.Models.Requests.Order;
 using backend.Infrastructure.Data;
 using backend.Infrastructure.Helpers.Commons.Response;
 using backend.Infrastructure.Helpers;
+using backend.Infrastructure.Messaging.Kafka;
+using backend.Application.DTOs.Kafka;
+using backend.Application.DTOs.KafkaPayload;
 using Microsoft.EntityFrameworkCore;
 using AutoMapper;
 
@@ -14,6 +18,8 @@ namespace backend.Application.Services
     public class OrderService : IOrderService
     {
         private readonly ApplicationDbContext _context;
+        private readonly KafkaProducerService _kafkaProducer;
+        private readonly INotificationService _notificationService;
         private readonly IMapper _mapper;
         private readonly IImageHelper _imageHelper;
         private readonly IApplyPromotionService _applyPromotionService;
@@ -22,11 +28,15 @@ namespace backend.Application.Services
            ApplicationDbContext context,
            IMapper mapper,
            IImageHelper imageHelper,
+           KafkaProducerService kafkaProducer,
+           INotificationService notificationService,
            IApplyPromotionService applyPromotionService)
         {
             _context = context;
             _mapper = mapper;
             _imageHelper = imageHelper;
+            _kafkaProducer = kafkaProducer;
+            _notificationService = notificationService;
             _applyPromotionService = applyPromotionService;
         }
 
@@ -462,10 +472,13 @@ namespace backend.Application.Services
             };
         }
 
-        public async Task<ApiResponse<object>> UpdateDeliveryStatusAsync(int orderId, DeliveryStatus newStatus)
+        public async Task<ApiResponse<object>> UpdateDeliveryStatusAsync(int orderId, DeliveryStatus newStatus, int changedBy)
         {
             var order = await _context.Orders
                 .Include(o => o.Payment)
+                .Include(o => o.Restaurant)
+                    .ThenInclude(r => r.Owner)
+                .Include(o => o.User)
                 .FirstOrDefaultAsync(o => o.Id == orderId);
 
             if (order == null)
@@ -493,55 +506,68 @@ namespace backend.Application.Services
             {
                 order.DeliveredAt = DateTime.UtcNow;
 
-                // Nếu là thanh toán online (VNPAY)
-                if (payment != null &&
-                    (payment.Method == PaymentMethod.VNPay))
+                if (payment != null)
                 {
-                    // Đã thanh toán xong trước đó
-                    if (payment.Status == PaymentStatus.Success)
+                    if ((payment.Method == PaymentMethod.VNPay || payment.Method == PaymentMethod.COD)
+                        && payment.Status != PaymentStatus.Success)
                     {
-                        order.Status = OrderStatus.Paid;
-                    }
-                    else
-                    {
-                        // Nếu chưa thanh toán thành công mà hàng đã giao, lỗi nghiệp vụ
                         return new ApiResponse<object>
                         {
                             ErrCode = ErrorCode.ValidationError,
-                            ErrMessage = "Cannot mark as delivered before successful online payment",
+                            ErrMessage = "Cannot mark order as delivered before successful payment",
                             Data = null
                         };
                     }
-                }
 
-                // Nếu là COD
-                if (payment != null && payment.Method == PaymentMethod.COD)
-                {
                     if (payment.Status == PaymentStatus.Success)
-                    {
                         order.Status = OrderStatus.Paid;
-                    }
-                    else
-                    {
-                        // Trường hợp shipper chưa thu tiền mà đã giao hàng → báo lỗi
-                        return new ApiResponse<object>
-                        {
-                            ErrCode = ErrorCode.ValidationError,
-                            ErrMessage = "Cannot mark COD order as delivered before confirming payment",
-                            Data = null
-                        };
-                    }
                 }
             }
 
             await _context.SaveChangesAsync();
+
+            // --- Gửi Kafka và Realtime Notification ---
+            if (order.User != null && order.Restaurant?.Owner != null)
+            {
+                var payload = new OrderDeliveryStatusUpdatedPayload
+                {
+                    OrderId = order.Id,
+                    RestaurantName = order.Restaurant.Name,
+                    ContactName = order.User.UserName ?? string.Empty,
+                    ContactEmail = order.User.Email ?? string.Empty,
+                    NewStatus = newStatus.ToString()
+                };
+
+                var envelope = new KafkaEnvelope<OrderDeliveryStatusUpdatedPayload>
+                {
+                    Target = "notification-service",
+                    Event = "order.delivery_status_updated",
+                    Payload = payload
+                };
+
+                await _kafkaProducer.SendMessageAsync(envelope, "notification-order");
+
+                // Realtime notification
+                await _notificationService.SendRealtimeNotificationAsync(
+                    order.UserId,
+                    "Trạng thái đơn hàng đã thay đổi",
+                    $"Đơn hàng của bạn tại {order.Restaurant.Name} đã chuyển sang: {newStatus}.",
+                    changedBy,
+                    UserRole.user.ToString(),
+                    new Dictionary<string, string>
+                    {
+                { "OrderId", order.Id.ToString() },
+                { "RestaurantId", order.RestaurantId.ToString() }
+                    }
+                );
+            }
 
             var orderDto = _mapper.Map<backend.Application.DTOs.Order.OrderDto>(order);
 
             return new ApiResponse<object>
             {
                 ErrCode = ErrorCode.Success,
-                ErrMessage = "OK",
+                ErrMessage = "Order delivery status updated",
                 Data = orderDto
             };
         }

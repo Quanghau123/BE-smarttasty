@@ -142,6 +142,20 @@ namespace NotificationService.Infrastructure.Messaging.Kafka
                         _logger.LogError(ex, "Error handling reservation.canceled_by_business event, TxId={TxId}", txId);
                     }
                     break;
+                case "order.delivery_status_updated":
+                    try
+                    {
+                        var statusPayload = JsonSerializer.Deserialize<OrderDeliveryStatusUpdatedPayload>(payload.GetRawText());
+                        if (statusPayload != null)
+                        {
+                            await _notificationHandler.HandleOrderDeliveryStatusUpdatedAsync(statusPayload, txId);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error handling order.delivery_status_updated event, TxId={TxId}", txId);
+                    }
+                    break;
 
                 default:
                     _logger.LogWarning("Unknown event: {Event}, TxId={TxId}", @event, txId);
