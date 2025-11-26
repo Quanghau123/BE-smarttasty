@@ -552,7 +552,7 @@ namespace backend.Application.Services
             var orders = await _context.Orders
                 .Include(o => o.OrderItems).ThenInclude(i => i.Dish)
                 .Include(o => o.Restaurant)
-                .Where(o => o.UserId == userId)
+                .Where(o => o.UserId == userId && o.Status == OrderStatus.Pending)
                 .ToListAsync();
 
             var orderDtos = _mapper.Map<List<backend.Application.DTOs.Order.OrderDto>>(orders);
