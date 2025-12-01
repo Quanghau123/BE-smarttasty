@@ -46,6 +46,13 @@ namespace backend.WebApi.Controllers
             return CreateResult(res);
         }
 
+        [HttpGet("restaurant/{restaurantId}")]
+        public async Task<IActionResult> GetByRestaurant(int restaurantId)
+        {
+            var res = await _service.GetDishPromotionByRestaurantAsync(restaurantId);
+            return CreateResult(res);
+        }
+
         [HttpPost("apply")]
         public async Task<IActionResult> Create([FromBody] CreateDishPromotionRequest request)
         {

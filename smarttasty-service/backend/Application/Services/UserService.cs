@@ -71,7 +71,6 @@ namespace backend.Application.Services
             var token = tokenHandler.CreateToken(tokenDescriptor);
             return tokenHandler.WriteToken(token);
         }
-
         private string GenerateRefreshToken()
         {
             return Convert.ToBase64String(Guid.NewGuid().ToByteArray());

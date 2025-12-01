@@ -70,6 +70,35 @@ namespace backend.Application.Services
                 Data = _mapper.Map<DishPromotionDto>(dp)
             };
         }
+        public async Task<ApiResponse<List<DishPromotionDto>>> GetDishPromotionByRestaurantAsync(int restaurantId)
+        {
+            var dp = await _context.DishPromotions
+                .Include(x => x.Dish)
+                .Include(x => x.Promotion)
+                .Where(x => x.Dish.RestaurantId == restaurantId)
+                .ToListAsync();
+
+            if (!dp.Any())
+                return new ApiResponse<List<DishPromotionDto>>
+                {
+                    ErrCode = ErrorCode.NotFound,
+                    ErrMessage = "DishPromotion not found",
+                    Data = null
+                };
+
+            var dtoList = _mapper.Map<List<DishPromotionDto>>(dp);
+
+            // xử lý image
+            foreach (var item in dtoList)
+                item.Image = _imageHelper.GetImageUrl(item.Image);
+
+            return new ApiResponse<List<DishPromotionDto>>
+            {
+                ErrCode = ErrorCode.Success,
+                ErrMessage = "OK",
+                Data = dtoList
+            };
+        }
 
         public async Task<ApiResponse<DishPromotionDto?>> ApplyDishPromotionsAsync(CreateDishPromotionRequest request)
         {
