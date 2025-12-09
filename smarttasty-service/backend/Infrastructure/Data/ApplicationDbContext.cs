@@ -20,6 +20,7 @@ namespace backend.Infrastructure.Data
         public DbSet<DishPromotion> DishPromotions { get; set; }
         public DbSet<OrderPromotion> OrderPromotions { get; set; }
         public DbSet<Order> Orders { get; set; }
+        public DbSet<OrderCommission> OrderCommission { get; set; }
         public DbSet<OrderItem> OrderItems { get; set; }
         public DbSet<Review> Reviews { get; set; }
         public DbSet<Favorite> Favorites { get; set; }
@@ -130,7 +131,7 @@ namespace backend.Infrastructure.Data
 }
 
 //add + update (add mà không update là lỗi nguyên db vì không so sánh với migrations cũ được)
-//dotnet ef migrations add update_seeder
+//dotnet ef migrations add update_Commission
 //dotnet ef database update
 
 //delete migrations nếu update bị lỗi

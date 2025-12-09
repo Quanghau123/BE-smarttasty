@@ -23,6 +23,7 @@ namespace backend.Application.Services
         private readonly IMapper _mapper;
         private readonly IImageHelper _imageHelper;
         private readonly IApplyPromotionService _applyPromotionService;
+        private readonly ICommissionService _commissionService;
 
         public OrderService(
            ApplicationDbContext context,
@@ -30,7 +31,8 @@ namespace backend.Application.Services
            IImageHelper imageHelper,
            KafkaProducerService kafkaProducer,
            INotificationService notificationService,
-           IApplyPromotionService applyPromotionService)
+           IApplyPromotionService applyPromotionService,
+           ICommissionService commissionService)
         {
             _context = context;
             _mapper = mapper;
@@ -38,6 +40,7 @@ namespace backend.Application.Services
             _kafkaProducer = kafkaProducer;
             _notificationService = notificationService;
             _applyPromotionService = applyPromotionService;
+            _commissionService = commissionService;
         }
 
         // ---------------- Order CRUD ----\------------
@@ -481,6 +484,7 @@ namespace backend.Application.Services
                 .Include(o => o.User)
                 .FirstOrDefaultAsync(o => o.Id == orderId);
 
+
             if (order == null)
                 return new ApiResponse<object>
                 {
@@ -499,6 +503,19 @@ namespace backend.Application.Services
                     Data = null
                 };
 
+            if (newStatus == DeliveryStatus.Delivered)
+            {
+                if (payment != null && payment.Status != PaymentStatus.Success)
+                {
+                    return new ApiResponse<object>
+                    {
+                        ErrCode = ErrorCode.ValidationError,
+                        ErrMessage = "Cannot mark order as delivered before payment is confirmed",
+                        Data = null
+                    };
+                }
+            }
+
             order.DeliveryStatus = newStatus;
             order.UpdatedAt = DateTime.UtcNow;
 
@@ -506,22 +523,21 @@ namespace backend.Application.Services
             {
                 order.DeliveredAt = DateTime.UtcNow;
 
-                if (payment != null)
+                if (payment != null && payment.Status == PaymentStatus.Success)
                 {
-                    if ((payment.Method == PaymentMethod.VNPay || payment.Method == PaymentMethod.COD)
-                        && payment.Status != PaymentStatus.Success)
-                    {
-                        return new ApiResponse<object>
-                        {
-                            ErrCode = ErrorCode.ValidationError,
-                            ErrMessage = "Cannot mark order as delivered before successful payment",
-                            Data = null
-                        };
-                    }
-
-                    if (payment.Status == PaymentStatus.Success)
-                        order.Status = OrderStatus.Paid;
+                    order.Status = OrderStatus.Paid;
                 }
+            }
+
+            bool canRecordCommission =
+                order.DeliveryStatus == DeliveryStatus.Delivered &&
+                payment != null &&
+                payment.Status == PaymentStatus.Success &&
+                !await _commissionService.IsCommissionRecorded(order.Id);
+
+            if (canRecordCommission)
+            {
+                await _commissionService.RecordCommissionAsync(order);
             }
 
             await _context.SaveChangesAsync();

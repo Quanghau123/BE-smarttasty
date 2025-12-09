@@ -121,6 +121,7 @@ builder.Services.AddScoped<IApplyPromotionService, ApplyPromotionService>();
 builder.Services.AddScoped<IOrderPromotionService, OrderPromotionService>();
 builder.Services.AddScoped<IVNPayService, VNPayService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<ICommissionService, CommissionService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IRefundService, RefundService>();
 builder.Services.AddScoped<ISearchService, SearchService>();
