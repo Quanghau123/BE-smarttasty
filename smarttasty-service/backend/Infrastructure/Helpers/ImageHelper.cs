@@ -13,7 +13,7 @@ namespace backend.Infrastructure.Helpers
 
         public ImageHelper(CloudinarySettings cloudinarySettings)
         {
-            _baseUrl = $"https://res.cloudinary.com/{cloudinarySettings.CloudName}/image/upload";
+            _baseUrl = $"https://res.cloudinary.com/{cloudinarySettings.CloudName}/image/upload/f_auto,q_auto";
         }
 
         public string GetImageUrl(string publicId)
