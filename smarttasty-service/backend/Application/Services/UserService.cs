@@ -128,7 +128,8 @@ namespace backend.Application.Services
                 {
                     UserId = user.UserId,
                     UserName = user.UserName ?? string.Empty,
-                    Role = user.Role.ToString()
+                    Role = user.Role.ToString(),
+                    IsActive = user.IsActive
                 }
             };
 

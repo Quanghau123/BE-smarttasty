@@ -5,6 +5,7 @@ namespace backend.Application.DTOs.Auth
         public int UserId { get; set; }
         public string UserName { get; set; } = string.Empty;
         public string Role { get; set; } = string.Empty;
+        public bool? IsActive { get; set; } = null;
     }
 
     public class LoginResponseDto
